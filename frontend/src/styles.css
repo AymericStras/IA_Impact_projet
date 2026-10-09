@@ -44,7 +44,7 @@ button, input, select { font: inherit; color: inherit; }
 .layout { flex: 1; display: grid; grid-template-columns: 380px 1fr; min-height: 0; }
 .sidebar { display: flex; flex-direction: column; min-height: 0; background: var(--white); border-right: 1px solid var(--grey); }
 .map { position: relative; min-height: 0; }
-.map .leaflet-container { position: absolute; inset: 0; background: var(--grey); font-family: var(--font); }
+.map-canvas { position: absolute; inset: 0; background: var(--grey); }
 
 /* ── Onglets ─────────────────────────────────────────── */
 .tabs { display: flex; gap: 6px; padding: 14px 20px 0; background: var(--navy); }
@@ -166,58 +166,19 @@ button, input, select { font: inherit; color: inherit; }
 .place-actions button:first-child, .popup-actions button:first-child { border-color: var(--yellow); background: var(--yellow); }
 .place-actions button:last-child, .popup-actions button:last-child { border-color: var(--red); background: var(--red); color: var(--white); }
 
-/* Gares façon Google Maps : pastille avec pictogramme, nom en clair à côté, liseré blanc */
-.st-icon { background: none; border: 0; }
-.st { position: absolute; left: 0; top: 0; display: flex; align-items: center; pointer-events: none; }
-.st-badge, .st-dot { pointer-events: auto; cursor: pointer; flex: none; translate: -50% 0; }
-.st-badge {
-  width: 22px; height: 22px; margin-top: -11px; border-radius: 6px; display: grid; place-items: center;
-  background: var(--navy); color: var(--white); border: 2px solid var(--white);
-  box-shadow: 0 1px 3px rgba(15, 33, 73, .45);
-}
-.st-badge svg { width: 14px; height: 14px; }
-.st-major .st-badge { width: 26px; height: 26px; margin-top: -13px; border-radius: 7px; }
-.st-major .st-badge svg { width: 17px; height: 17px; }
-.st-minor .st-badge { width: 18px; height: 18px; margin-top: -9px; border-radius: 5px; }
-.st-minor .st-badge svg { width: 11px; height: 11px; }
-.st-dot {
-  width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: var(--white); border: 2px solid var(--navy);
-  box-sizing: border-box;
-}
-.st-label {
-  margin-left: -4px; white-space: nowrap; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--navy);
-  text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 3px #fff;
-  translate: 0 -50%; margin-top: 0; line-height: 1;
-}
-.st-major .st-label { font-size: 13.5px; font-weight: 800; }
-.st-minor .st-label { font-size: 11px; font-weight: 500; }
-.st.is-dimmed { opacity: .45; }
-.st.is-start .st-badge { background: var(--yellow); color: var(--navy); }
-.st.is-end .st-badge, .st.is-selected .st-badge { background: var(--red); }
-.st.is-change .st-badge { background: var(--white); color: var(--navy); border-color: var(--navy); }
-.st.is-start .st-badge, .st.is-end .st-badge, .st.is-selected .st-badge, .st.is-change .st-badge {
-  width: 30px; height: 30px; margin-top: -15px; border-radius: 8px;
-}
-.st.is-start .st-badge svg, .st.is-end .st-badge svg, .st.is-selected .st-badge svg, .st.is-change .st-badge svg { width: 19px; height: 19px; }
-.st.is-start .st-label, .st.is-end .st-label, .st.is-selected .st-label { font-size: 14px; font-weight: 800; }
-.st.is-on-route .st-badge { background: var(--white); color: var(--red); border-color: var(--red); }
-.st.is-on-route .st-dot { border-color: var(--red); }
-
 /* Fiche de gare */
-.station-card .leaflet-popup-content { margin: 14px 16px; min-width: 210px; }
+.station-card .maplibregl-popup-content { padding: 14px 16px; min-width: 210px; border-radius: 16px; box-shadow: 0 4px 18px rgba(15, 33, 73, .25); }
+.station-card .maplibregl-popup-close-button { font-size: 18px; padding: 2px 8px; border-radius: 0 16px 0 8px; }
 .popup-kind { font-size: 11px !important; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .popup-freq { font-weight: 600; color: var(--ink) !important; font-size: 13px !important; }
 .popup-lines { list-style: none; margin: 4px 0 2px; padding: 0; display: flex; flex-direction: column; gap: 3px; }
 .popup-lines li { font-size: 12px; color: var(--muted); padding-left: 14px; position: relative; }
 .popup-lines li::before { content: ""; position: absolute; left: 0; top: 5px; width: 8px; height: 4px; border-radius: 2px; background: var(--red); }
 
-/* Leaflet */
-.leaflet-popup-content-wrapper { border-radius: 16px; }
 .popup { display: flex; flex-direction: column; gap: 4px; font-family: var(--font); }
 .popup strong { font-family: var(--font-title); font-size: 17px; }
 .popup span { color: var(--muted); font-size: 12px; }
 .popup-actions { padding: 6px 0 0; }
-.leaflet-tooltip { font-family: var(--font); font-weight: 600; border-radius: 8px; }
 
 /* ── Mobile : carte en haut, panneau en dessous ──────── */
 @media (max-width: 760px) {
