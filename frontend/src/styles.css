@@ -180,6 +180,137 @@ button, input, select { font: inherit; color: inherit; }
 .popup span { color: var(--muted); font-size: 12px; }
 .popup-actions { padding: 6px 0 0; }
 
+/* ── Lieux à découvrir ───────────────────────────────── */
+.discover { margin-bottom: 18px; }
+.discover h2 { display: flex; align-items: center; gap: 10px; font-family: var(--font-title); font-size: 18px; font-weight: 800; margin: 0 0 10px; }
+.discover h2 .pill { width: 22px; height: 8px; border-radius: var(--pill); background: var(--yellow); }
+.discover h2 small { margin-left: auto; font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--muted); }
+.discover-strip {
+  display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory;
+  margin: 0 -20px; padding: 2px 20px 10px; scrollbar-width: thin;
+}
+.disc-card {
+  display: flex; border: 0; padding: 0; text-align: left; cursor: pointer; background: var(--white);
+  border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px var(--grey), 0 2px 8px rgba(15, 33, 73, .08);
+  transition: box-shadow .15s, translate .15s;
+}
+.disc-card:hover { box-shadow: 0 0 0 2px var(--navy), 0 4px 14px rgba(15, 33, 73, .16); translate: 0 -1px; }
+.disc-card:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.disc-img { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--grey); }
+.disc-img-empty { display: flex; align-items: flex-end; padding: 8px 10px; color: var(--white); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.disc-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.disc-text strong { font-family: var(--font-title); font-size: 16px; font-weight: 800; line-height: 1.15; }
+.disc-distance { font-size: 12px; font-weight: 700; color: var(--red); }
+.disc-summary { font-size: 13px; line-height: 1.35; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Vignette du carrousel : photo au-dessus */
+.disc-tile { flex: 0 0 220px; flex-direction: column; scroll-snap-align: start; }
+.disc-tile .disc-img { height: 120px; }
+.disc-tile .disc-text { padding: 10px 12px 12px; }
+/* Ligne sous une gare sélectionnée : photo à gauche */
+.disc-row { width: calc(100% - 20px); margin: 0 10px 10px; align-items: stretch; }
+.disc-row .disc-img { flex: 0 0 88px; width: 88px; height: auto; min-height: 88px; }
+.disc-row .disc-text { padding: 8px 12px; }
+
+/* Couleurs par catégorie : aplats de secours et étiquettes */
+.cat-heritage { background: var(--navy); }
+.cat-museum { background: var(--red); }
+.cat-nature { background: #2f7d4f; }
+.cat-engineering { background: var(--navy-2); }
+
+/* Nombre de lieux à côté du nom de la gare */
+.place-name { display: flex; align-items: center; gap: 8px; }
+.place-disc {
+  margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: var(--pill);
+  background: var(--yellow); color: var(--navy); font-size: 12px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Lieux dans la bulle de gare */
+.popup-disc { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--grey); }
+.popup-disc > span { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 11px !important; }
+.popup-disc button {
+  display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 3px; border-radius: 10px;
+  cursor: pointer; text-align: left; font-size: 13px; font-weight: 600;
+}
+.popup-disc button:hover { background: var(--grey); }
+.popup-disc .disc-img { width: 36px; height: 36px; flex: none; border-radius: 8px; padding: 0; font-size: 0; }
+
+/* Épingles des lieux sur la carte : photo ronde, bordure jaune, pointe vers le lieu.
+   MapLibre positionne le bouton par transform : ne jamais lui mettre scale/translate/position
+   (scale multiplierait aussi son décalage sur la carte) — l'effet de survol porte sur la photo. */
+.disc-pin {
+  --size: var(--pin, 30px);
+  width: var(--size); height: var(--size); padding: 0; border: 0; background: none; cursor: pointer;
+  transition: opacity .2s;
+}
+.disc-pin::after {
+  content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -6px;
+  border: 6px solid transparent; border-top: 7px solid var(--yellow); border-bottom: 0;
+}
+.disc-pin img {
+  display: block; width: 100%; height: 100%; object-fit: cover; box-sizing: border-box;
+  border: 3px solid var(--yellow); border-radius: 50%; background: var(--navy);
+  box-shadow: 0 2px 6px rgba(15, 33, 73, .45); transform-origin: 50% 100%; transition: scale .12s;
+}
+.disc-pin span {
+  position: absolute; top: calc(100% + 9px); left: 50%; translate: -50% 0; white-space: nowrap;
+  font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--navy);
+  background: var(--white); padding: 2px 8px; border-radius: var(--pill);
+  box-shadow: 0 1px 4px rgba(15, 33, 73, .3); display: none; pointer-events: none;
+}
+.pins-named .disc-pin span, .disc-pin:hover span, .disc-pin:focus-visible span { display: block; }
+.disc-pin:hover, .disc-pin:focus-visible { z-index: 2; outline: none; }
+.disc-pin:hover img, .disc-pin:focus-visible img { scale: 1.15; }
+.pins-dimmed .disc-pin { opacity: .45; }
+
+/* ── Fiche détaillée d'un lieu ───────────────────────── */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 10; background: rgba(15, 33, 73, .55);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  animation: fade .18s ease-out;
+}
+.sheet {
+  width: min(560px, 100%); max-height: 100%; overflow: auto; background: var(--white);
+  border-radius: 22px; box-shadow: 0 18px 48px rgba(15, 33, 73, .35);
+  animation: rise .22s cubic-bezier(.2, .8, .3, 1);
+}
+.sheet-hero { position: relative; height: 260px; }
+.sheet-hero .disc-img { font-size: 13px; }
+.sheet-close {
+  position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 50%;
+  border: 0; background: var(--white); color: var(--navy); font-size: 24px; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 33, 73, .3);
+}
+.sheet-close:focus-visible { outline: 3px solid var(--yellow); }
+.sheet-credit {
+  position: absolute; right: 0; bottom: 0; max-width: 100%; padding: 4px 10px; border-top-left-radius: 10px;
+  background: rgba(15, 33, 73, .7); color: var(--white); font-size: 10px; text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sheet-body { padding: 18px 24px 24px; line-height: 1.55; }
+.sheet-body p { margin: 0 0 12px; }
+.sheet-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.disc-cat, .disc-era { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--pill); }
+.disc-cat { color: var(--white); }
+.disc-era { background: var(--grey); color: var(--navy); }
+.sheet h2 { font-family: var(--font-title); font-size: 30px; font-weight: 800; line-height: 1.05; margin: 0 0 6px; }
+.sheet-distance { color: var(--red); font-weight: 700; font-size: 14px; }
+.sheet-lead { font-size: 17px; font-weight: 600; }
+.sheet-fact { margin: 16px 0 4px; padding: 14px 16px; border-radius: 16px; background: var(--yellow); }
+.sheet-fact strong { font-family: var(--font-title); font-size: 17px; font-weight: 800; }
+.sheet-fact p { margin: 4px 0 0; }
+.sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.sheet-actions button {
+  flex: 1 1 180px; border: 0; border-radius: var(--pill); padding: 12px 16px; cursor: pointer;
+  font-weight: 800; letter-spacing: .05em; text-transform: uppercase; font-size: 13px;
+  background: var(--navy); color: var(--white);
+}
+.sheet-actions button:last-child { background: var(--red); }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { opacity: 0; translate: 0 24px; } }
+@media (prefers-reduced-motion: reduce) { .sheet-backdrop, .sheet { animation: none; } }
+
 /* ── Mobile : carte en haut, panneau en dessous ──────── */
 @media (max-width: 760px) {
   .header { padding: 10px 16px; gap: 12px; }
@@ -188,4 +319,12 @@ button, input, select { font: inherit; color: inherit; }
   .map { order: -1; }
   .sidebar { border-right: 0; }
   .tabs, .hero, .panel-body, .data-note { padding-left: 16px; padding-right: 16px; }
+  .discover-strip { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .disc-tile { flex-basis: 200px; }
+  /* Fiche en plein écran, qui monte du bas */
+  .sheet-backdrop { padding: 0; align-items: flex-end; }
+  .sheet { border-radius: 22px 22px 0 0; max-height: 92vh; }
+  .sheet-hero { height: 210px; }
+  .sheet-body { padding: 16px 16px 24px; }
+  .sheet h2 { font-size: 26px; }
 }

@@ -6,6 +6,8 @@ import { layers, namedFlavor } from "@protomaps/basemaps";
 import { OCCITANIE, OCCITANIE_BOUNDS, OUTSIDE_MASK } from "../occitanie";
 import { COACH_MODES, WALK, type Edge, type Place, type Route } from "../api";
 import { useI18n } from "../i18n";
+import { DISCOVERIES, DISCOVERIES_BY_STATION, imageOf, type Discovery } from "../data/discoveries";
+import { DiscoveryImage } from "./Discovery";
 
 type Props = {
   places: Place[];
@@ -15,6 +17,7 @@ type Props = {
   selected: string | null;
   onSelect: (id: string) => void;
   onPick: (which: "from" | "to", name: string) => void;
+  onOpenDiscovery: (d: Discovery) => void;
 };
 
 // Moteur cartographique : MapLibre GL (rendu WebGL) sur un fond vectoriel de l'Occitanie seule, servi par le
@@ -178,8 +181,9 @@ function addOverlays(map: MlMap) {
 }
 
 // Fiche de gare : contenu React rendu dans la bulle MapLibre
-function StationCard({ card, onPick, close }: { card: Place; onPick: Props["onPick"]; close: () => void }) {
-  const { t } = useI18n();
+function StationCard({ card, onPick, onOpenDiscovery, close }: { card: Place; onPick: Props["onPick"]; onOpenDiscovery: Props["onOpenDiscovery"]; close: () => void }) {
+  const { t, locale } = useI18n();
+  const discoveries = DISCOVERIES_BY_STATION.get(card.id) ?? [];
   return (
     <div className="popup">
       <span className="popup-kind">
@@ -194,6 +198,17 @@ function StationCard({ card, onPick, close }: { card: Place; onPick: Props["onPi
           ))}
         </ul>
       )}
+      {discoveries.length > 0 && (
+        <div className="popup-disc">
+          <span>{t.discoverCount(discoveries.length)}</span>
+          {discoveries.map((d) => (
+            <button key={d.id} onClick={() => { onOpenDiscovery(d); close(); }}>
+              <DiscoveryImage d={d} />
+              {d.title[locale]}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="popup-actions">
         <button onClick={() => { onPick("from", card.name); close(); }}>{t.leaveFrom}</button>
         <button onClick={() => { onPick("to", card.name); close(); }}>{t.goTo}</button>
@@ -202,15 +217,16 @@ function StationCard({ card, onPick, close }: { card: Place; onPick: Props["onPi
   );
 }
 
-export default memo(function MapView({ places, edges, byId, route, selected, onSelect, onPick }: Props) {
+export default memo(function MapView({ places, edges, byId, route, selected, onSelect, onPick, onOpenDiscovery }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MlMap | null>(null);
   const [card, setCard] = useState<Place | null>(null);
+  const { locale } = useI18n();
   const popup = useRef<maplibregl.Popup | null>(null);
   const popupBody = useMemo(() => document.createElement("div"), []);
   // Les gestionnaires d'événements de la carte sont posés une fois : ils lisent les données via des refs
-  const latest = useRef({ byId, onSelect });
-  latest.current = { byId, onSelect };
+  const latest = useRef({ byId, onSelect, onOpenDiscovery });
+  latest.current = { byId, onSelect, onOpenDiscovery };
 
   useEffect(() => {
     const m = new maplibregl.Map({
@@ -238,6 +254,14 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
     });
     m.on("mouseenter", STATION_LAYERS, () => (m.getCanvas().style.cursor = "pointer"));
     m.on("mouseleave", STATION_LAYERS, () => (m.getCanvas().style.cursor = ""));
+    // Taille des épingles de lieux selon le zoom (variable CSS lue par .disc-pin), noms à partir du zoom 11
+    const scalePins = () => {
+      const z = m.getZoom();
+      box.current!.style.setProperty("--pin", `${Math.round(Math.min(46, Math.max(24, 24 + (z - 6) * 3.7)))}px`);
+      box.current!.classList.toggle("pins-named", z >= 11);
+    };
+    m.on("zoom", scalePins);
+    scalePins();
     return () => m.remove();
   }, []);
 
@@ -259,6 +283,33 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   useEffect(() => {
     (map?.getSource("network") as GeoJSONSource | undefined)?.setData(network);
   }, [map, network]);
+
+  // Lieux à découvrir : une épingle avec la photo du lieu, nommée dans la langue de l'interface. Des marqueurs
+  // HTML plutôt qu'une couche : ils ne sont que 32, et une photo ronde s'y fait en CSS.
+  useEffect(() => {
+    if (!map) return;
+    const markers = DISCOVERIES.map((d) => {
+      const pin = document.createElement("button");
+      pin.className = `disc-pin cat-${d.category}`;
+      pin.setAttribute("aria-label", d.title[locale]);
+      const img = Object.assign(document.createElement("img"), { src: imageOf(d), alt: "", loading: "lazy" });
+      // Pas de photo : pixel transparent, il reste un rond marine bordé de jaune
+      img.onerror = () => (img.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
+      const name = Object.assign(document.createElement("span"), { textContent: d.title[locale] });
+      pin.append(img, name);
+      pin.addEventListener("click", (e) => {
+        e.stopPropagation();
+        latest.current.onOpenDiscovery(d);
+      });
+      return new maplibregl.Marker({ element: pin, anchor: "bottom", offset: [0, -9] }).setLngLat([d.lon, d.lat]).addTo(map);
+    });
+    return () => markers.forEach((mk) => mk.remove());
+  }, [map, locale]);
+
+  // Épingles en retrait quand un itinéraire est affiché
+  useEffect(() => {
+    box.current?.classList.toggle("pins-dimmed", route !== null);
+  }, [route]);
 
   // Réseau estompé quand un itinéraire est affiché
   useEffect(() => {
@@ -342,7 +393,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   return (
     <div className="map">
       <div ref={box} className="map-canvas" />
-      {card && createPortal(<StationCard card={card} onPick={onPick} close={() => setCard(null)} />, popupBody)}
+      {card && createPortal(<StationCard card={card} onPick={onPick} onOpenDiscovery={onOpenDiscovery} close={() => setCard(null)} />, popupBody)}
     </div>
   );
 });

@@ -5,6 +5,8 @@ import Header from "./components/Header";
 import MapView from "./components/MapView";
 import RoutePanel from "./components/RoutePanel";
 import PlacesPanel from "./components/PlacesPanel";
+import { DiscoverySheet } from "./components/Discovery";
+import type { Discovery } from "./data/discoveries";
 
 type Tab = "route" | "places";
 
@@ -20,6 +22,8 @@ export default function App() {
   const [routeError, setRouteError] = useState<ErrorCode | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [discovery, setDiscovery] = useState<Discovery | null>(null);
+  const closeDiscovery = useCallback(() => setDiscovery(null), []);
 
   useEffect(() => {
     Promise.all([api.places(), api.network()])
@@ -86,12 +90,13 @@ export default function App() {
               error={routeError}
             />
           ) : (
-            <PlacesPanel places={places} selected={selected} onSelect={setSelected} onPick={pick} />
+            <PlacesPanel places={places} byId={byId} selected={selected} onSelect={setSelected} onPick={pick} onOpenDiscovery={setDiscovery} />
           )}
           <p className="data-note">{t.dataNote}</p>
         </aside>
-        <MapView places={places} edges={edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
+        <MapView places={places} edges={edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} onOpenDiscovery={setDiscovery} />
       </main>
+      {discovery && <DiscoverySheet d={discovery} station={byId.get(discovery.stationId)} onClose={closeDiscovery} onPick={pick} />}
     </div>
   );
 }
