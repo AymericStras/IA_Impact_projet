@@ -4,7 +4,7 @@ from app.main import app
 from app.routing import Network, expected_wait, normalize
 
 client = TestClient(app)
-ALL_BUT_TER_TRAIN = ["Car TER", "Car à réservation", "INTERCITES", "INTERCITES de nuit", "TGV INOUI", "OUIGO"]
+ALL_BUT_TER_TRAIN = ["Car TER", "Car liO", "Car à réservation", "INTERCITES", "INTERCITES de nuit", "TGV INOUI", "OUIGO"]
 
 
 def route(**params):
@@ -29,7 +29,8 @@ def test_route_shape():
     assert all(a["to_id"] == b["from_id"] for a, b in zip(legs, legs[1:]))       # les legs s'enchaînent
     assert all(leg["stops"][0] == leg["from_id"] and leg["stops"][-1] == leg["to_id"] for leg in legs)
     assert legs[0]["wait_minutes"] == 0
-    assert abs(body["minutes"] - sum(l["minutes"] + l["wait_minutes"] for l in legs)) < 0.5
+    total = body["access_minutes"] + body["egress_minutes"] + sum(l["minutes"] + l["wait_minutes"] for l in legs)
+    assert abs(body["minutes"] - total) < 0.5
 
 
 def test_direct_trains_are_found():
@@ -48,8 +49,27 @@ def test_exclude_modes():
     assert full["minutes"] <= no_ic["minutes"]
 
 
+def test_lio_coaches():
+    # Ganges n'a pas de gare : seul le car liO 608 y va depuis Montpellier
+    r = route(**{"from": "Montpellier", "to": "Ganges"}).json()
+    assert [l["mode"] for l in r["legs"] if l["mode"] != "Marche"] == ["Car liO"] and r["transfers"] == 0
+    assert code(route(**{"from": "Montpellier", "to": "Ganges", "exclude": "Car liO"})) == "no_route"
+    places = client.get("/places").json()["places"]
+    assert {p["network"] for p in places} == {"sncf", "lio"}
+
+
+def test_walk_between_coach_stop_and_station():
+    # Le Vigan -> Montpellier sans le 608 : car 140 jusqu'à Nîmes, à pied jusqu'à la gare, puis train
+    r = route(**{"from": "Le Vigan", "to": "Montpellier Saint-Roch", "exclude": "INTERCITES"}).json()
+    modes = [l["mode"] for l in r["legs"]]
+    assert "Car liO" in modes and "Marche" in modes and modes[-1] != "Car liO"
+    walk = next(l for l in r["legs"] if l["mode"] == "Marche")
+    assert walk["wait_minutes"] == 0 and walk["trips_per_day"] is None
+
+
 def test_city_prefers_station_named_after_it():
-    assert route(**{"from": "Toulouse", "to": "Tarbes"}).json()["from"] == "Toulouse Matabiau"
+    r = route(**{"from": "Toulouse", "to": "Tarbes"}).json()
+    assert r["from"] == "Toulouse Matabiau" and r["access_minutes"] == 0
     assert route(**{"from": "montpellier", "to": "NIMES"}).status_code == 200
 
 

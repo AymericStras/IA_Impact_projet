@@ -19,6 +19,7 @@ export default function PlacesPanel({ places, selected, onSelect, onPick }: Prop
     const k = norm(q.trim());
     const out = new Map<string, Place[]>();
     for (const p of places) {
+      if (!k && p.network === "lio") continue; // ~4 700 arrêts de car : seulement quand on cherche
       if (k && !norm(p.name).includes(k) && !norm(p.department).includes(k) && !norm(p.commune).includes(k)) continue;
       if (!out.has(p.department)) out.set(p.department, []);
       out.get(p.department)!.push(p);
@@ -34,6 +35,7 @@ export default function PlacesPanel({ places, selected, onSelect, onPick }: Prop
         <span className="places-count">{t.stations(count)}</span>
       </div>
       <div className="panel-body">
+        {!q.trim() && <p className="hint places-hint">{t.placesHint}</p>}
         {groups.map(([dep, ps]) => (
           <div key={dep} className="dep">
             <h2>

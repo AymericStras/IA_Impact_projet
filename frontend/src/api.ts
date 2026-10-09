@@ -2,7 +2,7 @@
 // en prod, VITE_API_URL pointe vers l'API déployée.
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
-export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string };
+export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string; network: "sncf" | "lio" };
 export type Edge = { from_id: string; to_id: string; mode: string; minutes: number };
 // Un leg = un trajet direct (même train ou même car), stops = toutes les gares desservies, extrémités comprises
 export type Leg = {
@@ -15,10 +15,21 @@ export type Leg = {
   minutes: number;
   wait_minutes: number; // changement + attente estimée avant ce leg (0 pour le premier)
   stops: string[];
-  trips_per_day: number;
+  trips_per_day: number | null; // null pour la marche
 };
 export type Mode = { id: string; links: number; missions: number };
-export type Route = { from: string; to: string; minutes: number; ride_minutes: number; transfers: number; legs: Leg[] };
+export type Route = {
+  from: string;
+  to: string;
+  minutes: number;
+  ride_minutes: number;
+  access_minutes: number; // pour rejoindre le premier arrêt quand on a demandé une ville
+  egress_minutes: number;
+  transfers: number;
+  legs: Leg[];
+};
+export const WALK = "Marche";
+export const COACH_MODES = new Set(["Car TER", "Car liO", "Car à réservation"]);
 export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "unknown_mode" | "network";
 
 export class ApiError extends Error {

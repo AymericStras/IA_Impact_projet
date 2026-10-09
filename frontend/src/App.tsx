@@ -97,7 +97,9 @@ export default function App() {
           )}
           <p className="data-note">{t.dataNote}</p>
         </aside>
-        <MapView places={places} edges={excluded.length ? edges.filter((e) => !excluded.includes(e.mode)) : edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
+        <MapView
+          places={excluded.includes("Car liO") ? places.filter((p) => p.network !== "lio") : places}
+          edges={excluded.length ? edges.filter((e) => !excluded.includes(e.mode)) : edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
       </main>
     </div>
   );

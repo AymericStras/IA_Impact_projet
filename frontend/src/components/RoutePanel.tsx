@@ -1,4 +1,4 @@
-import type { ErrorCode, Mode, Place, Route } from "../api";
+import { WALK, type ErrorCode, type Mode, type Place, type Route } from "../api";
 import { formatMinutes, useI18n } from "../i18n";
 import Trame from "./Trame";
 
@@ -103,20 +103,27 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <ol className="timeline">
               {route.legs.map((leg, i) => (
                 <li key={i} className={i === 0 ? "first" : undefined}>
-                  {i === 0 ? (
-                    <span className="stop">{leg.from}</span>
-                  ) : (
-                    <span className="change">{t.change(formatMinutes(leg.wait_minutes))}</span>
-                  )}
+                  {i === 0 && route.access_minutes > 0 && <span className="change access">{t.access(formatMinutes(route.access_minutes))}</span>}
+                  {i === 0 && <span className="stop">{leg.from}</span>}
+                  {i > 0 && leg.wait_minutes > 0 && <span className="change">{t.change(formatMinutes(leg.wait_minutes))}</span>}
                   <span className="leg">
                     <span className={`mode mode-${slug(leg.mode)}`}>{t.modes[leg.mode] ?? leg.mode}</span>
                     <span className="leg-time">{formatMinutes(leg.minutes)}</span>
-                    <span className="leg-meta">
-                      {t.stopsCount(leg.stops.length - 2)} · {t.perDay(leg.trips_per_day)}
-                    </span>
-                    {leg.line && <span className="leg-line">{leg.line}</span>}
+                    {leg.mode === WALK ? (
+                      <span className="leg-meta">{leg.line}</span>
+                    ) : (
+                      <>
+                        <span className="leg-meta">
+                          {t.stopsCount(leg.stops.length - 2)} · {t.perDay(leg.trips_per_day ?? 0)}
+                        </span>
+                        {leg.line && <span className="leg-line">{leg.line}</span>}
+                      </>
+                    )}
                   </span>
                   <span className={i === route.legs.length - 1 ? "stop last" : "stop"}>{leg.to}</span>
+                  {i === route.legs.length - 1 && route.egress_minutes > 0 && (
+                    <span className="change access">{t.egress(formatMinutes(route.egress_minutes))}</span>
+                  )}
                 </li>
               ))}
             </ol>

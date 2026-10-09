@@ -1,7 +1,8 @@
 # Backend — calcul d'itinéraire
 
 API FastAPI qui renvoie le meilleur itinéraire entre une ville ou gare de départ et une ville ou gare
-de destination en Occitanie, à partir des **horaires officiels SNCF** (GTFS TER + Intercités + TGV).
+de destination en Occitanie, à partir des **horaires officiels** SNCF (TER, Intercités, TGV, OUIGO) et
+**liO** (cars régionaux de la Région Occitanie).
 
 Un itinéraire est une suite de **trajets directs** (même train ou même car du début à la fin) reliés
 par des **correspondances**. Le Dijkstra minimise :
@@ -14,14 +15,23 @@ L'attente moyenne est déduite de la fréquence réelle : 16 trains/jour sur une
 train par heure, donc 30 min d'attente en moyenne (plafond 2 h). Le premier départ n'est pas pénalisé :
 le voyageur choisit son heure. Les horaires précis ne sont pas modélisés ; la durée est une estimation.
 
+Un arrêt de car liO et une gare SNCF à moins de 400 m sont reliés **à pied** (4,5 km/h) : on peut descendre
+du car et prendre le train. La marche ne compte pas comme une correspondance.
+
+Quand on demande une **ville**, toutes ses gares et ses arrêts de car sont candidats, avec un temps d'accès
+estimé : 0 min pour la gare qui porte son nom (« Toulouse » → Matabiau), 10 min pour les autres gares et les
+gares routières, 20 min pour un arrêt de car quelconque. C'est ce qui permet « Montpellier → Ganges » en
+car liO depuis Trifontaine plutôt qu'un détour en train par Nîmes.
+
 ```
 backend/
 ├── app/
 │   ├── main.py                 # API HTTP (FastAPI)
 │   └── routing.py              # graphe des trajets directs + Dijkstra, utilisable seul en CLI
 ├── data/                       # généré par scripts/build_from_gtfs.py
-│   ├── stations_occitanie.csv  # 360 gares : id UIC, nom, coordonnées, département, commune
-│   ├── missions_occitanie.csv  # 724 missions : suites d'arrêts + temps de passage médians + fréquence
+│   ├── stations_occitanie.csv  # 5 050 arrêts : 360 gares SNCF (id UIC) + ~4 700 arrêts liO (id « L… »)
+│   ├── missions_occitanie.csv  # 3 381 missions : suites d'arrêts + temps de passage médians + fréquence
+│   ├── walk_links.csv          # 345 correspondances à pied arrêt liO <-> gare SNCF
 │   ├── connections_occitanie.csv  # tronçons entre arrêts consécutifs, ancien format (notebook, Neo4j)
 │   └── build_info.json         # version et validité des horaires, jour de référence
 ├── scripts/
@@ -50,35 +60,36 @@ python -m app.routing Toulouse Tarbes --exclude INTERCITES --exclude "Car TER" -
 Les horaires SNCF changent (le GTFS actuel est valide du 09/10/2026 au 31/03/2027, voir `GET /info`) :
 
 ```bash
-python scripts/build_from_gtfs.py --refresh   # ~2 s, ~100 Mo de RAM, sources dans backend/.cache/
+python scripts/build_from_gtfs.py --refresh   # ~2 s, ~150 Mo de RAM, sources dans backend/.cache/
 ```
 
 Sources :
 - GTFS SNCF TGV + Intercités + TER : `eu.ftp.opendatasoft.com/sncf/plandata/Export_OpenData_SNCF_GTFS_NewTripId.zip`
   (référencé sur transport.data.gouv.fr, « Réseau SNCF TGV, Intercités et TER »)
+- GTFS liO : flux publié par la Région Occitanie (transport.data.gouv.fr, « Réseau interurbain liO Occitanie »)
 - Liste des gares SNCF (département et commune par code UIC) : ressources.data.sncf.com, jeu `liste-des-gares`
 - Contours des départements, pour les arrêts absents de la liste des gares : github.com/gregoiredavid/france-geojson
 
 Ce que fait le script :
-1. garde les gares (StopArea) situées dans les 13 départements d'Occitanie ;
+1. garde les gares et zones d'arrêt situées dans les 13 départements d'Occitanie (noms liO remis en casse normale) ;
 2. découpe chaque train en morceaux contigus à l'intérieur de la région ;
 3. regroupe les trains qui desservent les mêmes arrêts dans le même ordre en **missions**, avec les temps de
    passage médians, les arrêts où l'on peut monter ou descendre, et le nombre de circulations le **jour de
    référence** (le mardi/mercredi/jeudi le plus chargé de la période) ;
-4. écrit aussi `connections_occitanie.csv` au format historique du projet, pour le notebook et Neo4j.
+4. relie à pied les arrêts liO et les gares SNCF à moins de 400 m ;
+5. écrit aussi `connections_occitanie.csv` au format historique du projet, pour le notebook et Neo4j
+   (le mode est dans `stop_id` : `StopPoint:OCECar liO-L…` pour les cars liO).
 
-Le réseau couvre seulement l'offre SNCF (trains TER, cars TER, Intercités, TGV, OUIGO). Les lignes de cars
-régionaux liO hors SNCF ont leur propre GTFS (transport.data.gouv.fr, « Réseau interurbain liO Occitanie »),
-non intégré.
+Les réseaux urbains (tram de Montpellier, métro de Toulouse…) ne sont pas intégrés.
 
 ## Endpoints
 
 | Méthode | Route | Réponse |
 |---|---|---|
-| GET | `/health` | `{"status": "ok", "stations": 360}` |
+| GET | `/health` | `{"status": "ok", "stations": 5050}` |
 | GET | `/info` | source, validité des horaires, jour de référence, volumes |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
-| GET | `/places` | gares avec `id, name, lat, lon, department, commune` |
+| GET | `/places` | arrêts avec `id, name, lat, lon, department, commune, network` (`sncf` ou `lio`) |
 | GET | `/network` | tronçons entre arrêts consécutifs `from_id, to_id, mode, minutes` |
 | GET | `/modes` | `[{"id": "Train TER", "links": 637, "missions": 403}, …]` |
 | GET | `/route?from=Montpellier&to=Rodez` | voir ci-dessous |
@@ -87,7 +98,7 @@ Paramètres de `/route` :
 - `from`, `to` : nom de **ville** (toutes ses gares sont essayées ; « Toulouse » part de Matabiau plutôt
   que d'une gare de banlieue) ou de **gare** précise. Accents, casse et tirets sont ignorés.
 - `exclude` (répétable) : type de transport à ignorer, parmi les `id` de `/modes`
-  (`Train TER`, `Car TER`, `Car à réservation`, `INTERCITES`, `INTERCITES de nuit`, `TGV INOUI`, `OUIGO`, `Navette`).
+  (`Train TER`, `Car TER`, `Car liO`, `Car à réservation`, `INTERCITES`, `INTERCITES de nuit`, `TGV INOUI`, `OUIGO`, `Navette`).
 - `transfer_min` (défaut 5) : minutes de changement par correspondance, en plus de l'attente estimée.
 
 ```json
@@ -105,7 +116,9 @@ Paramètres de `/route` :
 }
 ```
 
-- `minutes` : durée estimée totale = `ride_minutes` + somme des `wait_minutes`
+- `minutes` : durée estimée totale = `access_minutes` + `ride_minutes` + somme des `wait_minutes` + `egress_minutes`
+- `access_minutes` / `egress_minutes` : temps estimé pour rejoindre le premier arrêt / quitter le dernier (ville demandée)
+- un leg `"mode": "Marche"` est un trajet à pied entre un arrêt de car et une gare (`line` = distance)
 - `legs[].stops` : toutes les gares desservies par ce trajet direct, extrémités comprises
 - `legs[].trips_per_day` : circulations le jour de référence qui font ce trajet sans changement
 

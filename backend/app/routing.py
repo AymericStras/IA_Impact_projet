@@ -1,4 +1,4 @@
-"""Itinéraire le plus court (Dijkstra) sur les horaires officiels SNCF en Occitanie.
+"""Itinéraire le plus court (Dijkstra) sur les horaires officiels SNCF et liO en Occitanie.
 
 Le graphe est construit à partir des **missions** (data/missions_occitanie.csv, voir
 scripts/build_from_gtfs.py) : une mission est une suite d'arrêts parcourue par un ou plusieurs
@@ -11,6 +11,9 @@ Coût d'un itinéraire = temps passé à bord + pour chaque correspondance :
     deux passages sur une journée de service de 16 h (19 trains/jour -> ~25 min).
 Le premier départ n'est pas pénalisé : le voyageur choisit son heure. Les heures précises ne sont pas
 modélisées ; la durée annoncée est une estimation moyenne.
+
+Un arrêt de car liO et une gare SNCF à moins de 400 m sont reliés à pied (data/walk_links.csv) :
+la marche n'est pas un trajet, elle ne compte pas comme une montée.
 
 Le départ et la destination sont des noms de ville ou de gare, tels que les sort le NER (FROM / TO).
 
@@ -40,13 +43,22 @@ def expected_wait(per_day):
     return min(SERVICE_DAY_MIN / (2 * max(per_day, 0.5)), MAX_WAIT_MIN)
 
 # Ordre d'affichage des types de transport ; ceux qui n'y sont pas viennent après
-MODES = ("Train TER", "Car TER", "Car à réservation", "INTERCITES", "INTERCITES de nuit", "TGV INOUI", "OUIGO")
+MODES = ("Train TER", "Car TER", "Car liO", "Car à réservation", "INTERCITES", "INTERCITES de nuit", "TGV INOUI", "OUIGO")
+WALK = "Marche"
+# Temps pour rejoindre (ou quitter) un arrêt quand on demande une ville : la gare qui porte le nom de la
+# ville est le point de départ naturel, un arrêt de car en périphérie demande de traverser la ville.
+ACCESS_MIN = {"main": 0, "station": 10, "hub": 10, "stop": 20}
 
 
 def normalize(s):
     """'Saint-Gaudens' / 'SAINT GAUDENS' / 'saint-gaudéns' -> 'SAINT GAUDENS'."""
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     return re.sub(r"[^A-Z0-9]+", " ", s.upper()).strip()
+
+
+def is_lio(stop_id):
+    """Les arrêts liO ont un identifiant préfixé par L ; les gares SNCF, leur code UIC."""
+    return stop_id.startswith("L")
 
 
 class UnknownPlace(KeyError):
@@ -65,7 +77,8 @@ class Network:
         with open(data_dir / "stations_occitanie.csv", encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 self.place[r["stop_id"]] = {"id": r["stop_id"], "name": r["name"], "lat": float(r["lat"]),
-                                            "lon": float(r["lon"]), "department": r["department"], "commune": r["commune"]}
+                                            "lon": float(r["lon"]), "department": r["department"], "commune": r["commune"],
+                                            "network": "lio" if is_lio(r["stop_id"]) else "sncf"}
                 self.by_key[normalize(r["name"])].add(r["stop_id"])
                 if r["commune"]:
                     self.by_key[normalize(r["commune"])].add(r["stop_id"])
@@ -107,21 +120,40 @@ class Network:
         self.adj = defaultdict(list)    # a -> [(b, mode)]
         for a, b, mode in self.rides:
             self.adj[a].append((b, mode))
+        self.walk = defaultdict(list)   # a -> [(b, minutes, mètres)]
+        walk_path = data_dir / "walk_links.csv"
+        if walk_path.exists():
+            with open(walk_path, encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    self.walk[r["from_id"]].append((r["to_id"], float(r["minutes"]), int(r["meters"])))
 
     # ── Recherche de lieux ───────────────────────────────────────────────────
     def resolve(self, query):
-        """Toutes les gares d'une ville (ou la gare exacte). Repli : gares dont le nom commence par la requête."""
+        """Gares et arrêts correspondant à une ville ou une gare -> minutes d'accès estimées depuis la ville.
+
+        Une gare précise (« Nîmes Pont du Gard ») : elle seule, sans accès.
+        Une ville (« Toulouse ») : toutes ses gares et ses arrêts de car, la gare qui porte son nom à 0 min
+        (Matabiau, pas Montaudran), les autres gares et les gares routières à 10, les autres arrêts à 20.
+        Repli : gares dont le nom commence par la requête.
+        """
         key = normalize(query)
-        if key in self.by_key:
-            stops = self.by_key[key]
-            # « Toulouse » -> Toulouse Matabiau plutôt que Montaudran ou Saint-Agne :
-            # les gares qui portent le nom de la ville passent avant celles de la banlieue.
-            named = {s for s in stops if (normalize(self.name[s]) + " ").startswith(key + " ")}
-            return named or stops
-        hits = {s for k, stops in self.by_key.items() if k.startswith(key + " ") for s in stops}
-        if not hits:
+        stops = self.by_key.get(key)
+        if not stops:
+            stops = {s for k, ids in self.by_key.items() if k.startswith(key + " ") for s in ids}
+        if not stops:
             raise UnknownPlace(query)
-        return hits
+        exact = {s for s in stops if normalize(self.name[s]) == key}
+        if exact:
+            return {s: 0 for s in exact}
+        out = {}
+        for s in stops:
+            named = (normalize(self.name[s]) + " ").startswith(key + " ")
+            if not is_lio(s):
+                kind = "main" if named else "station"
+            else:
+                kind = "hub" if re.search(r"\b(GARE|PEM)\b", normalize(self.name[s])) else "stop"
+            out[s] = ACCESS_MIN[kind]
+        return out
 
     def stations(self, query="", limit=20):
         """Gares dont le nom normalisé contient la requête, triées par nom."""
@@ -154,53 +186,72 @@ class Network:
         transfer_min : minutes de changement par correspondance (en plus de l'attente estimée)
 
         Renvoie None s'il n'existe aucun chemin, sinon
-        {"from", "to", "minutes", "ride_minutes", "transfers", "transfer_min",
+        {"from", "to", "minutes", "ride_minutes", "access_minutes", "egress_minutes", "transfers", "transfer_min",
          "legs": [{"mode", "line", "from", "to", "from_id", "to_id", "minutes", "wait_minutes",
                    "stops", "trips_per_day"}, ...]}
         où chaque leg est un trajet direct (même train ou même car du début à la fin) et wait_minutes
         le changement + l'attente estimée avant ce leg (0 pour le premier).
         """
         sources, targets = self.resolve(departure), self.resolve(destination)
-        if sources & targets:
+        if sources.keys() & targets.keys():
             raise SamePlace(departure)
-        dist = {s: 0.0 for s in sources}
+        # État = (gare, déjà monté ?) : la première montée est gratuite, les suivantes sont des correspondances.
+        # La marche ne change pas l'état : partir à pied vers un arrêt de car n'est pas une correspondance.
+        dist = {(s, False): float(a) for s, a in sources.items()}
         prev = {}
-        heap = [(0.0, s) for s in sources]
+        heap = [(float(a), s, False) for s, a in sources.items()]
         heapq.heapify(heap)
+        best = None  # (coût total avec l'accès à l'arrivée, état)
         while heap:
-            d, u = heapq.heappop(heap)
-            if d > dist[u]:
+            d, u, boarded = heapq.heappop(heap)
+            if best and d >= best[0]:
+                break
+            if d > dist[(u, boarded)]:
                 continue
-            if u in targets:
-                return self._itinerary(u, prev, transfer_min, d)
-            first = u in sources  # depuis une gare de départ, pas de correspondance
+            if u in targets and boarded and (best is None or d + targets[u] < best[0]):
+                best = (d + targets[u], (u, boarded))
+            moves = []
             for v, mode in self.adj[u]:
                 if mode in exclude:
                     continue
                 ride, _, _, _, per_day = self.rides[(u, v, mode)]
-                nd = d + ride + (0 if first else transfer_min + expected_wait(per_day))
-                if nd < dist.get(v, float("inf")):
-                    dist[v] = nd
-                    prev[v] = (u, mode)
-                    heapq.heappush(heap, (nd, v))
-        return None
+                moves.append((v, True, ride + (transfer_min + expected_wait(per_day) if boarded else 0), mode))
+            for v, minutes, _ in self.walk[u]:
+                moves.append((v, boarded, minutes, WALK))
+            for v, b, cost, mode in moves:
+                nd = d + cost
+                if nd < dist.get((v, b), float("inf")):
+                    dist[(v, b)] = nd
+                    prev[(v, b)] = ((u, boarded), mode)
+                    heapq.heappush(heap, (nd, v, b))
+        if best is None:
+            return None
+        return self._itinerary(best[1], prev, transfer_min, best[0], sources, targets)
 
-    def _itinerary(self, u, prev, transfer_min, total):
+    def _itinerary(self, state, prev, transfer_min, total, sources, targets):
         legs = []
-        while u in prev:
-            p, mode = prev[u]
-            minutes, k, i, j, per_day = self.rides[(p, u, mode)]
-            m = self.missions[k]
-            legs.append({"mode": mode, "line": m["line"], "from": self.name[p], "to": self.name[u],
-                         "from_id": p, "to_id": u, "minutes": round(minutes, 1),
-                         "wait_minutes": 0 if p not in prev else round(transfer_min + expected_wait(per_day), 1),
-                         "stops": m["stops"][i:j + 1], "trips_per_day": per_day})
-            u = p
+        while state in prev:
+            (p, was_boarded), mode = prev[state]
+            u = state[0]
+            if mode == WALK:
+                minutes, meters = next((m, mt) for v, m, mt in self.walk[p] if v == u)
+                legs.append({"mode": WALK, "line": f"{meters} m", "from": self.name[p], "to": self.name[u],
+                             "from_id": p, "to_id": u, "minutes": minutes, "wait_minutes": 0,
+                             "stops": [p, u], "trips_per_day": None})
+            else:
+                minutes, k, i, j, per_day = self.rides[(p, u, mode)]
+                m = self.missions[k]
+                legs.append({"mode": mode, "line": m["line"], "from": self.name[p], "to": self.name[u],
+                             "from_id": p, "to_id": u, "minutes": round(minutes, 1),
+                             "wait_minutes": round(transfer_min + expected_wait(per_day), 1) if was_boarded else 0,
+                             "stops": m["stops"][i:j + 1], "trips_per_day": per_day})
+            state = (p, was_boarded)
         legs.reverse()
-        ride = sum(leg["minutes"] for leg in legs)
-        transfers = max(len(legs) - 1, 0)
+        rides = [leg for leg in legs if leg["mode"] != WALK]
         return {"from": legs[0]["from"], "to": legs[-1]["to"], "minutes": round(total, 1),
-                "ride_minutes": round(ride, 1), "transfers": transfers, "transfer_min": transfer_min, "legs": legs}
+                "ride_minutes": round(sum(leg["minutes"] for leg in legs), 1),
+                "access_minutes": sources[legs[0]["from_id"]], "egress_minutes": targets[legs[-1]["to_id"]],
+                "transfers": max(len(rides) - 1, 0), "transfer_min": transfer_min, "legs": legs}
 
 
 def fmt(minutes):
@@ -231,11 +282,16 @@ def main():
     if r is None:
         sys.exit(f"Aucun itinéraire entre {args.departure} et {args.destination}.")
     n = r["transfers"]
+    if r["access_minutes"] or r["egress_minutes"]:
+        print(f"  (dont ~{fmt(r['access_minutes'])} pour rejoindre {r['from']}, ~{fmt(r['egress_minutes'])} depuis {r['to']})")
     print(f"{r['from']} -> {r['to']} : {fmt(r['minutes'])} "
           f"({'direct' if n == 0 else f'{n} correspondance' + ('s' if n > 1 else '')})")
     for leg in r["legs"]:
         if leg["wait_minutes"]:
             print(f"  ~{fmt(leg['wait_minutes'])} de correspondance à {leg['from']}")
+        if leg["mode"] == WALK:
+            print(f"  {leg['from']} -> {leg['to']}  {fmt(leg['minutes'])} à pied ({leg['line']})")
+            continue
         print(f"  {leg['from']} -> {leg['to']}  {fmt(leg['minutes'])}  [{leg['mode']} · {leg['line']}]"
               f"  {len(leg['stops']) - 2} arrêt(s) intermédiaire(s), {leg['trips_per_day']}/jour")
 

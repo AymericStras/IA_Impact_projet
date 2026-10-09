@@ -91,6 +91,7 @@ button, input, select { font: inherit; color: inherit; }
 .chip.mode-car-ter .chip-dot { background: var(--yellow); box-shadow: inset 0 0 0 2px var(--navy); }
 .chip.mode-intercites-de-nuit .chip-dot { background: var(--navy-2); box-shadow: inset 0 0 0 3px var(--white), 0 0 0 1px var(--navy); }
 .chip.mode-tgv-inoui .chip-dot { background: var(--grey-2); }
+.chip.mode-car-lio .chip-dot { background: var(--white); box-shadow: inset 0 0 0 3px var(--red); }
 .chip.off { background: transparent; color: rgba(255,255,255,.6); border-color: rgba(255,255,255,.3); text-decoration: line-through; }
 .chip.off .chip-dot { opacity: .35; }
 .chip:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
@@ -140,6 +141,10 @@ button, input, select { font: inherit; color: inherit; }
 .mode.mode-train-ter { background: var(--red); color: var(--white); }
 .mode.mode-car-ter { background: var(--yellow); color: var(--navy); }
 .mode.mode-intercites, .mode.mode-intercites-de-nuit { background: var(--navy); color: var(--white); }
+.mode.mode-car-lio { background: var(--white); color: var(--red); box-shadow: inset 0 0 0 2px var(--red); }
+.mode.mode-marche { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 2px var(--grey-2); }
+.change.access { background: var(--grey); }
+.places-hint { margin-bottom: 14px; font-size: 13px; }
 
 /* Lieux */
 .dep h2 { display: flex; align-items: center; gap: 10px; font-family: var(--font-title); font-size: 18px; font-weight: 800; margin: 16px 0 6px; }
