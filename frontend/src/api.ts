@@ -5,8 +5,9 @@ const BASE = import.meta.env.VITE_API_URL ?? "/api";
 export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string };
 export type Edge = { from_id: string; to_id: string; mode: string; minutes: number };
 export type Step = { from: string; to: string; from_id: string; to_id: string; minutes: number; mode: string };
+export type Mode = { id: string; links: number };
 export type Route = { from: string; to: string; minutes: number; steps: Step[] };
-export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "network";
+export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "unknown_mode" | "network";
 
 export class ApiError extends Error {
   constructor(public code: ErrorCode) {
@@ -14,8 +15,8 @@ export class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const qs = params ? "?" + new URLSearchParams(params) : "";
+async function get<T>(path: string, params?: URLSearchParams): Promise<T> {
+  const qs = params ? "?" + params : "";
   let res: Response;
   try {
     res = await fetch(BASE + path + qs);
@@ -30,6 +31,11 @@ async function get<T>(path: string, params?: Record<string, string>): Promise<T>
 export const api = {
   places: () => get<{ places: Place[] }>("/places").then((r) => r.places),
   network: () => get<{ edges: Edge[] }>("/network").then((r) => r.edges),
-  route: (from: string, to: string, trainsOnly = false) =>
-    get<Route>("/route", trainsOnly ? { from, to, trains_only: "true" } : { from, to }),
+  modes: () => get<{ modes: Mode[] }>("/modes").then((r) => r.modes),
+  // exclude : types de transport à ignorer, envoyés en ?exclude=…&exclude=…
+  route: (from: string, to: string, exclude: string[] = []) => {
+    const params = new URLSearchParams({ from, to });
+    exclude.forEach((m) => params.append("exclude", m));
+    return get<Route>("/route", params);
+  },
 };

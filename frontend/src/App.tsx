@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, ApiError, type Edge, type ErrorCode, type Place, type Route } from "./api";
+import { api, ApiError, type Edge, type ErrorCode, type Mode, type Place, type Route } from "./api";
 import { useI18n } from "./i18n";
 import Header from "./components/Header";
 import MapView from "./components/MapView";
@@ -12,6 +12,7 @@ export default function App() {
   const { t } = useI18n();
   const [places, setPlaces] = useState<Place[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [modes, setModes] = useState<Mode[]>([]);
   const [loadError, setLoadError] = useState<ErrorCode | null>(null);
   const [tab, setTab] = useState<Tab>("route");
   const [from, setFrom] = useState("");
@@ -20,25 +21,26 @@ export default function App() {
   const [routeError, setRouteError] = useState<ErrorCode | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
-  const [trainsOnly, setTrainsOnly] = useState(false);
+  const [excluded, setExcluded] = useState<string[]>([]); // types de transport désactivés
 
   useEffect(() => {
-    Promise.all([api.places(), api.network()])
-      .then(([p, e]) => {
+    Promise.all([api.places(), api.network(), api.modes()])
+      .then(([p, e, m]) => {
         setPlaces(p);
         setEdges(e);
+        setModes(m);
       })
       .catch((e) => setLoadError(e instanceof ApiError ? e.code : "network"));
   }, []);
 
   const byId = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
 
-  async function search(f = from, d = to, trains = trainsOnly) {
+  async function search(f = from, d = to, without = excluded) {
     if (!f.trim() || !d.trim()) return;
     setLoading(true);
     setRouteError(null);
     try {
-      setRoute(await api.route(f.trim(), d.trim(), trains));
+      setRoute(await api.route(f.trim(), d.trim(), without));
       setSelected(null);
     } catch (e) {
       setRoute(null);
@@ -79,10 +81,12 @@ export default function App() {
               setFrom={setFrom}
               setTo={setTo}
               onSearch={() => search()}
-              trainsOnly={trainsOnly}
-              setTrainsOnly={(v) => {
-                setTrainsOnly(v);
-                if (route || routeError) search(from, to, v); // relancer avec le nouveau filtre
+              modes={modes}
+              excluded={excluded}
+              toggleMode={(m) => {
+                const next = excluded.includes(m) ? excluded.filter((x) => x !== m) : [...excluded, m];
+                setExcluded(next);
+                if (route || routeError) search(from, to, next); // relancer avec le nouveau filtre
               }}
               loading={loading}
               route={route}
@@ -93,7 +97,7 @@ export default function App() {
           )}
           <p className="data-note">{t.dataNote}</p>
         </aside>
-        <MapView places={places} edges={trainsOnly ? edges.filter((e) => e.mode !== "Car TER") : edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
+        <MapView places={places} edges={excluded.length ? edges.filter((e) => !excluded.includes(e.mode)) : edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
       </main>
     </div>
   );

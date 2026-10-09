@@ -44,8 +44,8 @@ def mode_of(stop_id):
     return stop_id.split(":", 1)[1].rsplit("-", 1)[0].removeprefix("OCE")
 
 
-# Services routiers : exclus quand on demande « train seulement »
-COACH_MODES = {"Car TER"}
+# Types de transport présents dans les données, dans l'ordre d'affichage
+MODES = ("Train TER", "Car TER", "INTERCITES", "INTERCITES de nuit", "TGV INOUI")
 
 
 class UnknownPlace(KeyError):
@@ -109,10 +109,19 @@ class Network:
                 best[k] = min(w, best.get(k, w))
         return [{"from_id": a, "to_id": b, "mode": m, "minutes": round(w, 1)} for (a, b, m), w in best.items()]
 
-    def route(self, departure, destination, trains_only=False):
+    def modes(self):
+        """Types de transport présents dans le réseau, avec leur nombre de liaisons."""
+        count = defaultdict(int)
+        for out in self.adj.values():
+            for _, _, mode in out:
+                count[mode] += 1
+        order = {m: i for i, m in enumerate(MODES)}
+        return [{"id": m, "links": n} for m, n in sorted(count.items(), key=lambda kv: order.get(kv[0], len(MODES)))]
+
+    def route(self, departure, destination, exclude=()):
         """Plus court chemin en minutes entre n'importe quelle gare de départ et n'importe quelle gare d'arrivée.
 
-        trains_only=True ignore les cars TER : seuls les tronçons en train sont parcourus.
+        exclude : types de transport à ignorer, ex. {"Car TER", "INTERCITES de nuit"}.
 
         Renvoie None s'il n'existe aucun chemin, sinon
         {"from", "to", "minutes", "steps": [{"from", "to", "from_id", "to_id", "minutes", "mode"}, ...]}.
@@ -140,7 +149,7 @@ class Network:
                         "to": steps[-1]["to"] if steps else self.name[u],
                         "minutes": round(d, 1), "steps": steps}
             for w, v, mode in self.adj[u]:
-                if trains_only and mode in COACH_MODES:
+                if mode in exclude:
                     continue
                 nd = d + w
                 if nd < dist.get(v, float("inf")):
@@ -160,11 +169,12 @@ def main():
     p.add_argument("departure")
     p.add_argument("destination")
     p.add_argument("--csv", default=DEFAULT_CSV)
-    p.add_argument("--trains-only", action="store_true", help="ignorer les cars TER")
+    p.add_argument("--exclude", action="append", default=[], metavar="MODE", choices=MODES,
+                   help="type de transport à ignorer (répétable) : " + ", ".join(MODES))
     args = p.parse_args()
 
     try:
-        r = Network(args.csv).route(args.departure, args.destination, trains_only=args.trains_only)
+        r = Network(args.csv).route(args.departure, args.destination, exclude=set(args.exclude))
     except UnknownPlace as e:
         sys.exit(f"Ville ou gare inconnue : {e.args[0]!r}")
     except ValueError as e:

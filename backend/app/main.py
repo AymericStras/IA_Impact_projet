@@ -6,7 +6,8 @@
     GET /stations?q=mont&limit=20
     GET /places                          gares + coordonnées
     GET /network                         liaisons
-    GET /route?from=Toulouse&to=Perpignan[&trains_only=true]
+    GET /modes                           types de transport disponibles
+    GET /route?from=Toulouse&to=Perpignan[&exclude=Car TER&exclude=INTERCITES]
 
 Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front traduit
 à partir de `code`, `message` (anglais) n'est là que pour le débogage.
@@ -48,12 +49,21 @@ def network_edges():
     return {"edges": network.edges()}
 
 
+@app.get("/modes")
+def modes():
+    """Types de transport (Train TER, Car TER, INTERCITES…) avec leur nombre de liaisons."""
+    return {"modes": network.modes()}
+
+
 @app.get("/route")
 def route(departure: str = Query(..., alias="from", min_length=1),
           destination: str = Query(..., alias="to", min_length=1),
-          trains_only: bool = Query(False, description="Ignorer les cars TER")):
+          exclude: list[str] = Query([], description="Types de transport à ignorer (voir /modes)")):
+    unknown = set(exclude) - {m["id"] for m in network.modes()}
+    if unknown:
+        error(400, "unknown_mode", f"Unknown transport mode(s): {', '.join(sorted(unknown))}")
     try:
-        r = network.route(departure, destination, trains_only=trains_only)
+        r = network.route(departure, destination, exclude=set(exclude))
     except UnknownPlace as e:
         error(404, "unknown_place", f"Unknown city or station: {e.args[0]}")
     except ValueError:

@@ -1,4 +1,4 @@
-import type { ErrorCode, Place, Route } from "../api";
+import type { ErrorCode, Mode, Place, Route } from "../api";
 import { formatMinutes, useI18n } from "../i18n";
 import Trame from "./Trame";
 
@@ -9,14 +9,17 @@ type Props = {
   setFrom: (v: string) => void;
   setTo: (v: string) => void;
   onSearch: () => void;
-  trainsOnly: boolean;
-  setTrainsOnly: (v: boolean) => void;
+  modes: Mode[];
+  excluded: string[];
+  toggleMode: (mode: string) => void;
   loading: boolean;
   route: Route | null;
   error: ErrorCode | null;
 };
 
-export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, trainsOnly, setTrainsOnly, loading, route, error }: Props) {
+const slug = (mode: string) => mode.replace(/\s+/g, "-").toLowerCase();
+
+export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, modes, excluded, toggleMode, loading, route, error }: Props) {
   const { t } = useI18n();
   const [first, ...rest] = t.headline.split(" ");
 
@@ -59,14 +62,26 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <option key={p.id} value={p.name} />
           ))}
         </datalist>
-        <label className="toggle">
-          <input type="checkbox" role="switch" checked={trainsOnly} onChange={(e) => setTrainsOnly(e.target.checked)} />
-          <span className="toggle-track" aria-hidden="true" />
-          <span className="toggle-label">
-            {t.trainsOnly}
-            <small>{t.trainsOnlyHint}</small>
-          </span>
-        </label>
+        <fieldset className="modes">
+          <legend>
+            {t.transports} <small>{t.transportsHint}</small>
+          </legend>
+          {modes.map((m) => {
+            const on = !excluded.includes(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={on}
+                className={`chip mode-${slug(m.id)}${on ? "" : " off"}`}
+                onClick={() => toggleMode(m.id)}
+              >
+                <span className="chip-dot" aria-hidden="true" />
+                {t.modes[m.id] ?? m.id}
+              </button>
+            );
+          })}
+        </fieldset>
         <button className="cta" type="submit" disabled={loading || !from.trim() || !to.trim()}>
           {loading ? t.searching : t.search}
         </button>
@@ -88,7 +103,7 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
                 <li key={i} className={i === 0 ? "first" : undefined}>
                   {i === 0 && <span className="stop">{s.from}</span>}
                   <span className="leg">
-                    <span className={`mode mode-${s.mode.replace(/\s+/g, "-").toLowerCase()}`}>{t.modes[s.mode] ?? s.mode}</span>
+                    <span className={`mode mode-${slug(s.mode)}`}>{t.modes[s.mode] ?? s.mode}</span>
                     {formatMinutes(s.minutes)}
                   </span>
                   <span className={i === route.steps.length - 1 ? "stop last" : "stop"}>{s.to}</span>

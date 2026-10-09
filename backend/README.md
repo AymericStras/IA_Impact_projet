@@ -2,7 +2,8 @@
 
 API FastAPI qui renvoie le trajet le plus rapide (Dijkstra pondéré par `duration_min_mean`)
 entre une ville ou gare de départ et une ville ou gare de destination, sur le réseau ferré d'Occitanie
-(TER liO train et car, plus les TGV entre gares d'Occitanie ; **sans Intercités**).
+(train TER, car TER, Intercités de jour et de nuit, TGV entre gares d'Occitanie).
+Chaque type de transport peut être exclu du calcul.
 
 ```
 backend/
@@ -28,27 +29,27 @@ En ligne de commande, sans serveur et sans dépendance :
 
 ```bash
 python -m app.routing Toulouse Perpignan
-python -m app.routing Toulouse Tarbes --trains-only   # sans les cars TER
+python -m app.routing Toulouse Tarbes --exclude INTERCITES --exclude "Car TER"
 ```
 
 ## Endpoints
 
 | Méthode | Route | Exemple |
 |---|---|---|
-| GET | `/health` | `{"status": "ok", "stations": 243}` |
+| GET | `/health` | `{"status": "ok", "stations": 267}` |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
 | GET | `/places` | gares avec `id, name, lat, lon, department, commune` |
 | GET | `/network` | liaisons `from_id, to_id, mode, minutes` |
 | GET | `/route?from=Toulouse&to=Perpignan` | voir ci-dessous |
-| GET | `/route?from=Toulouse&to=Tarbes&trains_only=true` | même chose sans les cars TER |
+| GET | `/modes` | `{"modes": [{"id": "Train TER", "links": 437}, {"id": "Car TER", …}, …]}` |
+| GET | `/route?from=Toulouse&to=Tarbes&exclude=Car TER&exclude=INTERCITES` | même chose sans ces transports |
 
 ```json
 {
-  "from": "Toulouse Matabiau", "to": "Perpignan", "minutes": 117.8,
+  "from": "Toulouse Matabiau", "to": "Perpignan", "minutes": 106.2,
   "steps": [
-    {"from": "Toulouse Matabiau", "to": "Labège Innopole", "from_id": "87611004", "to_id": "87612002", "minutes": 8.0, "mode": "Train TER"},
-    {"from": "Labège Innopole", "to": "Baziège", "from_id": "87612002", "to_id": "87611723", "minutes": 8.3, "mode": "Train TER"},
-    …
+    {"from": "Toulouse Matabiau", "to": "Carcassonne", "from_id": "87611004", "to_id": "87615286", "minutes": 42.8, "mode": "INTERCITES"},
+    {"from": "Carcassonne", "to": "Narbonne", "from_id": "87615286", "to_id": "87781104", "minutes": 28.8, "mode": "INTERCITES"},
     {"from": "Narbonne", "to": "Perpignan", "from_id": "87781104", "to_id": "87784009", "minutes": 34.8, "mode": "TGV INOUI"}
   ]
 }
@@ -57,16 +58,18 @@ python -m app.routing Toulouse Tarbes --trains-only   # sans les cars TER
 `from` / `to` acceptent un nom de **ville** (toutes ses gares sont essayées : « Montpellier » couvre
 Saint-Roch et Sud de France ; « Toulouse » part de Matabiau plutôt que d'une gare de banlieue) ou de **gare** précise. Accents, casse et tirets sont ignorés.
 
-`trains_only=true` ignore les **cars TER** (autocars régionaux) : seuls les tronçons en train sont parcourus.
-Attention aux trous des données : Toulouse → Perpignan n'a pas de solution en train seul, car
-Carcassonne → Narbonne n'existe qu'en car dans ce sens.
+`exclude` (répétable) retire un type de transport du calcul. Valeurs possibles, données par `/modes` :
+`Train TER`, `Car TER` (autocars régionaux), `INTERCITES`, `INTERCITES de nuit`, `TGV INOUI`.
+Attention aux trous des données : sans Intercités ni cars, Toulouse → Perpignan n'a pas de solution,
+car Carcassonne → Narbonne n'existe qu'en car ou en Intercités dans ce sens.
 
 Erreurs — `{"detail": {"code", "message"}}` :
 
 | Code HTTP | `code` | Cas |
 |---|---|---|
 | 404 | `unknown_place` | ville/gare absente du réseau (ex. Paris) |
-| 404 | `no_route` | les deux existent mais ne sont pas reliées (ex. Toulouse → Lourdes, desservi seulement en Intercités ; ligne d'Aigues-Mortes) |
+| 404 | `no_route` | les deux existent mais ne sont pas reliées (ex. ligne d'Aigues-Mortes ; Toulouse → Lourdes si on exclut les Intercités) |
+| 400 | `unknown_mode` | valeur de `exclude` absente de `/modes` |
 | 400 | `same_place` | départ = destination |
 
 ## Tests

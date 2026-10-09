@@ -21,11 +21,10 @@ def test_route_ok():
     assert all(a["to"] == b["from"] for a, b in zip(body["steps"], body["steps"][1:]))
 
 
-def test_no_intercites():
-    modes = {e["mode"] for e in client.get("/network").json()["edges"]}
-    assert not any("INTERCITES" in m for m in modes)
-    # Toulouse–Lourdes n'existe qu'en Intercités dans les données
-    assert client.get("/route", params={"from": "Toulouse", "to": "Lourdes"}).json()["detail"]["code"] == "no_route"
+def test_modes():
+    modes = {m["id"]: m["links"] for m in client.get("/modes").json()["modes"]}
+    assert set(modes) == {"Train TER", "Car TER", "INTERCITES", "INTERCITES de nuit", "TGV INOUI"}
+    assert all(n > 0 for n in modes.values())
 
 
 def test_city_prefers_station_named_after_it():
@@ -33,16 +32,23 @@ def test_city_prefers_station_named_after_it():
     assert client.get("/route", params={"from": "Toulouse", "to": "Tarbes"}).json()["from"] == "Toulouse Matabiau"
 
 
-def test_trains_only():
-    # Toulouse -> Tarbes : le plus rapide prend un car Boussens -> Saint-Gaudens ; en train seul, il existe un détour
+def test_exclude_modes():
     params = {"from": "Toulouse", "to": "Tarbes"}
-    mixed = client.get("/route", params=params).json()
-    trains = client.get("/route", params={**params, "trains_only": "true"}).json()
-    assert any(s["mode"] == "Car TER" for s in mixed["steps"])
-    assert trains["steps"] and all(s["mode"] != "Car TER" for s in trains["steps"])
-    assert trains["minutes"] >= mixed["minutes"]
-    # Toulouse -> Perpignan : dans les données, Carcassonne -> Narbonne n'existe qu'en car
-    assert client.get("/route", params={"from": "Toulouse", "to": "Perpignan", "trains_only": "true"}).json()["detail"]["code"] == "no_route"
+    # Toulouse -> Tarbes : Intercités direct ; sans Intercités, TER + un car ; sans cars non plus, TER seul
+    full = client.get("/route", params=params).json()
+    no_ic = client.get("/route", params={**params, "exclude": ["INTERCITES", "INTERCITES de nuit"]}).json()
+    trains = client.get("/route", params={**params, "exclude": ["INTERCITES", "INTERCITES de nuit", "Car TER"]}).json()
+    assert any(s["mode"] == "INTERCITES" for s in full["steps"])
+    assert not any("INTERCITES" in s["mode"] for s in no_ic["steps"])
+    assert {s["mode"] for s in trains["steps"]} == {"Train TER"}
+    assert full["minutes"] <= no_ic["minutes"] <= trains["minutes"]
+
+
+def test_exclude_errors():
+    assert client.get("/route", params={"from": "Toulouse", "to": "Tarbes", "exclude": "Avion"}).json()["detail"]["code"] == "unknown_mode"
+    # Toulouse -> Lourdes n'existe qu'en Intercités dans les données
+    r = client.get("/route", params={"from": "Toulouse", "to": "Lourdes", "exclude": ["INTERCITES", "INTERCITES de nuit"]})
+    assert r.json()["detail"]["code"] == "no_route"
 
 
 def test_route_case_and_accents():
