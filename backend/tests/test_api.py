@@ -37,6 +37,21 @@ def test_stations():
     assert "Montpellier Saint-Roch" in names and "Montpellier Sud de France" in names
 
 
+def test_places_and_network():
+    places = client.get("/places").json()["places"]
+    assert len(places) == client.get("/health").json()["stations"]
+    toulouse = next(p for p in places if p["name"] == "Toulouse Matabiau")
+    assert toulouse["department"] == "Haute-Garonne" and 43 < toulouse["lat"] < 44
+    ids = {p["id"] for p in places}
+    edges = client.get("/network").json()["edges"]
+    assert edges and all(e["from_id"] in ids and e["to_id"] in ids for e in edges)
+
+
+def test_route_steps_have_ids():
+    steps = client.get("/route", params={"from": "Toulouse", "to": "Perpignan"}).json()["steps"]
+    assert all(s["from_id"] and s["to_id"] for s in steps)
+
+
 def test_dijkstra_is_optimal_on_small_graph(tmp_path):
     csv = tmp_path / "c.csv"
     csv.write_text(

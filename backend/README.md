@@ -10,7 +10,8 @@ backend/
 │   ├── main.py       # API HTTP (FastAPI)
 │   └── routing.py    # graphe + Dijkstra, utilisable seul en CLI
 ├── data/
-│   └── connections_occitanie.csv
+│   ├── connections_occitanie.csv
+│   └── stations_occitanie.csv   # coordonnées (open data SNCF « liste des gares »)
 └── tests/
 ```
 
@@ -35,6 +36,8 @@ python -m app.routing Toulouse Perpignan
 |---|---|---|
 | GET | `/health` | `{"status": "ok", "stations": 267}` |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
+| GET | `/places` | gares avec `id, name, lat, lon, department, commune` |
+| GET | `/network` | liaisons `from_id, to_id, mode, minutes` |
 | GET | `/route?from=Toulouse&to=Lourdes` | voir ci-dessous |
 
 ```json

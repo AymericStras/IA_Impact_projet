@@ -19,7 +19,9 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
-DEFAULT_CSV = Path(__file__).resolve().parent.parent / "data" / "connections_occitanie.csv"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DEFAULT_CSV = DATA_DIR / "connections_occitanie.csv"
+DEFAULT_STATIONS = DATA_DIR / "stations_occitanie.csv"
 
 
 def normalize(s):
@@ -47,8 +49,9 @@ class UnknownPlace(KeyError):
 
 
 class Network:
-    def __init__(self, path=DEFAULT_CSV):
+    def __init__(self, path=DEFAULT_CSV, stations_path=DEFAULT_STATIONS):
         self.adj = defaultdict(list)  # stop -> [(minutes, next_stop, mode)]
+        self.place = {}               # stop -> {"id", "name", "lat", "lon", "department", "commune"}
         self.name = {}                # stop -> nom de gare
         self.by_key = defaultdict(set)  # nom normalisé (ville ou gare) -> stops
         with open(path, encoding="utf-8-sig") as f:
@@ -60,6 +63,14 @@ class Network:
                     self.name[stop] = station
                     self.by_key[normalize(city)].add(stop)
                     self.by_key[normalize(station)].add(stop)
+        # Coordonnées des gares (référentiel SNCF « liste des gares ») : optionnel, sert au front
+        if stations_path and Path(stations_path).exists():
+            with open(stations_path, encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    if r["stop_id"] in self.name:
+                        self.place[r["stop_id"]] = {"id": r["stop_id"], "name": r["name"], "lat": float(r["lat"]),
+                                                    "lon": float(r["lon"]), "department": r["department"],
+                                                    "commune": r["commune"]}
 
     def resolve(self, query):
         """Toutes les gares d'une ville (ou la gare exacte). Repli : gares dont le nom commence par la requête."""
@@ -77,11 +88,24 @@ class Network:
         names = sorted({n for n in self.name.values() if key in normalize(n)})
         return names[:limit]
 
+    def places(self):
+        """Toutes les gares avec coordonnées, triées par nom."""
+        return sorted(self.place.values(), key=lambda p: normalize(p["name"]))
+
+    def edges(self):
+        """Liaisons dédoublonnées (a, b, mode) avec la durée la plus courte."""
+        best = {}
+        for a, out in self.adj.items():
+            for w, b, mode in out:
+                k = (a, b, mode)
+                best[k] = min(w, best.get(k, w))
+        return [{"from_id": a, "to_id": b, "mode": m, "minutes": round(w, 1)} for (a, b, m), w in best.items()]
+
     def route(self, departure, destination):
         """Plus court chemin en minutes entre n'importe quelle gare de départ et n'importe quelle gare d'arrivée.
 
         Renvoie None s'il n'existe aucun chemin, sinon
-        {"from", "to", "minutes", "steps": [{"from", "to", "minutes", "mode"}, ...]}.
+        {"from", "to", "minutes", "steps": [{"from", "to", "from_id", "to_id", "minutes", "mode"}, ...]}.
         """
         sources, targets = self.resolve(departure), self.resolve(destination)
         if sources & targets:
@@ -98,7 +122,8 @@ class Network:
                 steps = []
                 while u in prev:
                     p, minutes, mode = prev[u]
-                    steps.append({"from": self.name[p], "to": self.name[u], "minutes": round(minutes, 1), "mode": mode})
+                    steps.append({"from": self.name[p], "to": self.name[u], "from_id": p, "to_id": u,
+                                  "minutes": round(minutes, 1), "mode": mode})
                     u = p
                 steps.reverse()
                 return {"from": steps[0]["from"] if steps else self.name[u],

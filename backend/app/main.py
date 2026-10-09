@@ -4,6 +4,8 @@
 
     GET /health
     GET /stations?q=mont&limit=20
+    GET /places                          gares + coordonnées
+    GET /network                         liaisons
     GET /route?from=Toulouse&to=Perpignan
 
 Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front traduit
@@ -32,6 +34,18 @@ def health():
 @app.get("/stations")
 def stations(q: str = "", limit: int = Query(20, ge=1, le=500)):
     return {"stations": network.stations(q, limit)}
+
+
+@app.get("/places")
+def places():
+    """Gares avec coordonnées et département, pour la carte."""
+    return {"places": network.places()}
+
+
+@app.get("/network")
+def network_edges():
+    """Toutes les liaisons, pour tracer le réseau."""
+    return {"edges": network.edges()}
 
 
 @app.get("/route")

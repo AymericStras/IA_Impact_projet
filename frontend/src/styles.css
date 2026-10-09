@@ -1,0 +1,154 @@
+/* Direction artistique : charte liO (Occitanie Transports) —
+   marine / rouge / jaune, sans-serif grasse, capsules et points, premier mot souligné en rouge. */
+:root {
+  --navy: #0f2149;
+  --navy-2: #1d3166;
+  --red: #c90c0f;
+  --yellow: #ffd500;
+  --white: #ffffff;
+  --grey: #eceef3;
+  --grey-2: #c9cdd8;
+  --ink: #0f2149;
+  --muted: #5d6680;
+  --font: "Barlow", system-ui, sans-serif;
+  --font-title: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  --pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: var(--font); color: var(--ink); background: var(--white); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app { height: 100%; display: flex; flex-direction: column; }
+
+/* ── En-tête ─────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; gap: 20px;
+  padding: 12px 20px; background: var(--white); border-bottom: 1px solid var(--grey);
+  position: relative; z-index: 2;
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark { width: 40px; height: 40px; flex: none; }
+.brand-name { font-family: var(--font-title); font-weight: 800; font-size: 22px; letter-spacing: .01em; line-height: 1; }
+.brand-name span { color: var(--red); }
+.brand-tagline { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.header-trame { height: 30px; margin-left: auto; flex: 0 1 auto; min-width: 0; }
+.lang select {
+  appearance: none; border: 2px solid var(--navy); border-radius: var(--pill);
+  padding: 4px 14px; font-weight: 700; background: var(--white); cursor: pointer;
+}
+
+/* ── Mise en page ────────────────────────────────────── */
+.layout { flex: 1; display: grid; grid-template-columns: 380px 1fr; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; min-height: 0; background: var(--white); border-right: 1px solid var(--grey); }
+.map { position: relative; min-height: 0; }
+.map .leaflet-container { position: absolute; inset: 0; background: var(--grey); font-family: var(--font); }
+.tiles { filter: grayscale(.85) brightness(1.04) contrast(.92); }
+
+/* ── Onglets ─────────────────────────────────────────── */
+.tabs { display: flex; gap: 6px; padding: 14px 20px 0; background: var(--navy); }
+.tab {
+  border: 0; background: transparent; color: rgba(255,255,255,.7); cursor: pointer;
+  padding: 8px 16px 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 13px;
+  position: relative;
+}
+.tab.active { color: var(--white); }
+.tab.active::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 4px; height: 4px; border-radius: var(--pill); background: var(--red); }
+
+/* ── Bloc marine (formulaire) ────────────────────────── */
+.hero { background: var(--navy); color: var(--white); padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+.hero h1 { font-family: var(--font-title); font-weight: 800; font-size: 30px; line-height: 1.05; margin: 0 0 6px; }
+.hero h1 u { text-decoration: none; color: var(--red); background: linear-gradient(var(--red), var(--red)) 0 100% / 100% 4px no-repeat; padding-bottom: 2px; color: var(--white); }
+.field { position: relative; display: block; }
+.field .dot { position: absolute; left: 16px; top: 50%; translate: 0 -50%; }
+.field input, .hero input[type=search] {
+  width: 100%; border: 0; border-radius: var(--pill); padding: 12px 16px 12px 38px;
+  background: var(--white); color: var(--ink); font-weight: 600; outline: none;
+}
+.hero input[type=search] { padding-left: 18px; }
+.field input:focus, .hero input[type=search]:focus { box-shadow: 0 0 0 3px var(--yellow); }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.dot-yellow { background: var(--yellow); }
+.dot-red { background: var(--red); }
+.swap {
+  align-self: flex-end; margin: -6px 10px -6px 0; width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--white); background: var(--navy); color: var(--white); cursor: pointer; font-weight: 700; z-index: 1;
+}
+.cta {
+  margin-top: 4px; border: 0; border-radius: var(--pill); padding: 13px 18px; cursor: pointer;
+  background: var(--red); color: var(--white); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+.cta:disabled { opacity: .55; cursor: default; }
+.cta:not(:disabled):hover { background: #a90a0d; }
+.hero-trame { height: 20px; margin: 6px -4px -4px; opacity: .95; }
+.hero-compact { gap: 6px; }
+.places-count { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+
+/* ── Corps de panneau ────────────────────────────────── */
+.panel-body { flex: 1; overflow: auto; padding: 18px 20px; }
+.places { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.hint { color: var(--muted); margin: 0; line-height: 1.5; }
+.alert { margin: 12px 20px 0; padding: 12px 14px; border-radius: 14px; background: #fde8e8; color: var(--red); font-weight: 600; }
+.panel-body .alert { margin: 0 0 12px; }
+.data-note { margin: 0; padding: 10px 20px 14px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--grey); }
+
+/* Durée totale */
+.total { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 12px; padding-bottom: 14px; border-bottom: 2px solid var(--grey); margin-bottom: 14px; }
+.total-label { grid-column: 1 / -1; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.total-value { font-family: var(--font-title); font-size: 40px; font-weight: 800; line-height: 1; }
+.total-sub { font-weight: 600; color: var(--muted); }
+
+/* Frise des tronçons : une capsule marine, des points jaune → rouge */
+.timeline { list-style: none; margin: 0; padding: 0 0 0 26px; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 6px; border-radius: var(--pill); background: var(--navy); }
+.timeline li { display: flex; flex-direction: column; gap: 6px; padding-bottom: 6px; }
+.stop { font-weight: 700; position: relative; }
+.stop::before { content: ""; position: absolute; left: -24px; top: 50%; translate: 0 -50%; width: 14px; height: 14px; border-radius: 50%; background: var(--white); border: 3px solid var(--navy); box-sizing: border-box; }
+.timeline li.first > .stop:first-child::before { background: var(--yellow); }
+.stop.last::before { background: var(--red); }
+.leg { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); font-weight: 600; padding: 2px 0; }
+.mode { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--pill); background: var(--grey); color: var(--navy); }
+.mode-train-ter { background: var(--red); color: var(--white); }
+.mode-car-ter { background: var(--yellow); color: var(--navy); }
+.mode-intercites, .mode-intercites-de-nuit { background: var(--navy); color: var(--white); }
+
+/* Lieux */
+.dep h2 { display: flex; align-items: center; gap: 10px; font-family: var(--font-title); font-size: 18px; font-weight: 800; margin: 16px 0 6px; }
+.dep:first-child h2 { margin-top: 0; }
+.dep h2 small { margin-left: auto; font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--muted); }
+.dep .pill { width: 22px; height: 8px; border-radius: var(--pill); background: var(--red); }
+.dep:nth-child(3n+2) .pill { background: var(--yellow); }
+.dep:nth-child(3n) .pill { background: var(--navy); }
+.dep ul { list-style: none; margin: 0; padding: 0; }
+.place { border-radius: 12px; }
+.place-name { width: 100%; text-align: left; background: none; border: 0; padding: 7px 10px; cursor: pointer; border-radius: 12px; font-weight: 500; }
+.place-name:hover { background: var(--grey); }
+.place.active { background: var(--grey); }
+.place.active .place-name { font-weight: 700; }
+.place-actions, .popup-actions { display: flex; gap: 6px; padding: 0 10px 10px; }
+.place-actions button, .popup-actions button {
+  border: 2px solid var(--navy); background: var(--white); border-radius: var(--pill);
+  padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.place-actions button:first-child, .popup-actions button:first-child { border-color: var(--yellow); background: var(--yellow); }
+.place-actions button:last-child, .popup-actions button:last-child { border-color: var(--red); background: var(--red); color: var(--white); }
+
+/* Leaflet */
+.leaflet-popup-content-wrapper { border-radius: 16px; }
+.popup { display: flex; flex-direction: column; gap: 4px; font-family: var(--font); }
+.popup strong { font-family: var(--font-title); font-size: 17px; }
+.popup span { color: var(--muted); font-size: 12px; }
+.popup-actions { padding: 6px 0 0; }
+.leaflet-tooltip { font-family: var(--font); font-weight: 600; border-radius: 8px; }
+
+/* ── Mobile : carte en haut, panneau en dessous ──────── */
+@media (max-width: 760px) {
+  .header { padding: 10px 16px; gap: 12px; }
+  .header-trame, .brand-tagline { display: none; }
+  .layout { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
+  .map { order: -1; }
+  .sidebar { border-right: 0; }
+  .tabs, .hero, .panel-body, .data-note { padding-left: 16px; padding-right: 16px; }
+}
