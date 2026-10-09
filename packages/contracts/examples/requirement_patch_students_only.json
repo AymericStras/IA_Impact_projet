@@ -1,0 +1,13 @@
+{
+  "user_intent": "provide_information",
+  "operations": [],
+  "participants_mentioned": { "students": 25, "accompanying": null, "total_stated": null },
+  "ambiguities": [
+    {
+      "field": "participants_count",
+      "kind": "students_only",
+      "detail": "Teacher gave the number of students (25) but not the accompanying adults; total cannot be computed."
+    }
+  ],
+  "conflicts": []
+}

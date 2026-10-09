@@ -1,0 +1,37 @@
+{
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "state": "COLLECTING",
+  "version": 2,
+  "assistant_message": "À quelle heure souhaitez-vous être de retour le 12 novembre ?",
+  "requirements": {
+    "participants_count": 30,
+    "participants_breakdown": { "students": 27, "accompanying": 3 },
+    "departure": { "date": "2026-11-12", "time": "08:00", "constraint": "approximate" },
+    "return": null,
+    "teaching_type": { "subject": "Histoire", "theme": "Moyen Âge" }
+  },
+  "missing_fields": ["return"],
+  "pending_clarification": null,
+  "ready_for_confirmation": false,
+  "messages": [
+    {
+      "id": "msg_001",
+      "role": "assistant",
+      "content": "Bonjour ! Décrivez-moi votre projet de sortie pédagogique : combien de participants, quand partir et revenir, et sur quel thème.",
+      "created_at": "2026-10-10T14:30:00+02:00"
+    },
+    {
+      "id": "msg_002",
+      "role": "user",
+      "content": "Bonjour, je voudrais organiser une sortie le 12 novembre 2026. J'ai 27 élèves et 3 accompagnateurs. On aimerait partir vers 8 h. Je suis professeur d'histoire et nous travaillons sur le Moyen Âge.",
+      "source": "text",
+      "created_at": "2026-10-10T14:31:10+02:00"
+    },
+    {
+      "id": "msg_003",
+      "role": "assistant",
+      "content": "À quelle heure souhaitez-vous être de retour le 12 novembre ?",
+      "created_at": "2026-10-10T14:31:13+02:00"
+    }
+  ]
+}

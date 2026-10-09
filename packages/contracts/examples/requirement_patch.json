@@ -1,0 +1,20 @@
+{
+  "user_intent": "provide_information",
+  "operations": [
+    {
+      "field": "departure",
+      "operation": "set",
+      "value": { "date": "2026-11-12", "time": "08:00", "constraint": "approximate" },
+      "evidence": "une sortie le 12 novembre 2026 … partir vers 8 h"
+    },
+    {
+      "field": "teaching_type",
+      "operation": "set",
+      "value": { "subject": "Histoire", "theme": "Moyen Âge" },
+      "evidence": "professeur d'histoire et nous travaillons sur le Moyen Âge"
+    }
+  ],
+  "participants_mentioned": { "students": 27, "accompanying": 3, "total_stated": null },
+  "ambiguities": [],
+  "conflicts": []
+}

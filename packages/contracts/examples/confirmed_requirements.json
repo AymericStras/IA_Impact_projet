@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "status": "confirmed",
+  "timezone": "Europe/Paris",
+  "confirmed_at": "2026-10-10T14:32:05+02:00",
+  "requirements": {
+    "participants_count": 30,
+    "participants_breakdown": { "students": 27, "accompanying": 3 },
+    "departure": { "date": "2026-11-12", "time": "08:00", "constraint": "approximate" },
+    "return": { "date": "2026-11-12", "time": "17:00", "constraint": "latest" },
+    "teaching_type": { "subject": "Histoire", "theme": "Moyen Âge" }
+  }
+}

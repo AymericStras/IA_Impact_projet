@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sncf-lio-chatbot/contracts/conversation_response.schema.json",
+  "title": "ConversationResponse",
+  "description": "Returned by every conversation endpoint. The frontend renders this and nothing else: it never re-derives missing fields or readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conversation_id", "state", "version", "assistant_message", "requirements", "missing_fields", "ready_for_confirmation", "messages"],
+  "properties": {
+    "conversation_id": { "type": "string" },
+    "state": {
+      "type": "string",
+      "description": "Externally visible states. Transient states (EXTRACTING, VALIDATING) are internal to one request.",
+      "enum": ["COLLECTING", "ASKING_USER", "AWAITING_CONFIRMATION", "EDITING", "CONFIRMED", "HANDOFF"]
+    },
+    "version": { "type": "integer", "minimum": 0, "description": "Monotonic requirements version; increments on every applied patch. Used for optimistic edits and snapshots." },
+    "assistant_message": { "type": ["string", "null"], "description": "French text to show the teacher. Null when nothing new to say (e.g. GET)." },
+    "requirements": { "$ref": "#/$defs/PartialRequirements" },
+    "missing_fields": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["participants_count", "departure", "return", "teaching_type"] }
+    },
+    "pending_clarification": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["field", "kind"],
+      "properties": {
+        "field": { "type": "string", "enum": ["participants_count", "departure", "return", "teaching_type"] },
+        "kind": { "type": "string" }
+      }
+    },
+    "ready_for_confirmation": { "type": "boolean" },
+    "transcript": { "type": ["string", "null"], "description": "Only on audio endpoint responses: the French transcription shown for correction before extraction." },
+    "messages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Message" }
+    }
+  },
+  "$defs": {
+    "Message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "content", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string", "enum": ["assistant", "user"] },
+        "content": { "type": "string" },
+        "source": { "type": "string", "enum": ["text", "audio", "edit"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PartialRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participants_count", "departure", "return", "teaching_type"],
+      "properties": {
+        "participants_count": { "type": ["integer", "null"], "minimum": 1 },
+        "participants_breakdown": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["students", "accompanying"],
+          "properties": {
+            "students": { "type": ["integer", "null"], "minimum": 0 },
+            "accompanying": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
+        "departure": { "$ref": "#/$defs/PartialDateTime" },
+        "return": { "$ref": "#/$defs/PartialDateTime" },
+        "teaching_type": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["subject", "theme"],
+          "properties": {
+            "subject": { "type": ["string", "null"] },
+            "theme": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "PartialDateTime": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "A date/time field is complete only when date, time and constraint are all non-null.",
+      "required": ["date", "time", "constraint"],
+      "properties": {
+        "date": { "type": ["string", "null"], "format": "date" },
+        "time": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+        "constraint": { "type": ["string", "null"], "enum": ["exact", "approximate", "earliest", "latest", null] }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+# secrets & local state
+.env
+.env.*
+!.env.example
+.local/
+artifacts/
+*.db
+*.sqlite*
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# node / next
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+
+# audio / media must never be committed
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.ogg
+
+# evals output
+evals/results/
