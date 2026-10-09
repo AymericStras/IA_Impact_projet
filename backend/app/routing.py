@@ -76,7 +76,11 @@ class Network:
         """Toutes les gares d'une ville (ou la gare exacte). Repli : gares dont le nom commence par la requête."""
         key = normalize(query)
         if key in self.by_key:
-            return self.by_key[key]
+            stops = self.by_key[key]
+            # « Toulouse » -> Toulouse Matabiau plutôt que Montaudran ou Saint-Agne :
+            # les gares qui portent le nom de la ville passent avant celles de la banlieue.
+            named = {s for s in stops if (normalize(self.name[s]) + " ").startswith(key + " ")}
+            return named or stops
         hits = {s for k, stops in self.by_key.items() if k.startswith(key + " ") for s in stops}
         if not hits:
             raise UnknownPlace(query)

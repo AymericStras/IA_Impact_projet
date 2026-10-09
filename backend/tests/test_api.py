@@ -21,6 +21,18 @@ def test_route_ok():
     assert all(a["to"] == b["from"] for a, b in zip(body["steps"], body["steps"][1:]))
 
 
+def test_no_intercites():
+    modes = {e["mode"] for e in client.get("/network").json()["edges"]}
+    assert not any("INTERCITES" in m for m in modes)
+    # Toulouse–Lourdes n'existe qu'en Intercités dans les données
+    assert client.get("/route", params={"from": "Toulouse", "to": "Lourdes"}).json()["detail"]["code"] == "no_route"
+
+
+def test_city_prefers_station_named_after_it():
+    # « Toulouse » part de Matabiau, pas d'une gare de banlieue (Montaudran, Saint-Agne…)
+    assert client.get("/route", params={"from": "Toulouse", "to": "Tarbes"}).json()["from"] == "Toulouse Matabiau"
+
+
 def test_route_case_and_accents():
     assert client.get("/route", params={"from": "montpellier", "to": "NIMES"}).status_code == 200
 

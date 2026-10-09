@@ -2,7 +2,7 @@
 
 API FastAPI qui renvoie le trajet le plus rapide (Dijkstra pondéré par `duration_min_mean`)
 entre une ville ou gare de départ et une ville ou gare de destination, sur le réseau ferré d'Occitanie
-(TER liO, Intercités, TGV entre gares d'Occitanie).
+(TER liO train et car, plus les TGV entre gares d'Occitanie ; **sans Intercités**).
 
 ```
 backend/
@@ -34,32 +34,33 @@ python -m app.routing Toulouse Perpignan
 
 | Méthode | Route | Exemple |
 |---|---|---|
-| GET | `/health` | `{"status": "ok", "stations": 267}` |
+| GET | `/health` | `{"status": "ok", "stations": 243}` |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
 | GET | `/places` | gares avec `id, name, lat, lon, department, commune` |
 | GET | `/network` | liaisons `from_id, to_id, mode, minutes` |
-| GET | `/route?from=Toulouse&to=Lourdes` | voir ci-dessous |
+| GET | `/route?from=Toulouse&to=Perpignan` | voir ci-dessous |
 
 ```json
 {
-  "from": "Toulouse Matabiau", "to": "Lourdes", "minutes": 103.2,
+  "from": "Toulouse Matabiau", "to": "Perpignan", "minutes": 117.8,
   "steps": [
-    {"from": "Toulouse Matabiau", "to": "Montréjeau - Gourdan-Polignan", "minutes": 55.4, "mode": "INTERCITES"},
-    {"from": "Montréjeau - Gourdan-Polignan", "to": "Tarbes", "minutes": 33.4, "mode": "INTERCITES"},
-    {"from": "Tarbes", "to": "Lourdes", "minutes": 14.4, "mode": "INTERCITES"}
+    {"from": "Toulouse Matabiau", "to": "Labège Innopole", "from_id": "87611004", "to_id": "87612002", "minutes": 8.0, "mode": "Train TER"},
+    {"from": "Labège Innopole", "to": "Baziège", "from_id": "87612002", "to_id": "87611723", "minutes": 8.3, "mode": "Train TER"},
+    …
+    {"from": "Narbonne", "to": "Perpignan", "from_id": "87781104", "to_id": "87784009", "minutes": 34.8, "mode": "TGV INOUI"}
   ]
 }
 ```
 
 `from` / `to` acceptent un nom de **ville** (toutes ses gares sont essayées : « Montpellier » couvre
-Saint-Roch et Sud de France) ou de **gare** précise. Accents, casse et tirets sont ignorés.
+Saint-Roch et Sud de France ; « Toulouse » part de Matabiau plutôt que d'une gare de banlieue) ou de **gare** précise. Accents, casse et tirets sont ignorés.
 
 Erreurs — `{"detail": {"code", "message"}}` :
 
 | Code HTTP | `code` | Cas |
 |---|---|---|
 | 404 | `unknown_place` | ville/gare absente du réseau (ex. Paris) |
-| 404 | `no_route` | les deux existent mais ne sont pas reliées (ex. ligne d'Aigues-Mortes, isolée dans les données) |
+| 404 | `no_route` | les deux existent mais ne sont pas reliées (ex. Toulouse → Lourdes, desservi seulement en Intercités ; ligne d'Aigues-Mortes) |
 | 400 | `same_place` | départ = destination |
 
 ## Tests

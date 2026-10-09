@@ -2,29 +2,21 @@ stop_id,name,lat,lon,department,commune
 87781278,Agde,43.31685,3.46167,Hérault,Agde
 87775858,Aigues-Mortes,43.57088,4.19109,Gard,Aigues-Mortes
 87775833,Aimargues,43.67865,4.20874,Gard,Aimargues
-87615195,Albi Madeleine,43.93862,2.14102,Tarn,Albi
 87615005,Albi Ville,43.92235,2.13778,Tarn,Albi
 87613398,Albias,44.09081,1.44296,Tarn-et-Garonne,Albias
 87615187,Alet-les-Bains,42.99727,2.252,Aude,Alet-Les-Bains
 87783654,Allenc,44.54152,3.66413,Lozère,Allenc
 87775288,Alès,44.12803,4.08497,Gard,Ales
-87611517,Andorre l'Hospitalet,42.5895,1.80003,Ariège,L'Hospitalet-Pres-L'Andorre
-87784231,Argelès-sur-Mer,42.54404,3.02164,Pyrénées-Orientales,Argeles-Sur-Mer
-87613075,Assier,44.67471,1.86938,Lot,Assier
 87611764,Aubiet,43.65004,0.7893,Gers,Aubiet
 87613224,Aubin,44.52737,2.23909,Aveyron,Aubin
 87611749,Auch,43.64762,0.5969,Gers,Auch
-87783266,Aumont-Aubrac,44.70619,3.29118,Lozère,Peyre En Aubrac
 87611384,Auterive,43.34889,1.46859,Haute-Garonne,Auterive
 87616011,Avignonet,43.36472,1.78382,Haute-Garonne,Avignonet-Lauragais
-87611533,Ax-les-Thermes,42.72477,1.83347,Ariège,Ax-Les-Thermes
 87613604,Bagnac,44.66511,2.16013,Lot,Bagnac-Sur-Cele
 87783647,Bagnols - Chadenet,44.52861,3.62835,Lozère,Chadenet
 87764571,Bagnols-sur-Cèze,44.16157,4.62706,Gard,Bagnols-Sur-Ceze
 87773457,Baillargues,43.65314,4.00677,Hérault,Baillargues
 87111864,Balsièges Bourg,44.48207,3.4566,Lozère,Balsieges
-87783324,Banassac - La Canourgue,44.43952,3.18583,Lozère,Banassac-Canilhac
-87784298,Banyuls-sur-Mer,42.48289,3.12487,Pyrénées-Orientales,Banyuls-Sur-Mer
 87615757,Baraqueville,44.27028,2.42758,Aveyron,Baraqueville
 87783563,Barjac,44.49938,3.41079,Lozère,Barjac
 87611723,Baziège,43.45508,1.61734,Haute-Garonne,Baziege
@@ -43,7 +35,6 @@ stop_id,name,lat,lon,department,commune
 87594747,Bétaille,44.94243,1.73469,Lot,Betaille
 87781005,Béziers,43.33672,3.21439,Hérault,Beziers
 87613000,Cahors,44.4479,1.43302,Lot,Cahors
-87783340,Campagnac - Saint-Geniez,44.41403,3.05522,Aveyron,Saint-Saturnin-De-Lenne
 87613109,Capdenac,44.57873,2.07722,Aveyron,Capdenac-Gare
 87671156,Capvern,43.10408,0.32869,Hautes-Pyrénées,Capvern
 87611061,Carbonne,43.2971,1.21092,Haute-Garonne,Carbonne
@@ -56,25 +47,21 @@ stop_id,name,lat,lon,department,commune
 87613356,Caussade,44.16069,1.53275,Tarn-et-Garonne,Caussade
 87611079,Cazères,43.21244,1.08115,Haute-Garonne,Cazeres
 87781542,Ceilhes - Roqueredonde,43.80532,3.16933,Hérault,Roqueredonde
-87785006,Cerbère,42.44251,3.16521,Pyrénées-Orientales,Cerbere
 87775221,Chamborigaud,44.30032,3.97943,Gard,Chamborigaud
 87783530,Chanac,44.47409,3.34556,Lozère,Esclanedes
 87734343,Chapeauroux,44.83784,3.74201,Lozère,Saint Bonnet-Laval
 87775148,Chasseradès,44.5539,3.83982,Lozère,Mont Lozere Et Goulet
 87783290,Chirac,44.51567,3.25449,Lozère,Bourgs Sur Colagne
 87611376,Cintegabelle,43.30525,1.52057,Haute-Garonne,Cintegabelle
-87784256,Collioure,42.52677,3.0782,Pyrénées-Orientales,Collioure
 87611467,Colomiers,43.60348,1.33429,Haute-Garonne,Colomiers
 87611921,Colomiers Lycée International,43.61645,1.3141,Haute-Garonne,Colomiers
 87613802,Cordes - Vindrac,44.06887,1.89915,Tarn,Vindrac-Alayrac
 87615120,Couffoulens - Leuc,43.1552,2.3169,Aude,Couffoulens
 87615203,Couiza - Montazels,42.94241,2.24822,Aude,Montazels
 87781161,Coursan,43.23104,3.04804,Aude,Coursan
-87613232,Cransac,44.52294,2.27175,Aveyron,Cransac
 87615484,Damiatte - Saint-Paul,43.65636,1.97426,Tarn,Damiatte
 87611681,Dieupentale,43.86652,1.27503,Tarn-et-Garonne,Dieupentale
 87613174,Dégagnac,44.65245,1.34088,Lot,Degagnac
-87784207,Elne,42.59719,2.96348,Pyrénées-Orientales,Elne
 87784843,Err,42.44277,2.02889,Pyrénées-Orientales,Err
 87611707,Escalquens,43.52061,1.54003,Haute-Garonne,Escalquens
 87615211,Espéraza,42.9358,2.21824,Aude,Esperaza
@@ -92,7 +79,6 @@ stop_id,name,lat,lon,department,commune
 87611772,Gimont Cahuzac,43.6331,0.86758,Gers,Gimont
 87613141,Gourdon,44.74066,1.3896,Lot,Gourdon
 87615377,Gragnague,43.69751,1.56784,Haute-Garonne,Gragnague
-87613059,Gramat,44.77347,1.72232,Lot,Gramat
 87775254,Grand-Combe la Pise,44.20972,4.03259,Gard,La Grand-Combe
 87611673,Grisolles,43.82896,1.30102,Tarn-et-Garonne,Grisolles
 87775213,Génolhac,44.34728,3.95165,Gard,Genolhac
@@ -125,7 +111,6 @@ stop_id,name,lat,lon,department,commune
 87784512,Le Soler,42.6788,2.79403,Pyrénées-Orientales,Le Soler
 87353573,Le Toec,43.59552,1.40153,Haute-Garonne,Toulouse
 87611350,Le Vernet d'Ariège,43.18935,1.61161,Ariège,Le Vernet
-87611574,Les Cabannes,42.78643,1.68627,Ariège,Les Cabannes
 87781559,Les Cabrils,43.76666,3.18207,Hérault,Joncels
 87328021,Les Cauquillous,43.73413,1.75457,Tarn,Lavaur
 87594564,Les Quatre-Routes,44.99767,1.64374,Lot,Le Vignon-En-Quercy
@@ -146,7 +131,6 @@ stop_id,name,lat,lon,department,commune
 87773424,Lunel-Viel,43.68113,4.09361,Hérault,Lunel-Viel
 87611558,Luzenac - Garanou,42.7643,1.75324,Ariège,Garanou
 87615112,Lézignan-Corbières,43.19901,2.7653,Aude,Lezignan-Corbieres
-87781666,Magalas,43.46767,3.2295,Hérault,Magalas
 87611194,Marignac - Saint-Béat,42.91547,0.65198,Haute-Garonne,Marignac
 87784629,Marquixanes,42.64412,2.49361,Pyrénées-Orientales,Marquixanes
 87781294,Marseillan Plage,43.31654,3.53156,Hérault,Marseillan
@@ -172,7 +156,6 @@ stop_id,name,lat,lon,department,commune
 87611848,Montrabé,43.64456,1.52638,Haute-Garonne,Montrabe
 87611152,Montréjeau - Gourdan-Polignan,43.07834,0.57221,Haute-Garonne,Gourdan-Polignan
 87611038,Muret,43.46328,1.3232,Haute-Garonne,Muret
-87611525,Mérens-les-Vals,42.65936,1.83734,Ariège,Merens-Les-Vals
 87611814,Mérenvielle,43.63658,1.15064,Haute-Garonne,Merenvielle
 87613463,Najac,44.2226,1.97655,Aveyron,Najac
 87781104,Narbonne,43.19096,3.00622,Aude,Narbonne
@@ -190,29 +173,24 @@ stop_id,name,lat,lon,department,commune
 87784785,Planès,42.50104,2.13689,Pyrénées-Orientales,Planes
 87615146,Pomas,43.11218,2.28829,Aude,Pomas
 87764555,Pont-Saint-Esprit,44.25348,4.64319,Gard,Pont-Saint-Esprit
-87784264,Port-Vendres,42.51337,3.10268,Pyrénées-Orientales,Port-Vendres
 87781062,Port-la-Nouvelle,43.01987,3.03871,Aude,Port-La-Nouvelle
 87611400,Portet Saint-Simon,43.52639,1.38777,Haute-Garonne,Portet-Sur-Garonne
-87611509,Porté-Puymorens,42.53896,1.82484,Pyrénées-Orientales,Porta
 87784637,Prades - Molitg-les-Bains,42.62053,2.43662,Pyrénées-Orientales,Prades
 87594754,Puybrun,44.92172,1.78426,Lot,Puybrun
 87615328,Rabastens - Couffouleux,43.82045,1.73251,Tarn,Coufouleux
 87784660,Ria,42.60562,2.39847,Pyrénées-Orientales,Ria-Sirach
 87784173,Rivesaltes,42.76634,2.86775,Pyrénées-Orientales,Rivesaltes
-87613042,Rocamadour - Padirac,44.81824,1.65744,Lot,Rocamadour
 87613422,Rodez,44.36265,2.58026,Aveyron,Rodez
 87615351,Roquesérière - Buzet,43.75139,1.62034,Haute-Garonne,Buzet-Sur-Tarn
 87784835,Saillagouse,42.45674,2.03219,Pyrénées-Orientales,Saillagouse
 87611301,Saint-Agne,43.57918,1.44944,Haute-Garonne,Toulouse
 87773465,Saint-Aunès,43.63539,3.96326,Hérault,Saint-Aunes
 87613257,Saint-Christophe,44.46479,2.40748,Aveyron,Saint-Christophe-Vallon
-87783241,Saint-Chély-d'Apcher,44.78843,3.27257,Lozère,Saint-Chely-D'Apcher
 87446179,Saint-Cyprien Arènes,43.59393,1.41648,Haute-Garonne,Toulouse
 87594572,Saint-Denis-Près-Martel,44.94572,1.6665,Lot,Saint-Denis-Les-Martel
 87784520,Saint-Féliu-d'Avall,42.67535,2.74604,Pyrénées-Orientales,Saint-Feliu-D'Avall
 87611137,Saint-Gaudens,43.10436,0.72765,Haute-Garonne,Saint-Gaudens
 87775361,Saint-Geniès-de-Malgoirès,43.95012,4.21492,Gard,Saint-Genies-De-Malgoires
-87783423,Saint-Georges-de-Luzençon,44.05322,2.97985,Aveyron,Saint-Georges-De-Luzencon
 87611624,Saint-Jean-de-Verges,43.01221,1.60808,Ariège,Crampagna
 87611657,Saint-Jory,43.74123,1.36865,Haute-Garonne,Saint-Jory
 87775841,Saint-Laurent-d'Aigouze,43.63914,4.19301,Gard,Saint-Laurent-D'Aigouze
@@ -232,7 +210,6 @@ stop_id,name,lat,lon,department,commune
 87784702,Serdinya,42.56698,2.32322,Pyrénées-Orientales,Serdinya
 87594333,Souillac,44.90245,1.46518,Lot,Souillac
 87773200,Sète,43.4128,3.69661,Hérault,Sete
-87783365,Sévérac-le-Château,44.32588,3.05623,Aveyron,Severac D'Aveyron
 87615674,Tanus,44.10039,2.3153,Tarn,Tanus
 87611590,Tarascon-sur-Ariège,42.84949,1.59999,Ariège,Tarascon-Sur-Ariege
 87671008,Tarbes,43.24031,0.0683,Hautes-Pyrénées,Tarbes
@@ -264,5 +241,4 @@ stop_id,name,lat,lon,department,commune
 87773515,Villeneuve-lès-Maguelone,43.54376,3.84992,Hérault,Villeneuve-Les-Maguelone
 87618215,Villenouvelle,43.43491,1.6569,Haute-Garonne,Villenouvelle
 87784611,Vinça,42.6505,2.53448,Pyrénées-Orientales,Vinca
-87613661,Viviez - Decazeville,44.55595,2.21832,Aveyron,Viviez
 87611566,Vèbre,42.7738,1.71933,Ariège,Vebre
