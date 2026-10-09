@@ -1,111 +1,324 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/requirement_patch.schema.json",
-  "title": "RequirementPatch",
-  "description": "Output of the extraction model for ONE teacher message. It is a proposal: the backend validates and merges it (domain/patch_merger.py). The model never produces chatbot text and never sets confirmation. Mirrors services/api/app/schemas/patch.py (Pydantic is authoritative; keep in sync).",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["user_intent", "operations", "participants_mentioned", "ambiguities", "conflicts"],
-  "properties": {
-    "user_intent": {
-      "type": "string",
-      "description": "What the teacher is doing in this message, as understood by the model. Code decides what to do with it.",
-      "enum": ["provide_information", "correct_information", "confirm", "reject", "ask_question", "other"]
-    },
-    "operations": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/Operation" }
-    },
-    "participants_mentioned": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Raw counts found in the message. Code computes the total; the model must not add numbers itself unless the teacher states a total.",
-      "required": ["students", "accompanying", "total_stated"],
-      "properties": {
-        "students": { "type": ["integer", "null"], "minimum": 0 },
-        "accompanying": { "type": ["integer", "null"], "minimum": 0 },
-        "total_stated": { "type": ["integer", "null"], "minimum": 0, "description": "Only when the teacher explicitly states a total ('nous sommes 30', '30 en tout')" }
-      }
-    },
-    "ambiguities": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/Ambiguity" }
-    },
-    "conflicts": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/Conflict" }
-    }
-  },
+  "description": "Sortie structurée du modèle d'extraction pour un message ; validée et fusionnée par le backend.",
   "$defs": {
-    "FieldName": {
-      "type": "string",
-      "enum": ["participants_count", "departure", "return", "teaching_type"]
-    },
-    "Operation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["field", "operation", "value", "evidence"],
-      "properties": {
-        "field": { "$ref": "#/$defs/FieldName" },
-        "operation": {
-          "type": "string",
-          "description": "set = field was unknown; replace = teacher explicitly corrects a known value; clear = teacher withdraws a value ('je ne connais pas encore la date').",
-          "enum": ["set", "replace", "clear"]
-        },
-        "value": {
-          "description": "Shape depends on field: integer for participants_count; PartialDateTime for departure/return; TeachingType for teaching_type; null for clear.",
-          "oneOf": [
-            { "type": "null" },
-            { "type": "integer", "minimum": 1 },
-            { "$ref": "#/$defs/PartialDateTime" },
-            { "$ref": "#/$defs/TeachingType" }
-          ]
-        },
-        "evidence": { "type": "string", "minLength": 1, "description": "Verbatim French fragment supporting the operation" }
-      }
-    },
-    "PartialDateTime": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Date and/or time as resolved from the message. Relative dates are resolved by the model ONLY when unambiguous given the provided current date; otherwise the field stays null and an ambiguity is reported.",
-      "required": ["date", "time", "constraint"],
-      "properties": {
-        "date": { "type": ["string", "null"], "format": "date" },
-        "time": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
-        "constraint": { "type": ["string", "null"], "enum": ["exact", "approximate", "earliest", "latest", null] }
-      }
-    },
-    "TeachingType": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["subject", "theme"],
-      "properties": {
-        "subject": { "type": ["string", "null"] },
-        "theme": { "type": ["string", "null"] }
-      }
-    },
     "Ambiguity": {
-      "type": "object",
       "additionalProperties": false,
-      "required": ["field", "kind", "detail"],
       "properties": {
-        "field": { "$ref": "#/$defs/FieldName" },
-        "kind": {
-          "type": "string",
-          "enum": ["students_only", "relative_date_unresolved", "vague_quantity", "vague_time", "multiple_candidates", "unclear_subject", "other"]
+        "field": {
+          "enum": [
+            "participants_count",
+            "departure",
+            "return",
+            "teaching_type"
+          ],
+          "title": "Field",
+          "type": "string"
         },
-        "detail": { "type": "string", "description": "Short English explanation for the dialogue manager; never shown to the user" }
-      }
+        "kind": {
+          "$ref": "#/$defs/AmbiguityKind"
+        },
+        "detail": {
+          "description": "Short English explanation for the dialogue manager; never shown to the user",
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "kind",
+        "detail"
+      ],
+      "title": "Ambiguity",
+      "type": "object"
+    },
+    "AmbiguityKind": {
+      "enum": [
+        "students_only",
+        "relative_date_unresolved",
+        "vague_quantity",
+        "vague_time",
+        "multiple_candidates",
+        "unclear_subject",
+        "other"
+      ],
+      "title": "AmbiguityKind",
+      "type": "string"
     },
     "Conflict": {
-      "type": "object",
       "additionalProperties": false,
-      "description": "New information contradicts existing state without an explicit correction. Code asks the teacher which is right.",
-      "required": ["field", "evidence"],
       "properties": {
-        "field": { "$ref": "#/$defs/FieldName" },
-        "evidence": { "type": "string" }
-      }
+        "field": {
+          "enum": [
+            "participants_count",
+            "departure",
+            "return",
+            "teaching_type"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "evidence": {
+          "description": "Fragment that contradicts the current requirements without an explicit correction",
+          "title": "Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "evidence"
+      ],
+      "title": "Conflict",
+      "type": "object"
+    },
+    "Operation": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "participants_count",
+            "departure",
+            "return",
+            "teaching_type"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "operation": {
+          "description": "set = field was unknown; replace = explicit correction of a known value; clear = teacher withdraws a value",
+          "enum": [
+            "set",
+            "replace",
+            "clear"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/PartialDateTimePatch"
+            },
+            {
+              "$ref": "#/$defs/TeachingTypePatch"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "integer for participants_count; date/time object for departure or return; subject/theme object for teaching_type; null for clear",
+          "title": "Value"
+        },
+        "evidence": {
+          "description": "Verbatim French fragment from the teacher's message supporting this operation",
+          "title": "Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "operation",
+        "value",
+        "evidence"
+      ],
+      "title": "Operation",
+      "type": "object"
+    },
+    "PartialDateTimePatch": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ISO date YYYY-MM-DD, or null when unknown/unresolved",
+          "title": "Date"
+        },
+        "time": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "24h time HH:MM, or null",
+          "title": "Time"
+        },
+        "constraint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeConstraint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "exact | approximate | earliest | latest, or null"
+        }
+      },
+      "required": [
+        "date",
+        "time",
+        "constraint"
+      ],
+      "title": "PartialDateTimePatch",
+      "type": "object"
+    },
+    "ParticipantsMentioned": {
+      "additionalProperties": false,
+      "properties": {
+        "students": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Number of students mentioned in this message, or null",
+          "title": "Students"
+        },
+        "accompanying": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Number of accompanying adults mentioned, or null",
+          "title": "Accompanying"
+        },
+        "total_stated": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Only when the teacher explicitly states a total ('nous sommes 30')",
+          "title": "Total Stated"
+        }
+      },
+      "required": [
+        "students",
+        "accompanying",
+        "total_stated"
+      ],
+      "title": "ParticipantsMentioned",
+      "type": "object"
+    },
+    "TeachingTypePatch": {
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Standard French school subject (Histoire, SVT, ...) or null",
+          "title": "Subject"
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Teaching theme (Moyen Âge, architecture, ...) or null",
+          "title": "Theme"
+        }
+      },
+      "required": [
+        "subject",
+        "theme"
+      ],
+      "title": "TeachingTypePatch",
+      "type": "object"
+    },
+    "TimeConstraint": {
+      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "enum": [
+        "exact",
+        "approximate",
+        "earliest",
+        "latest"
+      ],
+      "title": "TimeConstraint",
+      "type": "string"
+    },
+    "UserIntent": {
+      "enum": [
+        "provide_information",
+        "correct_information",
+        "confirm",
+        "reject",
+        "ask_question",
+        "other"
+      ],
+      "title": "UserIntent",
+      "type": "string"
     }
-  }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "user_intent": {
+      "$ref": "#/$defs/UserIntent"
+    },
+    "operations": {
+      "items": {
+        "$ref": "#/$defs/Operation"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "participants_mentioned": {
+      "$ref": "#/$defs/ParticipantsMentioned"
+    },
+    "ambiguities": {
+      "items": {
+        "$ref": "#/$defs/Ambiguity"
+      },
+      "title": "Ambiguities",
+      "type": "array"
+    },
+    "conflicts": {
+      "items": {
+        "$ref": "#/$defs/Conflict"
+      },
+      "title": "Conflicts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "user_intent",
+    "operations",
+    "participants_mentioned",
+    "ambiguities",
+    "conflicts"
+  ],
+  "title": "RequirementPatch",
+  "type": "object"
 }

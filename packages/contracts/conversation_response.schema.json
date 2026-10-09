@@ -1,92 +1,529 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/conversation_response.schema.json",
-  "title": "ConversationResponse",
-  "description": "Returned by every conversation endpoint. The frontend renders this and nothing else: it never re-derives missing fields or readiness.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["conversation_id", "state", "version", "assistant_message", "requirements", "missing_fields", "ready_for_confirmation", "messages"],
-  "properties": {
-    "conversation_id": { "type": "string" },
-    "state": {
-      "type": "string",
-      "description": "Externally visible states. Transient states (EXTRACTING, VALIDATING) are internal to one request.",
-      "enum": ["COLLECTING", "ASKING_USER", "AWAITING_CONFIRMATION", "EDITING", "CONFIRMED", "HANDOFF"]
-    },
-    "version": { "type": "integer", "minimum": 0, "description": "Monotonic requirements version; increments on every applied patch. Used for optimistic edits and snapshots." },
-    "assistant_message": { "type": ["string", "null"], "description": "French text to show the teacher. Null when nothing new to say (e.g. GET)." },
-    "requirements": { "$ref": "#/$defs/PartialRequirements" },
-    "missing_fields": {
-      "type": "array",
-      "items": { "type": "string", "enum": ["participants_count", "departure", "return", "teaching_type"] }
-    },
-    "pending_clarification": {
-      "type": ["object", "null"],
-      "additionalProperties": false,
-      "required": ["field", "kind"],
-      "properties": {
-        "field": { "type": "string", "enum": ["participants_count", "departure", "return", "teaching_type"] },
-        "kind": { "type": "string" }
-      }
-    },
-    "ready_for_confirmation": { "type": "boolean" },
-    "transcript": { "type": ["string", "null"], "description": "Only on audio endpoint responses: the French transcription shown for correction before extraction." },
-    "messages": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/Message" }
-    }
-  },
+  "description": "Réponse de tous les endpoints : le client l'affiche telle quelle, sans recalculer.",
   "$defs": {
-    "Message": {
-      "type": "object",
+    "CompleteRequirements": {
       "additionalProperties": false,
-      "required": ["id", "role", "content", "created_at"],
       "properties": {
-        "id": { "type": "string" },
-        "role": { "type": "string", "enum": ["assistant", "user"] },
-        "content": { "type": "string" },
-        "source": { "type": "string", "enum": ["text", "audio", "edit"] },
-        "created_at": { "type": "string", "format": "date-time" }
-      }
-    },
-    "PartialRequirements": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["participants_count", "departure", "return", "teaching_type"],
-      "properties": {
-        "participants_count": { "type": ["integer", "null"], "minimum": 1 },
-        "participants_breakdown": {
-          "type": ["object", "null"],
-          "additionalProperties": false,
-          "required": ["students", "accompanying"],
-          "properties": {
-            "students": { "type": ["integer", "null"], "minimum": 0 },
-            "accompanying": { "type": ["integer", "null"], "minimum": 0 }
-          }
+        "participants_count": {
+          "minimum": 1,
+          "title": "Participants Count",
+          "type": "integer"
         },
-        "departure": { "$ref": "#/$defs/PartialDateTime" },
-        "return": { "$ref": "#/$defs/PartialDateTime" },
+        "participants_breakdown": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantsBreakdown"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "departure": {
+          "$ref": "#/$defs/DateTimeRequirement"
+        },
+        "return": {
+          "$ref": "#/$defs/DateTimeRequirement"
+        },
         "teaching_type": {
-          "type": ["object", "null"],
-          "additionalProperties": false,
-          "required": ["subject", "theme"],
-          "properties": {
-            "subject": { "type": ["string", "null"] },
-            "theme": { "type": ["string", "null"] }
-          }
+          "$ref": "#/$defs/CompleteTeachingType"
         }
-      }
+      },
+      "required": [
+        "participants_count",
+        "departure",
+        "return",
+        "teaching_type"
+      ],
+      "title": "CompleteRequirements",
+      "type": "object"
+    },
+    "CompleteTeachingType": {
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Subject"
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Theme"
+        }
+      },
+      "required": [
+        "subject",
+        "theme"
+      ],
+      "title": "CompleteTeachingType",
+      "type": "object"
+    },
+    "ConfirmedRequirements": {
+      "additionalProperties": false,
+      "description": "Charge utile transmise au module de planification après confirmation explicite.",
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "conversation_id": {
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "status": {
+          "const": "confirmed",
+          "default": "confirmed",
+          "title": "Status",
+          "type": "string"
+        },
+        "timezone": {
+          "const": "Europe/Paris",
+          "default": "Europe/Paris",
+          "title": "Timezone",
+          "type": "string"
+        },
+        "confirmed_at": {
+          "description": "Horodatage ISO 8601 avec décalage, ex. 2026-10-10T14:32:05+02:00",
+          "title": "Confirmed At",
+          "type": "string"
+        },
+        "requirements": {
+          "$ref": "#/$defs/CompleteRequirements"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "confirmed_at",
+        "requirements"
+      ],
+      "title": "ConfirmedRequirements",
+      "type": "object"
+    },
+    "ConversationState": {
+      "description": "États visibles par le client. EXTRACTING/VALIDATING sont internes à une requête.",
+      "enum": [
+        "COLLECTING",
+        "ASKING_USER",
+        "AWAITING_CONFIRMATION",
+        "EDITING",
+        "CONFIRMED",
+        "HANDOFF"
+      ],
+      "title": "ConversationState",
+      "type": "string"
+    },
+    "DateTimeRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "time": {
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "title": "Time",
+          "type": "string"
+        },
+        "constraint": {
+          "$ref": "#/$defs/TimeConstraint"
+        }
+      },
+      "required": [
+        "date",
+        "time",
+        "constraint"
+      ],
+      "title": "DateTimeRequirement",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "assistant",
+            "user"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "enum": [
+                "text",
+                "audio",
+                "edit"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "content",
+        "created_at"
+      ],
+      "title": "Message",
+      "type": "object"
     },
     "PartialDateTime": {
-      "type": ["object", "null"],
       "additionalProperties": false,
-      "description": "A date/time field is complete only when date, time and constraint are all non-null.",
-      "required": ["date", "time", "constraint"],
+      "description": "Date/heure partiellement connue. Complète seulement si les trois champs sont renseignés.",
       "properties": {
-        "date": { "type": ["string", "null"], "format": "date" },
-        "time": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
-        "constraint": { "type": ["string", "null"], "enum": ["exact", "approximate", "earliest", "latest", null] }
-      }
+        "date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Date civile ISO 8601 (Europe/Paris)",
+          "title": "Date"
+        },
+        "time": {
+          "anyOf": [
+            {
+              "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Heure locale HH:MM",
+          "title": "Time"
+        },
+        "constraint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeConstraint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nature de la contrainte horaire"
+        }
+      },
+      "title": "PartialDateTime",
+      "type": "object"
+    },
+    "PartialRequirements": {
+      "additionalProperties": false,
+      "description": "État courant des quatre informations, tel qu'il est renvoyé au client à chaque tour.",
+      "properties": {
+        "participants_count": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Élèves + accompagnateurs",
+          "title": "Participants Count"
+        },
+        "participants_breakdown": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantsBreakdown"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "departure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDateTime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "return": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDateTime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "teaching_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TeachingType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "PartialRequirements",
+      "type": "object"
+    },
+    "ParticipantsBreakdown": {
+      "additionalProperties": false,
+      "properties": {
+        "students": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Students"
+        },
+        "accompanying": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accompanying"
+        }
+      },
+      "title": "ParticipantsBreakdown",
+      "type": "object"
+    },
+    "PendingClarification": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "participants_count",
+            "departure",
+            "return",
+            "teaching_type"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "kind"
+      ],
+      "title": "PendingClarification",
+      "type": "object"
+    },
+    "TeachingType": {
+      "additionalProperties": false,
+      "description": "Matière et/ou thème pédagogique : l'un des deux suffit.",
+      "properties": {
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Matière scolaire, ex. « Histoire », « SVT »",
+          "title": "Subject"
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Thème pédagogique, ex. « Moyen Âge »",
+          "title": "Theme"
+        }
+      },
+      "title": "TeachingType",
+      "type": "object"
+    },
+    "TimeConstraint": {
+      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "enum": [
+        "exact",
+        "approximate",
+        "earliest",
+        "latest"
+      ],
+      "title": "TimeConstraint",
+      "type": "string"
     }
-  }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/ConversationState"
+    },
+    "version": {
+      "description": "Version monotone des informations ; +1 à chaque patch appliqué",
+      "minimum": 0,
+      "title": "Version",
+      "type": "integer"
+    },
+    "assistant_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Assistant Message"
+    },
+    "requirements": {
+      "$ref": "#/$defs/PartialRequirements"
+    },
+    "missing_fields": {
+      "items": {
+        "enum": [
+          "participants_count",
+          "departure",
+          "return",
+          "teaching_type"
+        ],
+        "type": "string"
+      },
+      "title": "Missing Fields",
+      "type": "array"
+    },
+    "pending_clarification": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PendingClarification"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ready_for_confirmation": {
+      "title": "Ready For Confirmation",
+      "type": "boolean"
+    },
+    "transcript": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Uniquement après /audio : transcription à corriger",
+      "title": "Transcript"
+    },
+    "confirmed_requirements": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConfirmedRequirements"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Charge utile finale, non nulle seulement en état CONFIRMED"
+    },
+    "messages": {
+      "items": {
+        "$ref": "#/$defs/Message"
+      },
+      "title": "Messages",
+      "type": "array"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "state",
+    "version",
+    "assistant_message",
+    "requirements",
+    "missing_fields",
+    "ready_for_confirmation",
+    "messages"
+  ],
+  "title": "ConversationResponse",
+  "type": "object"
 }

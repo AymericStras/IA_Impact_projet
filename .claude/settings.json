@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in */services/api/*.py) cd \"$(git -C \"$(dirname \"$f\")\" rev-parse --show-toplevel)/services/api\" && uv run --quiet ruff format --quiet \"$f\" && uv run --quiet ruff check --quiet --fix \"$f\" || true;; esac",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

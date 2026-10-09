@@ -1,70 +1,188 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/requirements.schema.json",
-  "title": "ConfirmedRequirements",
-  "description": "Payload handed to the travel-planning module after the teacher explicitly confirms. schema_version follows semver; additive changes bump minor, breaking changes bump major.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schema_version", "conversation_id", "status", "timezone", "confirmed_at", "requirements"],
-  "properties": {
-    "schema_version": { "const": "1.0" },
-    "conversation_id": { "type": "string", "minLength": 1 },
-    "status": { "const": "confirmed" },
-    "timezone": { "const": "Europe/Paris" },
-    "confirmed_at": { "type": "string", "format": "date-time" },
-    "requirements": { "$ref": "#/$defs/CompleteRequirements" }
-  },
+  "description": "Charge utile transmise au module de planification après confirmation explicite.",
   "$defs": {
-    "TimeConstraint": {
-      "type": "string",
-      "description": "exact = 'à 8 h'; approximate = 'vers 8 h'; earliest = 'après 8 h' / 'pas avant'; latest = 'avant 17 h' / 'au plus tard'.",
-      "enum": ["exact", "approximate", "earliest", "latest"]
+    "CompleteRequirements": {
+      "additionalProperties": false,
+      "properties": {
+        "participants_count": {
+          "minimum": 1,
+          "title": "Participants Count",
+          "type": "integer"
+        },
+        "participants_breakdown": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantsBreakdown"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "departure": {
+          "$ref": "#/$defs/DateTimeRequirement"
+        },
+        "return": {
+          "$ref": "#/$defs/DateTimeRequirement"
+        },
+        "teaching_type": {
+          "$ref": "#/$defs/CompleteTeachingType"
+        }
+      },
+      "required": [
+        "participants_count",
+        "departure",
+        "return",
+        "teaching_type"
+      ],
+      "title": "CompleteRequirements",
+      "type": "object"
+    },
+    "CompleteTeachingType": {
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Subject"
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Theme"
+        }
+      },
+      "required": [
+        "subject",
+        "theme"
+      ],
+      "title": "CompleteTeachingType",
+      "type": "object"
     },
     "DateTimeRequirement": {
-      "type": "object",
       "additionalProperties": false,
-      "required": ["date", "time", "constraint"],
       "properties": {
-        "date": { "type": "string", "format": "date", "description": "ISO 8601 calendar date in Europe/Paris" },
-        "time": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$", "description": "24h local time HH:MM" },
-        "constraint": { "$ref": "#/$defs/TimeConstraint" }
-      }
-    },
-    "TeachingType": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Either subject or theme alone is sufficient; both may be present.",
-      "required": ["subject", "theme"],
-      "properties": {
-        "subject": { "type": ["string", "null"], "minLength": 1, "description": "School subject, e.g. 'Histoire', 'SVT'" },
-        "theme": { "type": ["string", "null"], "minLength": 1, "description": "Teaching theme, e.g. 'Moyen Âge', 'architecture'" }
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "time": {
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "title": "Time",
+          "type": "string"
+        },
+        "constraint": {
+          "$ref": "#/$defs/TimeConstraint"
+        }
       },
-      "anyOf": [
-        { "properties": { "subject": { "type": "string" } } },
-        { "properties": { "theme": { "type": "string" } } }
-      ]
+      "required": [
+        "date",
+        "time",
+        "constraint"
+      ],
+      "title": "DateTimeRequirement",
+      "type": "object"
     },
     "ParticipantsBreakdown": {
-      "type": "object",
       "additionalProperties": false,
-      "description": "Optional detail when the teacher gave it; participants_count stays the authoritative total.",
-      "required": ["students", "accompanying"],
       "properties": {
-        "students": { "type": ["integer", "null"], "minimum": 0 },
-        "accompanying": { "type": ["integer", "null"], "minimum": 0 }
-      }
+        "students": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Students"
+        },
+        "accompanying": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accompanying"
+        }
+      },
+      "title": "ParticipantsBreakdown",
+      "type": "object"
     },
-    "CompleteRequirements": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["participants_count", "departure", "return", "teaching_type"],
-      "properties": {
-        "participants_count": { "type": "integer", "minimum": 1, "description": "Students + accompanying adults, computed by code" },
-        "participants_breakdown": { "$ref": "#/$defs/ParticipantsBreakdown" },
-        "departure": { "$ref": "#/$defs/DateTimeRequirement" },
-        "return": { "$ref": "#/$defs/DateTimeRequirement" },
-        "teaching_type": { "$ref": "#/$defs/TeachingType" }
-      }
+    "TimeConstraint": {
+      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "enum": [
+        "exact",
+        "approximate",
+        "earliest",
+        "latest"
+      ],
+      "title": "TimeConstraint",
+      "type": "string"
     }
-  }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "conversation_id": {
+      "minLength": 1,
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "status": {
+      "const": "confirmed",
+      "default": "confirmed",
+      "title": "Status",
+      "type": "string"
+    },
+    "timezone": {
+      "const": "Europe/Paris",
+      "default": "Europe/Paris",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "confirmed_at": {
+      "description": "Horodatage ISO 8601 avec décalage, ex. 2026-10-10T14:32:05+02:00",
+      "title": "Confirmed At",
+      "type": "string"
+    },
+    "requirements": {
+      "$ref": "#/$defs/CompleteRequirements"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "confirmed_at",
+    "requirements"
+  ],
+  "title": "ConfirmedRequirements",
+  "type": "object"
 }

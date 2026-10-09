@@ -1,0 +1,59 @@
+[project]
+name = "sncf-chatbot-api"
+version = "0.1.0"
+description = "FastAPI backend of the SNCF liO teacher chatbot: transcription, structured extraction, state machine."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.11",
+    "pydantic-settings>=2.4",
+    "sqlalchemy>=2.0",
+    "openai>=1.80",
+    "python-multipart>=0.0.9",
+    "psycopg[binary]>=3.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "jsonschema>=4.23",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "W", "SIM"]
+ignore = ["B008"]  # FastAPI Depends() dans les valeurs par défaut
+
+[tool.ruff.lint.per-file-ignores]
+# Chaînes françaises / descriptions lues par le modèle : la longueur prime sur la coupure.
+"app/domain/dialogue.py" = ["E501"]
+"app/schemas/patch.py" = ["E501"]
+"app/api/routes.py" = ["E501"]
+"app/main.py" = ["E501"]
+"app/domain/pipeline.py" = ["E501"]
+"app/services/extraction.py" = ["E501"]
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
