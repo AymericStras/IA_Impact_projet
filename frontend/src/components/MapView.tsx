@@ -25,8 +25,8 @@ function Camera({ route, selected, byId }: Pick<Props, "route" | "selected" | "b
     if (selected) {
       const p = byId.get(selected);
       if (p) map.flyTo([p.lat, p.lon], Math.max(map.getZoom(), 11), { duration: 0.8 });
-    } else if (route && route.steps.length) {
-      const pts = route.steps.flatMap((s) => [byId.get(s.from_id), byId.get(s.to_id)]).filter(Boolean) as Place[];
+    } else if (route && route.legs.length) {
+      const pts = route.legs.flatMap((l) => l.stops.map((id) => byId.get(id))).filter(Boolean) as Place[];
       map.flyToBounds(pts.map((p) => [p.lat, p.lon] as LatLngTuple), { padding: [60, 60], duration: 0.8 });
     }
   }, [route, selected, byId, map]);
@@ -52,14 +52,16 @@ export default function MapView({ places, edges, byId, route, selected, onSelect
   }, [edges, byId]);
 
   const routePts = useMemo(() => {
-    if (!route?.steps.length) return [];
-    const first = byId.get(route.steps[0].from_id);
-    return [first, ...route.steps.map((s) => byId.get(s.to_id))].filter(Boolean).map((p) => [p!.lat, p!.lon] as LatLngTuple);
+    // Une polyligne par leg, qui passe par toutes les gares desservies
+    return (route?.legs ?? []).map((l) =>
+      l.stops.map((id) => byId.get(id)).filter(Boolean).map((p) => [p!.lat, p!.lon] as LatLngTuple),
+    );
   }, [route, byId]);
 
-  const onRoute = useMemo(() => new Set(route?.steps.flatMap((s) => [s.from_id, s.to_id]) ?? []), [route]);
-  const startId = route?.steps[0]?.from_id;
-  const endId = route?.steps[route.steps.length - 1]?.to_id;
+  const onRoute = useMemo(() => new Set(route?.legs.flatMap((l) => l.stops) ?? []), [route]);
+  const changes = useMemo(() => new Set(route?.legs.slice(1).map((l) => l.from_id) ?? []), [route]);
+  const startId = route?.legs[0]?.from_id;
+  const endId = route?.legs[route.legs.length - 1]?.to_id;
 
   return (
     <div className="map">
@@ -81,13 +83,14 @@ export default function MapView({ places, edges, byId, route, selected, onSelect
         )}
         {places.map((p) => {
           const isEnd = p.id === startId || p.id === endId;
+          const isChange = changes.has(p.id);
           const fill = p.id === startId ? YELLOW : p.id === endId ? RED : p.id === selected ? YELLOW : "#fff";
           return (
             <CircleMarker
               key={p.id}
               center={[p.lat, p.lon]}
-              radius={isEnd || p.id === selected ? 8 : onRoute.has(p.id) ? 5 : 3.5}
-              pathOptions={{ color: NAVY, weight: isEnd ? 3 : 1.5, fillColor: fill, fillOpacity: 1 }}
+              radius={isEnd || p.id === selected ? 8 : isChange ? 7 : onRoute.has(p.id) ? 4.5 : 3.5}
+              pathOptions={{ color: NAVY, weight: isEnd || isChange ? 3 : 1.5, fillColor: fill, fillOpacity: 1 }}
               eventHandlers={{ click: () => onSelect(p.id) }}
             >
               <Tooltip direction="top" offset={[0, -6]}>{p.name}</Tooltip>

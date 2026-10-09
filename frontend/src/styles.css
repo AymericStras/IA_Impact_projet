@@ -126,7 +126,16 @@ button, input, select { font: inherit; color: inherit; }
 .stop::before { content: ""; position: absolute; left: -24px; top: 50%; translate: 0 -50%; width: 14px; height: 14px; border-radius: 50%; background: var(--white); border: 3px solid var(--navy); box-sizing: border-box; }
 .timeline li.first > .stop:first-child::before { background: var(--yellow); }
 .stop.last::before { background: var(--red); }
-.leg { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); font-weight: 600; padding: 2px 0; }
+.leg { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 14px; color: var(--muted); font-weight: 600; padding: 2px 0; }
+.leg-time { color: var(--ink); font-weight: 700; }
+.leg-meta { font-size: 12px; }
+.leg-line { flex-basis: 100%; font-size: 12px; font-weight: 500; }
+.change {
+  align-self: flex-start; margin: 2px 0 2px -4px; padding: 3px 10px; border-radius: var(--pill);
+  background: var(--yellow); color: var(--navy); font-size: 12px; font-weight: 700;
+}
+.total-sub.is-direct { color: var(--red); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; }
+.estimate { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
 .mode { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--pill); background: var(--grey); color: var(--navy); }
 .mode.mode-train-ter { background: var(--red); color: var(--white); }
 .mode.mode-car-ter { background: var(--yellow); color: var(--navy); }

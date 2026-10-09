@@ -96,20 +96,31 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <div className="total">
               <span className="total-label">{t.total}</span>
               <span className="total-value">{formatMinutes(route.minutes)}</span>
-              <span className="total-sub">{t.segments(route.steps.length)}</span>
+              <span className={route.transfers ? "total-sub" : "total-sub is-direct"}>
+                {route.transfers ? t.transfers(route.transfers) : t.direct}
+              </span>
             </div>
             <ol className="timeline">
-              {route.steps.map((s, i) => (
+              {route.legs.map((leg, i) => (
                 <li key={i} className={i === 0 ? "first" : undefined}>
-                  {i === 0 && <span className="stop">{s.from}</span>}
+                  {i === 0 ? (
+                    <span className="stop">{leg.from}</span>
+                  ) : (
+                    <span className="change">{t.change(formatMinutes(leg.wait_minutes))}</span>
+                  )}
                   <span className="leg">
-                    <span className={`mode mode-${slug(s.mode)}`}>{t.modes[s.mode] ?? s.mode}</span>
-                    {formatMinutes(s.minutes)}
+                    <span className={`mode mode-${slug(leg.mode)}`}>{t.modes[leg.mode] ?? leg.mode}</span>
+                    <span className="leg-time">{formatMinutes(leg.minutes)}</span>
+                    <span className="leg-meta">
+                      {t.stopsCount(leg.stops.length - 2)} · {t.perDay(leg.trips_per_day)}
+                    </span>
+                    {leg.line && <span className="leg-line">{leg.line}</span>}
                   </span>
-                  <span className={i === route.steps.length - 1 ? "stop last" : "stop"}>{s.to}</span>
+                  <span className={i === route.legs.length - 1 ? "stop last" : "stop"}>{leg.to}</span>
                 </li>
               ))}
             </ol>
+            {route.transfers > 0 && <p className="estimate">{t.estimateNote}</p>}
           </>
         )}
       </section>

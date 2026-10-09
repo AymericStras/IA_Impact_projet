@@ -4,9 +4,21 @@ const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string };
 export type Edge = { from_id: string; to_id: string; mode: string; minutes: number };
-export type Step = { from: string; to: string; from_id: string; to_id: string; minutes: number; mode: string };
-export type Mode = { id: string; links: number };
-export type Route = { from: string; to: string; minutes: number; steps: Step[] };
+// Un leg = un trajet direct (même train ou même car), stops = toutes les gares desservies, extrémités comprises
+export type Leg = {
+  mode: string;
+  line: string;
+  from: string;
+  to: string;
+  from_id: string;
+  to_id: string;
+  minutes: number;
+  wait_minutes: number; // changement + attente estimée avant ce leg (0 pour le premier)
+  stops: string[];
+  trips_per_day: number;
+};
+export type Mode = { id: string; links: number; missions: number };
+export type Route = { from: string; to: string; minutes: number; ride_minutes: number; transfers: number; legs: Leg[] };
 export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "unknown_mode" | "network";
 
 export class ApiError extends Error {

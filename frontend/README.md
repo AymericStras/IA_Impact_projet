@@ -1,8 +1,9 @@
 # Frontend — carte et itinéraires
 
 React + Vite + Leaflet. Carte des gares d'Occitanie, liste des lieux par département,
-et calcul d'itinéraire via le backend (`/route`), avec un filtre par type de transport
-(train TER, car TER, Intercités, Intercités de nuit, TGV) : un mode désactivé est exclu
+et calcul d'itinéraire via le backend (`/route`) : trajets directs, correspondances avec
+attente estimée, nombre d'arrêts et de trains par jour ; filtre par type de transport
+(liste fournie par `/modes`) : un mode désactivé est exclu
 du calcul et masqué sur la carte. Direction artistique inspirée de la
 charte liO (marine `#0f2149`, rouge `#c90c0f`, jaune `#ffd500`, capsules et points).
 Interface en anglais et en français, langue détectée depuis le navigateur.
