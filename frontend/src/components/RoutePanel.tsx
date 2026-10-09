@@ -65,26 +65,29 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <option key={p.id} value={p.name} />
           ))}
         </datalist>
-        <fieldset className="modes">
-          <legend>
-            {t.transports} <small>{t.transportsHint}</small>
-          </legend>
-          {modes.map((m) => {
-            const on = !excluded.includes(m.id);
-            return (
-              <button
-                key={m.id}
-                type="button"
-                aria-pressed={on}
-                className={`chip mode-${slug(m.id)}${on ? "" : " off"}`}
-                onClick={() => toggleMode(m.id)}
-              >
-                <span className="chip-dot" aria-hidden="true" />
-                {t.modes[m.id] ?? m.id}
-              </button>
-            );
-          })}
-        </fieldset>
+        {/* Un seul mode (jeu « trains liO ») : rien à filtrer */}
+        {modes.length > 1 && (
+          <fieldset className="modes">
+            <legend>
+              {t.transports} <small>{t.transportsHint}</small>
+            </legend>
+            {modes.map((m) => {
+              const on = !excluded.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={on}
+                  className={`chip mode-${slug(m.id)}${on ? "" : " off"}`}
+                  onClick={() => toggleMode(m.id)}
+                >
+                  <span className="chip-dot" aria-hidden="true" />
+                  {t.modes[m.id] ?? m.id}
+                </button>
+              );
+            })}
+          </fieldset>
+        )}
         {!excluded.includes("Car liO") && networks.length > 0 && (
           <details className="lio-details">
             <summary>

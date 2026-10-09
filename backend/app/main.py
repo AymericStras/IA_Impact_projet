@@ -2,8 +2,8 @@
 
     uvicorn app.main:app --reload        (depuis backend/)
 
-Jeu de données : variable d'environnement IA_DATASET, nom d'un sous-dossier de data/ (défaut « ter_lio » :
-trains TER, cars TER et cars liO). IA_DATASET=full charge la base complète (data/, avec Intercités, TGV…).
+Jeu de données : variable d'environnement IA_DATASET, nom d'un sous-dossier de data/ (défaut « train_lio » :
+trains TER liO seulement). IA_DATASET=full charge la base complète (data/ : cars TER et liO, Intercités, TGV…).
 
     GET /health
     GET /stations?q=mont&limit=20
@@ -28,7 +28,7 @@ from .routing import DATA_DIR, DEFAULT_TRANSFER_MIN, Network, SamePlace, Unknown
 app = FastAPI(title="IA Impact — routing API", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
-DATASET = os.environ.get("IA_DATASET", "ter_lio")
+DATASET = os.environ.get("IA_DATASET", "train_lio")
 data_dir = DATA_DIR if DATASET == "full" else DATA_DIR / DATASET
 network = Network(data_dir)
 build_info = json.loads((data_dir / "build_info.json").read_text(encoding="utf-8"))

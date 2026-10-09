@@ -18,7 +18,7 @@ la marche n'est pas un trajet, elle ne compte pas comme une montée.
 
 Le départ et la destination sont des noms de ville ou de gare, tels que les sort le NER (FROM / TO).
 
-    python -m app.routing Toulouse Perpignan                  # TER + liO (data/ter_lio)
+    python -m app.routing Toulouse Perpignan                  # trains liO (data/train_lio)
     python -m app.routing Toulouse Tarbes --dataset full --exclude INTERCITES --transfer 5
 
     from app.routing import Network
@@ -290,8 +290,8 @@ def main():
                    help="type de transport à ignorer (répétable) : " + ", ".join(MODES))
     p.add_argument("--exclude-network", action="append", default=[], metavar="RÉSEAU",
                    help="réseau liO à ignorer (répétable), ex. « liO 34 »")
-    p.add_argument("--dataset", default="ter_lio",
-                   help="sous-dossier de data/ (défaut ter_lio : TER + liO) ; « full » pour la base complète")
+    p.add_argument("--dataset", default="train_lio",
+                   help="sous-dossier de data/ (défaut train_lio : trains TER liO) ; « full » pour la base complète")
     p.add_argument("--transfer", type=float, default=DEFAULT_TRANSFER_MIN,
                    help="minutes de changement par correspondance, en plus de l'attente estimée")
     args = p.parse_args()

@@ -28,16 +28,17 @@ car liO depuis Trifontaine plutôt qu'un détour en train par Nîmes.
 
 | Dossier | Contenu | Utilisée par |
 |---|---|---|
-| `data/ter_lio/` | **trains TER, cars TER, cars liO** — l'offre régionale (5 049 arrêts, 3 267 missions) | l'API et le site, **par défaut** |
-| `data/` | base complète : en plus Intercités (jour et nuit), TGV INOUI, OUIGO, Navette, Car à réservation | `IA_DATASET=full` |
+| `data/train_lio/` | **trains TER liO uniquement** : 259 gares, 403 missions, aucun car | l'API et le site, **par défaut** |
+| `data/` | base complète : en plus cars TER, cars liO (réseaux départementaux), Intercités, TGV, OUIGO… | `IA_DATASET=full` |
 
 ```bash
-uvicorn app.main:app --reload                    # TER + liO
+uvicorn app.main:app --reload                    # trains liO
 IA_DATASET=full uvicorn app.main:app --reload    # base complète
 ```
 
 La copie est produite par `scripts/filter_dataset.py` à partir de la base complète (mêmes fichiers, réduits aux
-missions des modes gardés et aux arrêts qu'elles desservent).
+missions des modes gardés et aux gares qu'elles desservent). Une autre sélection est possible, par exemple
+`--out data/ter_lio --modes "Train TER" "Car TER" "Car liO"`.
 
 ```
 backend/
@@ -45,7 +46,7 @@ backend/
 │   ├── main.py                 # API HTTP (FastAPI)
 │   └── routing.py              # graphe des trajets directs + Dijkstra, utilisable seul en CLI
 ├── data/                       # base complète, générée par scripts/build_from_gtfs.py
-│   ├── ter_lio/                # copie TER + liO (même structure), générée par scripts/filter_dataset.py
+│   ├── train_lio/              # copie trains liO (même structure), générée par scripts/filter_dataset.py
 │   ├── stations_occitanie.csv  # 5 050 arrêts : 360 gares SNCF (id UIC) + ~4 700 arrêts liO (id « L… »)
 │   ├── missions_occitanie.csv  # 3 381 missions : suites d'arrêts + temps de passage médians + fréquence
 │   ├── walk_links.csv          # 345 correspondances à pied arrêt liO <-> gare SNCF
@@ -53,7 +54,7 @@ backend/
 │   └── build_info.json         # version et validité des horaires, jour de référence
 ├── scripts/
 │   ├── build_from_gtfs.py      # télécharge les sources et reconstruit data/
-│   └── filter_dataset.py       # crée data/ter_lio/ (ou une autre sélection de modes)
+│   └── filter_dataset.py       # crée data/train_lio/ (ou une autre sélection de modes)
 └── tests/
 ```
 
@@ -69,8 +70,8 @@ uvicorn app.main:app --reload       # http://127.0.0.1:8000/docs
 En ligne de commande, sans serveur et sans dépendance :
 
 ```bash
-python -m app.routing Toulouse Perpignan                       # TER + liO
-python -m app.routing Toulouse Tarbes --exclude "Car TER" --transfer 10
+python -m app.routing Toulouse Perpignan                       # trains liO
+python -m app.routing Toulouse Tarbes --transfer 10
 python -m app.routing Toulouse Lourdes --dataset full --exclude INTERCITES
 python -m app.routing Montpellier Ganges --exclude-network "liO 34"
 ```
@@ -81,7 +82,7 @@ Les horaires SNCF changent (le GTFS actuel est valide du 09/10/2026 au 31/03/202
 
 ```bash
 python scripts/build_from_gtfs.py --refresh   # ~2 s, ~150 Mo de RAM, sources dans backend/.cache/
-python scripts/filter_dataset.py               # puis régénérer la copie TER + liO
+python scripts/filter_dataset.py               # puis régénérer la copie trains liO
 ```
 
 Sources :
@@ -107,7 +108,7 @@ Les réseaux urbains (tram de Montpellier, métro de Toulouse…) ne sont pas in
 
 | Méthode | Route | Réponse |
 |---|---|---|
-| GET | `/health` | `{"status": "ok", "stations": 5049}` (TER + liO) |
+| GET | `/health` | `{"status": "ok", "stations": 259}` (trains liO) |
 | GET | `/info` | source, validité des horaires, jour de référence, volumes |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
 | GET | `/places` | arrêts avec `id, name, lat, lon, department, commune, network` (`sncf` ou `lio`) |

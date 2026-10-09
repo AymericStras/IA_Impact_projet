@@ -35,7 +35,7 @@ export default function PlacesPanel({ places, selected, onSelect, onPick }: Prop
         <span className="places-count">{t.stations(count)}</span>
       </div>
       <div className="panel-body">
-        {!q.trim() && <p className="hint places-hint">{t.placesHint}</p>}
+        {!q.trim() && places.some((p) => p.network === "lio") && <p className="hint places-hint">{t.placesHint}</p>}
         {groups.map(([dep, ps]) => (
           <div key={dep} className="dep">
             <h2>

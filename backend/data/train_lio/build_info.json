@@ -4,15 +4,13 @@
   "valid_from": "20261009",
   "valid_until": "20270331",
   "reference_day": "20261105",
-  "stations": 5049,
+  "stations": 259,
   "lio_source": "transport.data.gouv.fr — Réseau interurbain liO Occitanie",
   "lio_feed_version": "09/10/2026-02:45",
-  "missions": 3267,
-  "segments": 11866,
-  "walk_links": 344,
+  "missions": 403,
+  "segments": 637,
+  "walk_links": 0,
   "modes": {
-    "Car TER": 207,
-    "Car liO": 2657,
     "Train TER": 403
   },
   "lio_networks": {
@@ -31,10 +29,8 @@
     "liO 82": 141,
     "liO TIL": 32
   },
-  "dataset": "ter_lio",
+  "dataset": "train_lio",
   "modes_kept": [
-    "Car TER",
-    "Car liO",
     "Train TER"
   ]
 }

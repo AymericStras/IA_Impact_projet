@@ -1,7 +1,7 @@
 """Crée une copie de la base limitée à certains types de transport.
 
-    python scripts/filter_dataset.py                       # data/ -> data/ter_lio/ (Train TER, Car TER, Car liO)
-    python scripts/filter_dataset.py --out data/train_ter --modes "Train TER"
+    python scripts/filter_dataset.py                       # data/ -> data/train_lio/ (trains TER liO seulement)
+    python scripts/filter_dataset.py --out data/ter_lio --modes "Train TER" "Car TER" "Car liO"
 
 La base complète (data/*.csv, produite par build_from_gtfs.py) n'est pas modifiée. La copie contient les mêmes
 fichiers, réduits aux missions des modes gardés et aux arrêts qu'elles desservent ; l'API la charge via
@@ -13,14 +13,14 @@ import json
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
-TER_LIO = ["Train TER", "Car TER", "Car liO"]
+TRAIN_LIO = ["Train TER"]  # les trains régionaux d'Occitanie, exploités sous la marque liO
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", type=Path, default=DATA)
-    ap.add_argument("--out", type=Path, default=DATA / "ter_lio")
-    ap.add_argument("--modes", nargs="+", default=TER_LIO, help="types de transport à garder")
+    ap.add_argument("--out", type=Path, default=DATA / "train_lio")
+    ap.add_argument("--modes", nargs="+", default=TRAIN_LIO, help="types de transport à garder")
     args = ap.parse_args()
     keep = set(args.modes)
     args.out.mkdir(parents=True, exist_ok=True)
