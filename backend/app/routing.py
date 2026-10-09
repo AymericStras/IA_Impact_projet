@@ -3,11 +3,11 @@
 Le départ et la destination sont des noms de ville ou de gare, tels que les
 sort le NER (FROM / TO) : "Toulouse", "montpellier", "Perpignan", "Nîmes Pont du Gard"...
 
-    python3 dijkstra.py Toulouse Perpignan
-    python3 dijkstra.py "Montpellier" "Rodez" --csv connections_final.csv
+    python -m app.routing Toulouse Perpignan
+    python -m app.routing "Montpellier" "Rodez" --csv chemin/vers/connections_final.csv
 
-    from dijkstra import Network
-    net = Network("connections_occitanie.csv")
+    from app.routing import Network
+    net = Network()
     route = net.route("Toulouse", "Perpignan")
 """
 import argparse
@@ -17,8 +17,9 @@ import re
 import sys
 import unicodedata
 from collections import defaultdict
+from pathlib import Path
 
-DEFAULT_CSV = "connections_occitanie.csv"
+DEFAULT_CSV = Path(__file__).resolve().parent.parent / "data" / "connections_occitanie.csv"
 
 
 def normalize(s):
@@ -39,6 +40,10 @@ def to_minutes(v):
 def mode_of(stop_id):
     """'StopPoint:OCETrain TER-87781278' -> 'Train TER'"""
     return stop_id.split(":", 1)[1].rsplit("-", 1)[0].removeprefix("OCE")
+
+
+class UnknownPlace(KeyError):
+    pass
 
 
 class Network:
@@ -63,8 +68,14 @@ class Network:
             return self.by_key[key]
         hits = {s for k, stops in self.by_key.items() if k.startswith(key + " ") for s in stops}
         if not hits:
-            raise KeyError(f"Ville ou gare inconnue : {query!r}")
+            raise UnknownPlace(query)
         return hits
+
+    def stations(self, query="", limit=20):
+        """Gares dont le nom normalisé contient la requête, triées par nom."""
+        key = normalize(query)
+        names = sorted({n for n in self.name.values() if key in normalize(n)})
+        return names[:limit]
 
     def route(self, departure, destination):
         """Plus court chemin en minutes entre n'importe quelle gare de départ et n'importe quelle gare d'arrivée.
@@ -73,6 +84,8 @@ class Network:
         {"from", "to", "minutes", "steps": [{"from", "to", "minutes", "mode"}, ...]}.
         """
         sources, targets = self.resolve(departure), self.resolve(destination)
+        if sources & targets:
+            raise ValueError("Le départ et la destination désignent la même gare ou la même ville.")
         dist = {s: 0.0 for s in sources}
         prev = {}
         heap = [(0.0, s) for s in sources]
@@ -114,8 +127,10 @@ def main():
 
     try:
         r = Network(args.csv).route(args.departure, args.destination)
-    except KeyError as e:
-        sys.exit(e.args[0])
+    except UnknownPlace as e:
+        sys.exit(f"Ville ou gare inconnue : {e.args[0]!r}")
+    except ValueError as e:
+        sys.exit(str(e))
     if r is None:
         sys.exit(f"Aucun itinéraire entre {args.departure} et {args.destination}.")
     print(f"{r['from']} -> {r['to']} : {fmt(r['minutes'])} ({len(r['steps'])} tronçon{'s' if len(r['steps']) > 1 else ''})")
