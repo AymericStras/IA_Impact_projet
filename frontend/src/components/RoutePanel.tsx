@@ -9,12 +9,14 @@ type Props = {
   setFrom: (v: string) => void;
   setTo: (v: string) => void;
   onSearch: () => void;
+  trainsOnly: boolean;
+  setTrainsOnly: (v: boolean) => void;
   loading: boolean;
   route: Route | null;
   error: ErrorCode | null;
 };
 
-export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, loading, route, error }: Props) {
+export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, trainsOnly, setTrainsOnly, loading, route, error }: Props) {
   const { t } = useI18n();
   const [first, ...rest] = t.headline.split(" ");
 
@@ -57,6 +59,14 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <option key={p.id} value={p.name} />
           ))}
         </datalist>
+        <label className="toggle">
+          <input type="checkbox" role="switch" checked={trainsOnly} onChange={(e) => setTrainsOnly(e.target.checked)} />
+          <span className="toggle-track" aria-hidden="true" />
+          <span className="toggle-label">
+            {t.trainsOnly}
+            <small>{t.trainsOnlyHint}</small>
+          </span>
+        </label>
         <button className="cta" type="submit" disabled={loading || !from.trim() || !to.trim()}>
           {loading ? t.searching : t.search}
         </button>

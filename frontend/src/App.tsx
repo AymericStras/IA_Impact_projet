@@ -20,6 +20,7 @@ export default function App() {
   const [routeError, setRouteError] = useState<ErrorCode | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [trainsOnly, setTrainsOnly] = useState(false);
 
   useEffect(() => {
     Promise.all([api.places(), api.network()])
@@ -32,12 +33,12 @@ export default function App() {
 
   const byId = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
 
-  async function search(f = from, d = to) {
+  async function search(f = from, d = to, trains = trainsOnly) {
     if (!f.trim() || !d.trim()) return;
     setLoading(true);
     setRouteError(null);
     try {
-      setRoute(await api.route(f.trim(), d.trim()));
+      setRoute(await api.route(f.trim(), d.trim(), trains));
       setSelected(null);
     } catch (e) {
       setRoute(null);
@@ -78,6 +79,11 @@ export default function App() {
               setFrom={setFrom}
               setTo={setTo}
               onSearch={() => search()}
+              trainsOnly={trainsOnly}
+              setTrainsOnly={(v) => {
+                setTrainsOnly(v);
+                if (route || routeError) search(from, to, v); // relancer avec le nouveau filtre
+              }}
               loading={loading}
               route={route}
               error={routeError}
@@ -87,7 +93,7 @@ export default function App() {
           )}
           <p className="data-note">{t.dataNote}</p>
         </aside>
-        <MapView places={places} edges={edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
+        <MapView places={places} edges={trainsOnly ? edges.filter((e) => e.mode !== "Car TER") : edges} byId={byId} route={route} selected={selected} onSelect={setSelected} onPick={pick} />
       </main>
     </div>
   );

@@ -33,6 +33,18 @@ def test_city_prefers_station_named_after_it():
     assert client.get("/route", params={"from": "Toulouse", "to": "Tarbes"}).json()["from"] == "Toulouse Matabiau"
 
 
+def test_trains_only():
+    # Toulouse -> Tarbes : le plus rapide prend un car Boussens -> Saint-Gaudens ; en train seul, il existe un détour
+    params = {"from": "Toulouse", "to": "Tarbes"}
+    mixed = client.get("/route", params=params).json()
+    trains = client.get("/route", params={**params, "trains_only": "true"}).json()
+    assert any(s["mode"] == "Car TER" for s in mixed["steps"])
+    assert trains["steps"] and all(s["mode"] != "Car TER" for s in trains["steps"])
+    assert trains["minutes"] >= mixed["minutes"]
+    # Toulouse -> Perpignan : dans les données, Carcassonne -> Narbonne n'existe qu'en car
+    assert client.get("/route", params={"from": "Toulouse", "to": "Perpignan", "trains_only": "true"}).json()["detail"]["code"] == "no_route"
+
+
 def test_route_case_and_accents():
     assert client.get("/route", params={"from": "montpellier", "to": "NIMES"}).status_code == 200
 

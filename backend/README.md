@@ -28,6 +28,7 @@ En ligne de commande, sans serveur et sans dépendance :
 
 ```bash
 python -m app.routing Toulouse Perpignan
+python -m app.routing Toulouse Tarbes --trains-only   # sans les cars TER
 ```
 
 ## Endpoints
@@ -39,6 +40,7 @@ python -m app.routing Toulouse Perpignan
 | GET | `/places` | gares avec `id, name, lat, lon, department, commune` |
 | GET | `/network` | liaisons `from_id, to_id, mode, minutes` |
 | GET | `/route?from=Toulouse&to=Perpignan` | voir ci-dessous |
+| GET | `/route?from=Toulouse&to=Tarbes&trains_only=true` | même chose sans les cars TER |
 
 ```json
 {
@@ -54,6 +56,10 @@ python -m app.routing Toulouse Perpignan
 
 `from` / `to` acceptent un nom de **ville** (toutes ses gares sont essayées : « Montpellier » couvre
 Saint-Roch et Sud de France ; « Toulouse » part de Matabiau plutôt que d'une gare de banlieue) ou de **gare** précise. Accents, casse et tirets sont ignorés.
+
+`trains_only=true` ignore les **cars TER** (autocars régionaux) : seuls les tronçons en train sont parcourus.
+Attention aux trous des données : Toulouse → Perpignan n'a pas de solution en train seul, car
+Carcassonne → Narbonne n'existe qu'en car dans ce sens.
 
 Erreurs — `{"detail": {"code", "message"}}` :
 

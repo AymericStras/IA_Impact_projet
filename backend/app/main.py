@@ -6,7 +6,7 @@
     GET /stations?q=mont&limit=20
     GET /places                          gares + coordonnées
     GET /network                         liaisons
-    GET /route?from=Toulouse&to=Perpignan
+    GET /route?from=Toulouse&to=Perpignan[&trains_only=true]
 
 Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front traduit
 à partir de `code`, `message` (anglais) n'est là que pour le débogage.
@@ -50,9 +50,10 @@ def network_edges():
 
 @app.get("/route")
 def route(departure: str = Query(..., alias="from", min_length=1),
-          destination: str = Query(..., alias="to", min_length=1)):
+          destination: str = Query(..., alias="to", min_length=1),
+          trains_only: bool = Query(False, description="Ignorer les cars TER")):
     try:
-        r = network.route(departure, destination)
+        r = network.route(departure, destination, trains_only=trains_only)
     except UnknownPlace as e:
         error(404, "unknown_place", f"Unknown city or station: {e.args[0]}")
     except ValueError:

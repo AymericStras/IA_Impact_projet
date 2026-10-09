@@ -30,5 +30,6 @@ async function get<T>(path: string, params?: Record<string, string>): Promise<T>
 export const api = {
   places: () => get<{ places: Place[] }>("/places").then((r) => r.places),
   network: () => get<{ edges: Edge[] }>("/network").then((r) => r.edges),
-  route: (from: string, to: string) => get<Route>("/route", { from, to }),
+  route: (from: string, to: string, trainsOnly = false) =>
+    get<Route>("/route", trainsOnly ? { from, to, trains_only: "true" } : { from, to }),
 };
