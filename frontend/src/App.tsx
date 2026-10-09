@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type Edge, type ErrorCode, type Place, type Route } from "./api";
 import { useI18n } from "./i18n";
 import Header from "./components/Header";
@@ -47,15 +47,18 @@ export default function App() {
     }
   }
 
-  // Depuis la carte ou la liste des lieux : remplir départ / arrivée, et chercher dès que les deux sont là
-  function pick(which: "from" | "to", name: string) {
-    const f = which === "from" ? name : from;
-    const d = which === "to" ? name : to;
+  // Depuis la carte ou la liste des lieux : remplir départ / arrivée, et chercher dès que les deux sont là.
+  // Fonction stable (lit départ / arrivée dans une ref) : la carte, mémoïsée, ne se redessine pas à chaque frappe.
+  const typed = useRef({ from, to });
+  typed.current = { from, to };
+  const pick = useCallback((which: "from" | "to", name: string) => {
+    const f = which === "from" ? name : typed.current.from;
+    const d = which === "to" ? name : typed.current.to;
     setFrom(f);
     setTo(d);
     setTab("route");
     if (f && d) search(f, d);
-  }
+  }, []);
 
   return (
     <div className="app">

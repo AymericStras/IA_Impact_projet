@@ -2,7 +2,17 @@
 // en prod, VITE_API_URL pointe vers l'API déployée.
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
-export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string; network: "sncf" | "lio" };
+export type Place = {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  department: string;
+  commune: string;
+  network: "sncf" | "lio";
+  trips_per_day: number; // passages par jour (jour de référence), sert à la taille de l'icône
+  lines: string[]; // lignes qui s'y arrêtent, les plus fréquentes d'abord
+};
 export type Edge = { from_id: string; to_id: string; mode: string; network: string; minutes: number };
 
 // Un leg = un trajet direct (même train ou même car), stops = toutes les gares desservies, extrémités comprises
@@ -17,6 +27,7 @@ export type Leg = {
   minutes: number;
   wait_minutes: number; // changement + attente estimée avant ce leg (0 pour le premier)
   stops: string[];
+  times: number[]; // minutes depuis le départ du leg, à chaque arrêt de `stops`
   trips_per_day: number | null; // null pour la marche
 };
 export type Route = {

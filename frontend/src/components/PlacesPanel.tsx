@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import type { Place } from "../api";
 import { useI18n } from "../i18n";
 
@@ -15,17 +15,21 @@ export default function PlacesPanel({ places, selected, onSelect, onPick }: Prop
   const { t } = useI18n();
   const [q, setQ] = useState("");
 
+  // Texte normalisé calculé une fois par lieu ; la liste suit la saisie en différé pour ne pas bloquer le champ
+  const searchable = useMemo(() => places.map((p) => ({ p, text: norm(`${p.name}\n${p.department}\n${p.commune}`) })), [places]);
+  const query = useDeferredValue(q);
+
   const groups = useMemo(() => {
-    const k = norm(q.trim());
+    const k = norm(query.trim());
     const out = new Map<string, Place[]>();
-    for (const p of places) {
+    for (const { p, text } of searchable) {
       if (!k && p.network === "lio") continue; // ~4 700 arrêts de car : seulement quand on cherche
-      if (k && !norm(p.name).includes(k) && !norm(p.department).includes(k) && !norm(p.commune).includes(k)) continue;
+      if (k && !text.includes(k)) continue;
       if (!out.has(p.department)) out.set(p.department, []);
       out.get(p.department)!.push(p);
     }
     return [...out.entries()].sort(([a], [b]) => a.localeCompare(b, "fr"));
-  }, [places, q]);
+  }, [searchable, query]);
   const count = groups.reduce((n, [, ps]) => n + ps.length, 0);
 
   return (

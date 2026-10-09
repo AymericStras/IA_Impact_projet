@@ -27,6 +27,9 @@ def test_route_shape():
     assert body["transfers"] == len(legs) - 1
     assert all(a["to_id"] == b["from_id"] for a, b in zip(legs, legs[1:]))       # les legs s'enchaînent
     assert all(leg["stops"][0] == leg["from_id"] and leg["stops"][-1] == leg["to_id"] for leg in legs)
+    # un temps de passage par arrêt, croissant, le dernier = durée du leg
+    assert all(len(l["times"]) == len(l["stops"]) and l["times"] == sorted(l["times"]) for l in legs)
+    assert all(abs(l["times"][-1] - l["minutes"]) < 0.2 for l in legs)
     assert legs[0]["wait_minutes"] == 0
     total = body["access_minutes"] + body["egress_minutes"] + sum(l["minutes"] + l["wait_minutes"] for l in legs)
     assert abs(body["minutes"] - total) < 0.5
@@ -107,6 +110,9 @@ def test_places_network_modes_info():
     assert len(places) == client.get("/health").json()["stations"]
     toulouse = next(p for p in places if p["name"] == "Toulouse Matabiau")
     assert toulouse["department"] == "Haute-Garonne" and 43 < toulouse["lat"] < 44
+    # La gare la plus fréquentée est Toulouse Matabiau, et elle dessert plusieurs lignes
+    assert max(places, key=lambda p: p["trips_per_day"])["name"] == "Toulouse Matabiau"
+    assert len(toulouse["lines"]) > 1
     ids = {p["id"] for p in places}
     edges = client.get("/network").json()["edges"]
     assert edges and all(e["from_id"] in ids and e["to_id"] in ids for e in edges)

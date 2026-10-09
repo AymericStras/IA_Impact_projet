@@ -30,7 +30,7 @@ import heapq
 import re
 import sys
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -101,6 +101,8 @@ class Network:
         # rapide, et on additionne les fréquences de toutes les missions qui font a -> b sans changement.
         self.rides = {}
         self.segments = {}              # (a, b, mode, réseau) -> minutes : arrêts consécutifs, pour dessiner le réseau
+        self.served = defaultdict(int)  # arrêt -> passages par jour (jour de référence)
+        self.lines = defaultdict(Counter)  # arrêt -> {ligne: passages par jour}
         with open(data_dir / "missions_occitanie.csv", encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 m = {"mode": r["mode"], "network": r.get("network", ""), "line": r["line"], "trips": int(r["trips"]), "per_day": int(r["trips_ref_day"]),
@@ -111,6 +113,11 @@ class Network:
                 k = len(self.missions)
                 self.missions.append(m)
                 stops = m["stops"]
+                for i, stop in enumerate(stops):  # fréquentation et lignes de chaque arrêt, pour la carte
+                    if m["pickup"][i] or m["dropoff"][i]:
+                        self.served[stop] += m["per_day"]
+                        if m["line"]:
+                            self.lines[stop][m["line"]] += m["per_day"]
                 for i in range(len(stops) - 1):
                     seg = (stops[i], stops[i + 1], m["mode"], m["network"])
                     t = m["arr"][i + 1] - m["dep"][i]
@@ -173,7 +180,10 @@ class Network:
         return sorted({n for n in self.name.values() if key in normalize(n)})[:limit]
 
     def places(self):
-        return sorted(self.place.values(), key=lambda p: normalize(p["name"]))
+        """Arrêts avec leurs passages par jour et leurs lignes (les plus fréquentes d'abord)."""
+        return [{**p, "trips_per_day": self.served[p["id"]],
+                 "lines": [line for line, _ in self.lines[p["id"]].most_common(6)]}
+                for p in sorted(self.place.values(), key=lambda p: normalize(p["name"]))]
 
     def edges(self):
         """Tronçons entre arrêts consécutifs (pour tracer le réseau)."""
@@ -211,7 +221,7 @@ class Network:
         Renvoie None s'il n'existe aucun chemin, sinon
         {"from", "to", "minutes", "ride_minutes", "access_minutes", "egress_minutes", "transfers", "transfer_min",
          "legs": [{"mode", "line", "from", "to", "from_id", "to_id", "minutes", "wait_minutes",
-                   "stops", "trips_per_day"}, ...]}
+                   "stops", "times", "trips_per_day"}, ...]}
         où chaque leg est un trajet direct (même train ou même car du début à la fin) et wait_minutes
         le changement + l'attente estimée avant ce leg (0 pour le premier).
         """
@@ -260,14 +270,16 @@ class Network:
                 minutes, meters = next((m, mt) for v, m, mt in self.walk[p] if v == u)
                 legs.append({"mode": WALK, "network": "", "line": f"{meters} m", "from": self.name[p], "to": self.name[u],
                              "from_id": p, "to_id": u, "minutes": minutes, "wait_minutes": 0,
-                             "stops": [p, u], "trips_per_day": None})
+                             "stops": [p, u], "trips_per_day": None, "times": [0, minutes]})
             else:
                 minutes, k, i, j, per_day = self.rides[(p, u, mode, network)]
                 m = self.missions[k]
                 legs.append({"mode": mode, "network": network, "line": m["line"], "from": self.name[p], "to": self.name[u],
                              "from_id": p, "to_id": u, "minutes": round(minutes, 1),
                              "wait_minutes": round(boarding_cost(was_boarded, per_day, transfer_min), 1),
-                             "stops": m["stops"][i:j + 1], "trips_per_day": per_day})
+                             "stops": m["stops"][i:j + 1], "trips_per_day": per_day,
+                             # minutes depuis le départ du leg, à chaque arrêt (arrivée), extrémités comprises
+                             "times": [0] + [round(m["arr"][x] - m["dep"][i], 1) for x in range(i + 1, j + 1)]})
             state = (p, was_boarded)
         legs.reverse()
         rides = [leg for leg in legs if leg["mode"] != WALK]

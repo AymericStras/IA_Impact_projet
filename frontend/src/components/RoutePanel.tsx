@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { WALK, type ErrorCode, type Place, type Route } from "../api";
 import { formatMinutes, useI18n } from "../i18n";
 import Trame from "./Trame";
@@ -18,7 +19,10 @@ const slug = (mode: string) => mode.replace(/\s+/g, "-").toLowerCase();
 
 export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, loading, route, error }: Props) {
   const { t } = useI18n();
+  const nameOf = useMemo(() => new Map(places.map((p) => [p.id, p.name])), [places]);
   const [first, ...rest] = t.headline.split(" ");
+  // Suggestions construites une fois, pas à chaque frappe (des milliers d'arrêts avec la base complète)
+  const suggestions = useMemo(() => places.map((p) => <option key={p.id} value={p.name} />), [places]);
 
   return (
     <>
@@ -54,11 +58,7 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
           <span className="sr-only">{t.to}</span>
           <input list="place-names" value={to} onChange={(e) => setTo(e.target.value)} placeholder={t.toPh} autoComplete="off" />
         </label>
-        <datalist id="place-names">
-          {places.map((p) => (
-            <option key={p.id} value={p.name} />
-          ))}
-        </datalist>
+        <datalist id="place-names">{suggestions}</datalist>
         <button className="cta" type="submit" disabled={loading || !from.trim() || !to.trim()}>
           {loading ? t.searching : t.search}
         </button>
@@ -90,10 +90,24 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
                       <span className="leg-meta">{leg.line}</span>
                     ) : (
                       <>
-                        <span className="leg-meta">
-                          {t.stopsCount(leg.stops.length - 2)} · {t.perDay(leg.trips_per_day ?? 0)}
-                        </span>
+                        <span className="leg-meta">{t.perDay(leg.trips_per_day ?? 0)}</span>
                         {leg.line && <span className="leg-line">{leg.line}</span>}
+                        {/* Arrêts intermédiaires, dépliés par défaut, avec leur temps depuis le départ */}
+                        {leg.stops.length > 2 ? (
+                          <details className="leg-stops" open>
+                            <summary>{t.stopsCount(leg.stops.length - 2)}</summary>
+                            <ol>
+                              {leg.stops.slice(1, -1).map((id, k) => (
+                                <li key={id}>
+                                  <span>{nameOf.get(id) ?? id}</span>
+                                  <span className="leg-stop-time">+{formatMinutes(leg.times[k + 1])}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          </details>
+                        ) : (
+                          <span className="leg-line">{t.stopsCount(0)}</span>
+                        )}
                       </>
                     )}
                   </span>
