@@ -20,5 +20,21 @@
     "OUIGO": 8,
     "TGV INOUI": 32,
     "Train TER": 403
+  },
+  "lio_networks": {
+    "liO 09": 87,
+    "liO 11": 127,
+    "liO 12": 180,
+    "liO 30": 432,
+    "liO 31": 269,
+    "liO 32": 76,
+    "liO 34": 614,
+    "liO 46": 61,
+    "liO 48": 96,
+    "liO 65": 91,
+    "liO 66": 213,
+    "liO 81": 238,
+    "liO 82": 141,
+    "liO TIL": 32
   }
 }

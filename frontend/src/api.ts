@@ -3,10 +3,13 @@
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export type Place = { id: string; name: string; lat: number; lon: number; department: string; commune: string; network: "sncf" | "lio" };
-export type Edge = { from_id: string; to_id: string; mode: string; minutes: number };
+export type Edge = { from_id: string; to_id: string; mode: string; network: string; minutes: number };
+// Réseau de cars liO : un par département (« liO 34 ») + les lignes régionales (« liO TIL »)
+export type LioNetwork = { id: string; department: string; missions: number };
 // Un leg = un trajet direct (même train ou même car), stops = toutes les gares desservies, extrémités comprises
 export type Leg = {
   mode: string;
+  network: string; // réseau liO (« liO 34 »), vide pour la SNCF et la marche
   line: string;
   from: string;
   to: string;
@@ -30,7 +33,7 @@ export type Route = {
 };
 export const WALK = "Marche";
 export const COACH_MODES = new Set(["Car TER", "Car liO", "Car à réservation"]);
-export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "unknown_mode" | "network";
+export type ErrorCode = "unknown_place" | "no_route" | "same_place" | "unknown_mode" | "unknown_network" | "network";
 
 export class ApiError extends Error {
   constructor(public code: ErrorCode) {
@@ -55,10 +58,12 @@ export const api = {
   places: () => get<{ places: Place[] }>("/places").then((r) => r.places),
   network: () => get<{ edges: Edge[] }>("/network").then((r) => r.edges),
   modes: () => get<{ modes: Mode[] }>("/modes").then((r) => r.modes),
-  // exclude : types de transport à ignorer, envoyés en ?exclude=…&exclude=…
-  route: (from: string, to: string, exclude: string[] = []) => {
+  networks: () => get<{ networks: LioNetwork[] }>("/networks").then((r) => r.networks),
+  // exclude : types de transport à ignorer, excludeNetworks : réseaux liO à ignorer (?exclude=…&exclude_network=…)
+  route: (from: string, to: string, exclude: string[] = [], excludeNetworks: string[] = []) => {
     const params = new URLSearchParams({ from, to });
     exclude.forEach((m) => params.append("exclude", m));
+    excludeNetworks.forEach((n) => params.append("exclude_network", n));
     return get<Route>("/route", params);
   },
 };

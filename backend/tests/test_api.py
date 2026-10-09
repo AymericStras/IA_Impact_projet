@@ -58,6 +58,19 @@ def test_lio_coaches():
     assert {p["network"] for p in places} == {"sncf", "lio"}
 
 
+def test_lio_networks():
+    nets = {n["id"]: n for n in client.get("/networks").json()["networks"]}
+    assert nets["liO 34"]["department"] == "Hérault" and "liO TIL" in nets and len(nets) == 14
+    # Montpellier -> Ganges : car 608, réseau liO 34 (Hérault) ; sans ce réseau, il faut un autre chemin ou rien
+    r = route(**{"from": "Montpellier", "to": "Ganges"}).json()
+    lio = [l for l in r["legs"] if l["mode"] == "Car liO"]
+    assert lio and all(l["network"] for l in lio)
+    without = route(**{"from": "Montpellier", "to": "Ganges", "exclude_network": [l["network"] for l in lio]})
+    assert without.status_code == 404 or all(l["network"] not in {x["network"] for x in lio}
+                                             for l in without.json()["legs"])
+    assert code(route(**{"from": "Montpellier", "to": "Ganges", "exclude_network": "liO 99"})) == "unknown_network"
+
+
 def test_walk_between_coach_stop_and_station():
     # Le Vigan -> Montpellier sans le 608 : car 140 jusqu'à Nîmes, à pied jusqu'à la gare, puis train
     r = route(**{"from": "Le Vigan", "to": "Montpellier Saint-Roch", "exclude": "INTERCITES"}).json()
@@ -119,6 +132,6 @@ def test_dijkstra_on_small_network(tmp_path):
     r = net.route("A", "C", exclude={"INTERCITES"})
     assert r["transfers"] == 0 and r["legs"][0]["line"] == "lente"
     # Si le direct mettait 70 min, la correspondance (65) gagnerait
-    net.rides[("1", "3", "Train TER")][0] = 70
+    net.rides[("1", "3", "Train TER", "")][0] = 70
     r = net.route("A", "C", exclude={"INTERCITES"})
     assert r["transfers"] == 1 and r["minutes"] == 65 and r["legs"][1]["wait_minutes"] == 35

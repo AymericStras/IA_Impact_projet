@@ -14,6 +14,7 @@ Produit dans backend/data/ :
   - stations_occitanie.csv    une ligne par gare (StopArea) : id UIC, nom, coordonnées, département, commune
   - missions_occitanie.csv    une ligne par « mission » : suite d'arrêts identique parcourue par un ou plusieurs trains,
                               avec les temps de passage médians. C'est ce qui permet de savoir qu'un trajet est direct.
+                              `network` = réseau liO départemental (liO 09 … liO 82, liO TIL), vide pour la SNCF.
   - walk_links.csv            correspondances à pied entre un arrêt liO et une gare SNCF proches (< 400 m)
   - connections_occitanie.csv tronçons entre arrêts consécutifs, au format historique du projet (notebook, Neo4j)
   - build_info.json           dates de validité des horaires, jour de référence, volumes
@@ -42,6 +43,11 @@ DEPTS_URL = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/mast
 # Clé publique publiée par la Région avec le jeu de données sur transport.data.gouv.fr
 LIO_URL = "https://app.mecatran.com/utw/ws/gtfsfeed/static/lio?apiKey=2b160d626f783808095373766f18714901325e45&type=gtfs_lio"
 LIO_MODE = "Car liO"
+# Réseaux liO : un par département (l'Hérault est publié sous le nom « Herault Transport »), plus les lignes
+# régionales qui traversent plusieurs départements (« liO TIL »)
+LIO_NETWORKS = {"109": "liO 09", "111": "liO 11", "112": "liO 12", "130": "liO 30", "131": "liO 31", "132": "liO 32",
+                "134": "liO 34", "146": "liO 46", "148": "liO 48", "165": "liO 65", "166": "liO 66", "181": "liO 81",
+                "182": "liO 82", "500": "liO TIL"}
 WALK_MAX_M = 400        # distance maximale d'une correspondance à pied arrêt liO <-> gare SNCF
 WALK_M_PER_MIN = 75     # 4,5 km/h
 
@@ -191,28 +197,28 @@ def main():
         if len(run) > 1:
             yield run
 
-    def collect(stop_times, trips, routes, ref_services, point_area, mode_of):
+    def collect(stop_times, trips, routes, ref_services, point_area, mode_of, network_of=lambda route_id: ""):
         """Regroupe les trajets d'un GTFS en missions. stop_times doit être groupé par trajet."""
         n_rows, current, rows = 0, None, []
         for r in stop_times:
             n_rows += 1
             if r["trip_id"] != current:
                 if rows:
-                    flush(current, rows, trips, routes, ref_services, point_area, mode_of)
+                    flush(current, rows, trips, routes, ref_services, point_area, mode_of, network_of)
                 current, rows = r["trip_id"], []
             rows.append(r)
         if rows:
-            flush(current, rows, trips, routes, ref_services, point_area, mode_of)
+            flush(current, rows, trips, routes, ref_services, point_area, mode_of, network_of)
         return n_rows
 
-    def flush(trip_id, rows, trips, routes, ref_services, point_area, mode_of):
+    def flush(trip_id, rows, trips, routes, ref_services, point_area, mode_of, network_of):
         route_id, service = trips[trip_id]
         for run in runs(rows, point_area):
             mode = mode_of(run[0]["stop_id"])
             areas = tuple(point_area[r["stop_id"]] for r in run)
             pickup = tuple(r["pickup_type"] != "1" for r in run)
             dropoff = tuple(r["drop_off_type"] != "1" for r in run)
-            m = missions[(mode, areas, pickup, dropoff)]
+            m = missions[(mode, network_of(route_id), areas, pickup, dropoff)]
             t0 = seconds(run[0]["departure_time"])
             for k, r in enumerate(run):
                 m["arr"][k].append((seconds(r["arrival_time"]) - t0) / 60)
@@ -257,21 +263,25 @@ def main():
             (lio_ref.add if r["exception_type"] == "1" else lio_ref.discard)(r["service_id"])
 
     lio_trips = {r["trip_id"]: (r["route_id"], r["service_id"]) for r in lio_table("trips.txt")}
+    lio_route_rows = list(lio_table("routes.txt"))
     lio_routes = {r["route_id"]: f'{r["route_short_name"]} · {pretty(r["route_long_name"])}'.strip(" ·")
-                  for r in lio_table("routes.txt")}
-    n_rows = collect(lio_table("stop_times.txt"), lio_trips, lio_routes, lio_ref, lio_area, lambda _: LIO_MODE)
+                  for r in lio_route_rows}
+    lio_network = {r["route_id"]: LIO_NETWORKS.get(r["agency_id"], "liO") for r in lio_route_rows}
+    n_rows = collect(lio_table("stop_times.txt"), lio_trips, lio_routes, lio_ref, lio_area, lambda _: LIO_MODE,
+                     lio_network.get)
     print(f"liO : {n_rows} horaires lus, {len(missions) - n_sncf} missions", file=sys.stderr)
 
     # ── Écriture ─────────────────────────────────────────────────────────────
     DATA.mkdir(exist_ok=True)
     used = set()
     mission_rows = []
-    for i, ((mode, areas, pickup, dropoff), m) in enumerate(sorted(missions.items(), key=lambda kv: (kv[0][0], -kv[1]["trips"]))):
+    for i, ((mode, network, areas, pickup, dropoff), m) in enumerate(
+            sorted(missions.items(), key=lambda kv: (kv[0][0], kv[0][1], -kv[1]["trips"]))):
         used.update(areas)
         arr = [round(statistics.median(m["arr"][k]), 1) for k in range(len(areas))]
         dep = [round(statistics.median(m["dep"][k]), 1) for k in range(len(areas))]
         mission_rows.append({
-            "mission_id": f"M{i:05d}", "mode": mode, "line": m["routes"].most_common(1)[0][0],
+            "mission_id": f"M{i:05d}", "mode": mode, "network": network, "line": m["routes"].most_common(1)[0][0],
             "trips": m["trips"], "trips_ref_day": m["ref"],
             "stops": "|".join(stations[a]["id"] for a in areas),
             "arrival_min": "|".join(f"{x:g}" for x in arr), "departure_min": "|".join(f"{x:g}" for x in dep),
@@ -340,7 +350,8 @@ def main():
             "lio_source": "transport.data.gouv.fr — Réseau interurbain liO Occitanie",
             "lio_feed_version": next(lio_table("feed_info.txt"))["feed_version"],
             "missions": len(mission_rows), "segments": len(seg), "walk_links": len(walks) // 2,
-            "modes": dict(Counter(m["mode"] for m in mission_rows))}
+            "modes": dict(Counter(m["mode"] for m in mission_rows)),
+            "lio_networks": dict(sorted(Counter(m["network"] for m in mission_rows if m["network"]).items()))}
     json.dump(info, open(DATA / "build_info.json", "w"), ensure_ascii=False, indent=2)
     print(json.dumps(info, ensure_ascii=False, indent=2))
 

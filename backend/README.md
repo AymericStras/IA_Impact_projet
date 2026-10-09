@@ -53,6 +53,7 @@ En ligne de commande, sans serveur et sans dépendance :
 ```bash
 python -m app.routing Toulouse Perpignan
 python -m app.routing Toulouse Tarbes --exclude INTERCITES --exclude "Car TER" --transfer 10
+python -m app.routing Montpellier Ganges --exclude-network "liO 34"
 ```
 
 ## Mettre à jour les horaires
@@ -92,6 +93,7 @@ Les réseaux urbains (tram de Montpellier, métro de Toulouse…) ne sont pas in
 | GET | `/places` | arrêts avec `id, name, lat, lon, department, commune, network` (`sncf` ou `lio`) |
 | GET | `/network` | tronçons entre arrêts consécutifs `from_id, to_id, mode, minutes` |
 | GET | `/modes` | `[{"id": "Train TER", "links": 637, "missions": 403}, …]` |
+| GET | `/networks` | réseaux liO : `[{"id": "liO 34", "department": "Hérault", "missions": 614}, …]` |
 | GET | `/route?from=Montpellier&to=Rodez` | voir ci-dessous |
 
 Paramètres de `/route` :
@@ -99,6 +101,8 @@ Paramètres de `/route` :
   que d'une gare de banlieue) ou de **gare** précise. Accents, casse et tirets sont ignorés.
 - `exclude` (répétable) : type de transport à ignorer, parmi les `id` de `/modes`
   (`Train TER`, `Car TER`, `Car liO`, `Car à réservation`, `INTERCITES`, `INTERCITES de nuit`, `TGV INOUI`, `OUIGO`, `Navette`).
+- `exclude_network` (répétable) : réseau de cars liO à ignorer, parmi les `id` de `/networks` : un par département
+  (`liO 09`, `liO 11`, … `liO 82`) et `liO TIL` pour les lignes régionales qui traversent plusieurs départements.
 - `transfer_min` (défaut 5) : minutes de changement par correspondance, en plus de l'attente estimée.
 
 ```json
@@ -130,6 +134,7 @@ Erreurs — `{"detail": {"code", "message"}}` :
 | 404 | `no_route` | les deux existent mais ne sont pas reliées avec les transports autorisés |
 | 400 | `same_place` | départ = destination |
 | 400 | `unknown_mode` | valeur de `exclude` absente de `/modes` |
+| 400 | `unknown_network` | valeur de `exclude_network` absente de `/networks` |
 
 ## Tests
 

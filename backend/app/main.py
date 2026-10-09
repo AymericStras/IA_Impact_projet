@@ -7,8 +7,9 @@
     GET /places                          gares + coordonnées
     GET /network                         liaisons
     GET /modes                           types de transport disponibles
+    GET /networks                        réseaux liO départementaux
     GET /info                            source des horaires, validité, jour de référence
-    GET /route?from=Toulouse&to=Perpignan[&exclude=Car TER&exclude=INTERCITES][&transfer_min=5]
+    GET /route?from=Toulouse&to=Perpignan[&exclude=Car TER&exclude=INTERCITES][&exclude_network=liO 34][&transfer_min=5]
 
 Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front traduit
 à partir de `code`, `message` (anglais) n'est là que pour le débogage.
@@ -65,17 +66,28 @@ def modes():
     return {"modes": network.modes()}
 
 
+@app.get("/networks")
+def networks():
+    """Réseaux de cars liO : un par département (liO 09 … liO 82) et les lignes régionales (liO TIL)."""
+    return {"networks": network.networks()}
+
+
 @app.get("/route")
 def route(departure: str = Query(..., alias="from", min_length=1),
           destination: str = Query(..., alias="to", min_length=1),
           exclude: list[str] = Query([], description="Types de transport à ignorer (voir /modes)"),
+          exclude_network: list[str] = Query([], description="Réseaux liO à ignorer (voir /networks)"),
           transfer_min: float = Query(DEFAULT_TRANSFER_MIN, ge=0, le=60,
                                       description="Minutes de changement par correspondance, en plus de l'attente estimée")):
     unknown = set(exclude) - {m["id"] for m in network.modes()}
     if unknown:
         error(400, "unknown_mode", f"Unknown transport mode(s): {', '.join(sorted(unknown))}")
+    unknown = set(exclude_network) - {n["id"] for n in network.networks()}
+    if unknown:
+        error(400, "unknown_network", f"Unknown liO network(s): {', '.join(sorted(unknown))}")
     try:
-        r = network.route(departure, destination, exclude=set(exclude), transfer_min=transfer_min)
+        r = network.route(departure, destination, exclude=set(exclude), exclude_networks=set(exclude_network),
+                          transfer_min=transfer_min)
     except UnknownPlace as e:
         error(404, "unknown_place", f"Unknown city or station: {e.args[0]}")
     except SamePlace:

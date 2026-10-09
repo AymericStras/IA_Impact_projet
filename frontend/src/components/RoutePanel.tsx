@@ -1,4 +1,4 @@
-import { WALK, type ErrorCode, type Mode, type Place, type Route } from "../api";
+import { WALK, type ErrorCode, type LioNetwork, type Mode, type Place, type Route } from "../api";
 import { formatMinutes, useI18n } from "../i18n";
 import Trame from "./Trame";
 
@@ -12,6 +12,9 @@ type Props = {
   modes: Mode[];
   excluded: string[];
   toggleMode: (mode: string) => void;
+  networks: LioNetwork[];
+  excludedNetworks: string[];
+  setExcludedNetworks: (next: string[]) => void;
   loading: boolean;
   route: Route | null;
   error: ErrorCode | null;
@@ -19,7 +22,7 @@ type Props = {
 
 const slug = (mode: string) => mode.replace(/\s+/g, "-").toLowerCase();
 
-export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, modes, excluded, toggleMode, loading, route, error }: Props) {
+export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, modes, excluded, toggleMode, networks, excludedNetworks, setExcludedNetworks, loading, route, error }: Props) {
   const { t } = useI18n();
   const [first, ...rest] = t.headline.split(" ");
 
@@ -82,6 +85,46 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             );
           })}
         </fieldset>
+        {!excluded.includes("Car liO") && networks.length > 0 && (
+          <details className="lio-details">
+            <summary>
+              {t.lioNetworks} <span className="lio-count">{networks.length - excludedNetworks.length}/{networks.length}</span>
+              <small>{t.lioNetworksHint}</small>
+            </summary>
+            <fieldset className="modes lio-networks">
+              <legend className="sr-only">{t.lioNetworks}</legend>
+              <div className="legend-actions">
+                <button type="button" onClick={() => setExcludedNetworks([])} disabled={!excludedNetworks.length}>
+                  {t.all}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExcludedNetworks(networks.map((n) => n.id))}
+                  disabled={excludedNetworks.length === networks.length}
+                >
+                  {t.none}
+                </button>
+              </div>
+              {networks.map((n) => {
+                const on = !excludedNetworks.includes(n.id);
+                const code = n.id.replace(/^liO\s*/, "");
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    aria-pressed={on}
+                    title={`${n.id} · ${n.department}`}
+                    className={`chip chip-small${on ? "" : " off"}`}
+                    onClick={() => setExcludedNetworks(on ? [...excludedNetworks, n.id] : excludedNetworks.filter((x) => x !== n.id))}
+                  >
+                    <span className="chip-code">{code}</span>
+                    {n.department}
+                  </button>
+                );
+              })}
+            </fieldset>
+          </details>
+        )}
         <button className="cta" type="submit" disabled={loading || !from.trim() || !to.trim()}>
           {loading ? t.searching : t.search}
         </button>
@@ -107,7 +150,7 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
                   {i === 0 && <span className="stop">{leg.from}</span>}
                   {i > 0 && leg.wait_minutes > 0 && <span className="change">{t.change(formatMinutes(leg.wait_minutes))}</span>}
                   <span className="leg">
-                    <span className={`mode mode-${slug(leg.mode)}`}>{t.modes[leg.mode] ?? leg.mode}</span>
+                    <span className={`mode mode-${slug(leg.mode)}`}>{leg.network || (t.modes[leg.mode] ?? leg.mode)}</span>
                     <span className="leg-time">{formatMinutes(leg.minutes)}</span>
                     {leg.mode === WALK ? (
                       <span className="leg-meta">{leg.line}</span>

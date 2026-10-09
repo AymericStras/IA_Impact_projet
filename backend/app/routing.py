@@ -47,6 +47,9 @@ MODES = ("Train TER", "Car TER", "Car liO", "Car à réservation", "INTERCITES",
 WALK = "Marche"
 # Temps pour rejoindre (ou quitter) un arrêt quand on demande une ville : la gare qui porte le nom de la
 # ville est le point de départ naturel, un arrêt de car en périphérie demande de traverser la ville.
+LIO_DEPARTMENTS = {"09": "Ariège", "11": "Aude", "12": "Aveyron", "30": "Gard", "31": "Haute-Garonne", "32": "Gers",
+                   "34": "Hérault", "46": "Lot", "48": "Lozère", "65": "Hautes-Pyrénées", "66": "Pyrénées-Orientales",
+                   "81": "Tarn", "82": "Tarn-et-Garonne", "TIL": "Lignes régionales"}
 ACCESS_MIN = {"main": 0, "station": 10, "hub": 10, "stop": 20}
 
 
@@ -85,13 +88,14 @@ class Network:
         self.name = {i: p["name"] for i, p in self.place.items()}
 
         self.missions = []
-        # Trajets directs : (a, b, mode) -> [minutes, mission, i, j, trains/jour]. On garde la mission la plus rapide,
-        # et on additionne les fréquences de toutes les missions qui font a -> b sans changement dans ce mode.
+        # Un « service » = (mode, réseau) : ("Train TER", "") pour la SNCF, ("Car liO", "liO 34") pour les cars liO.
+        # Trajets directs : (a, b, mode, réseau) -> [minutes, mission, i, j, trains/jour]. On garde la mission la plus
+        # rapide, et on additionne les fréquences de toutes les missions qui font a -> b sans changement.
         self.rides = {}
-        self.segments = {}              # (a, b, mode) -> minutes : arrêts consécutifs, pour dessiner le réseau
+        self.segments = {}              # (a, b, mode, réseau) -> minutes : arrêts consécutifs, pour dessiner le réseau
         with open(data_dir / "missions_occitanie.csv", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                m = {"mode": r["mode"], "line": r["line"], "trips": int(r["trips"]), "per_day": int(r["trips_ref_day"]),
+                m = {"mode": r["mode"], "network": r.get("network", ""), "line": r["line"], "trips": int(r["trips"]), "per_day": int(r["trips_ref_day"]),
                      "stops": r["stops"].split("|"),
                      "arr": [float(x) for x in r["arrival_min"].split("|")],
                      "dep": [float(x) for x in r["departure_min"].split("|")],
@@ -100,7 +104,7 @@ class Network:
                 self.missions.append(m)
                 stops = m["stops"]
                 for i in range(len(stops) - 1):
-                    seg = (stops[i], stops[i + 1], m["mode"])
+                    seg = (stops[i], stops[i + 1], m["mode"], m["network"])
                     t = m["arr"][i + 1] - m["dep"][i]
                     self.segments[seg] = min(t, self.segments.get(seg, t))
                     if not m["pickup"][i]:
@@ -108,7 +112,7 @@ class Network:
                     for j in range(i + 1, len(stops)):
                         if not m["dropoff"][j] or stops[j] == stops[i]:
                             continue
-                        key = (stops[i], stops[j], m["mode"])
+                        key = (stops[i], stops[j], m["mode"], m["network"])
                         t = m["arr"][j] - m["dep"][i]
                         best = self.rides.get(key)
                         if best is None:
@@ -117,9 +121,9 @@ class Network:
                             best[4] += m["per_day"]
                             if t < best[0]:
                                 best[:4] = [t, k, i, j]
-        self.adj = defaultdict(list)    # a -> [(b, mode)]
-        for a, b, mode in self.rides:
-            self.adj[a].append((b, mode))
+        self.adj = defaultdict(list)    # a -> [(b, mode, réseau)]
+        for a, b, mode, network in self.rides:
+            self.adj[a].append((b, mode, network))
         self.walk = defaultdict(list)   # a -> [(b, minutes, mètres)]
         walk_path = data_dir / "walk_links.csv"
         if walk_path.exists():
@@ -165,12 +169,13 @@ class Network:
 
     def edges(self):
         """Tronçons entre arrêts consécutifs (pour tracer le réseau)."""
-        return [{"from_id": a, "to_id": b, "mode": m, "minutes": round(t, 1)} for (a, b, m), t in self.segments.items()]
+        return [{"from_id": a, "to_id": b, "mode": m, "network": n, "minutes": round(t, 1)}
+                for (a, b, m, n), t in self.segments.items()]
 
     def modes(self):
         """Types de transport présents, avec leur nombre de tronçons et de missions."""
         links, missions = defaultdict(int), defaultdict(int)
-        for _, _, m in self.segments:
+        for _, _, m, _ in self.segments:
             links[m] += 1
         for m in self.missions:
             missions[m["mode"]] += 1
@@ -178,11 +183,21 @@ class Network:
         return [{"id": m, "links": links[m], "missions": missions[m]}
                 for m in sorted(links, key=lambda m: (order.get(m, len(MODES)), m))]
 
+    def networks(self):
+        """Réseaux liO (un par département + lignes régionales), avec leur département et leur nombre de missions."""
+        missions = defaultdict(int)
+        for m in self.missions:
+            if m["network"]:
+                missions[m["network"]] += 1
+        return [{"id": n, "department": LIO_DEPARTMENTS.get(n.removeprefix("liO "), ""), "missions": c}
+                for n, c in sorted(missions.items())]
+
     # ── Dijkstra ─────────────────────────────────────────────────────────────
-    def route(self, departure, destination, exclude=(), transfer_min=DEFAULT_TRANSFER_MIN):
+    def route(self, departure, destination, exclude=(), exclude_networks=(), transfer_min=DEFAULT_TRANSFER_MIN):
         """Itinéraire le plus court entre une gare (ou ville) de départ et une gare (ou ville) d'arrivée.
 
-        exclude      : types de transport à ignorer, ex. {"Car TER", "INTERCITES de nuit"}
+        exclude          : types de transport à ignorer, ex. {"Car TER", "INTERCITES de nuit"}
+        exclude_networks : réseaux liO à ignorer, ex. {"liO 34", "liO TIL"} (voir networks())
         transfer_min : minutes de changement par correspondance (en plus de l'attente estimée)
 
         Renvoie None s'il n'existe aucun chemin, sinon
@@ -211,13 +226,13 @@ class Network:
             if u in targets and boarded and (best is None or d + targets[u] < best[0]):
                 best = (d + targets[u], (u, boarded))
             moves = []
-            for v, mode in self.adj[u]:
-                if mode in exclude:
+            for v, mode, network in self.adj[u]:
+                if mode in exclude or network in exclude_networks:
                     continue
-                ride, _, _, _, per_day = self.rides[(u, v, mode)]
-                moves.append((v, True, ride + (transfer_min + expected_wait(per_day) if boarded else 0), mode))
+                ride, _, _, _, per_day = self.rides[(u, v, mode, network)]
+                moves.append((v, True, ride + (transfer_min + expected_wait(per_day) if boarded else 0), (mode, network)))
             for v, minutes, _ in self.walk[u]:
-                moves.append((v, boarded, minutes, WALK))
+                moves.append((v, boarded, minutes, (WALK, "")))
             for v, b, cost, mode in moves:
                 nd = d + cost
                 if nd < dist.get((v, b), float("inf")):
@@ -231,17 +246,17 @@ class Network:
     def _itinerary(self, state, prev, transfer_min, total, sources, targets):
         legs = []
         while state in prev:
-            (p, was_boarded), mode = prev[state]
+            (p, was_boarded), (mode, network) = prev[state]
             u = state[0]
             if mode == WALK:
                 minutes, meters = next((m, mt) for v, m, mt in self.walk[p] if v == u)
-                legs.append({"mode": WALK, "line": f"{meters} m", "from": self.name[p], "to": self.name[u],
+                legs.append({"mode": WALK, "network": "", "line": f"{meters} m", "from": self.name[p], "to": self.name[u],
                              "from_id": p, "to_id": u, "minutes": minutes, "wait_minutes": 0,
                              "stops": [p, u], "trips_per_day": None})
             else:
-                minutes, k, i, j, per_day = self.rides[(p, u, mode)]
+                minutes, k, i, j, per_day = self.rides[(p, u, mode, network)]
                 m = self.missions[k]
-                legs.append({"mode": mode, "line": m["line"], "from": self.name[p], "to": self.name[u],
+                legs.append({"mode": mode, "network": network, "line": m["line"], "from": self.name[p], "to": self.name[u],
                              "from_id": p, "to_id": u, "minutes": round(minutes, 1),
                              "wait_minutes": round(transfer_min + expected_wait(per_day), 1) if was_boarded else 0,
                              "stops": m["stops"][i:j + 1], "trips_per_day": per_day})
@@ -265,6 +280,8 @@ def main():
     p.add_argument("destination")
     p.add_argument("--exclude", action="append", default=[], metavar="MODE",
                    help="type de transport à ignorer (répétable) : " + ", ".join(MODES))
+    p.add_argument("--exclude-network", action="append", default=[], metavar="RÉSEAU",
+                   help="réseau liO à ignorer (répétable), ex. « liO 34 »")
     p.add_argument("--transfer", type=float, default=DEFAULT_TRANSFER_MIN,
                    help="minutes de changement par correspondance, en plus de l'attente estimée")
     args = p.parse_args()
@@ -274,7 +291,8 @@ def main():
     if unknown:
         sys.exit(f"Type de transport inconnu : {', '.join(sorted(unknown))}")
     try:
-        r = net.route(args.departure, args.destination, exclude=set(args.exclude), transfer_min=args.transfer)
+        r = net.route(args.departure, args.destination, exclude=set(args.exclude),
+                      exclude_networks=set(args.exclude_network), transfer_min=args.transfer)
     except UnknownPlace as e:
         sys.exit(f"Ville ou gare inconnue : {e.args[0]!r}")
     except SamePlace:
@@ -292,7 +310,7 @@ def main():
         if leg["mode"] == WALK:
             print(f"  {leg['from']} -> {leg['to']}  {fmt(leg['minutes'])} à pied ({leg['line']})")
             continue
-        print(f"  {leg['from']} -> {leg['to']}  {fmt(leg['minutes'])}  [{leg['mode']} · {leg['line']}]"
+        print(f"  {leg['from']} -> {leg['to']}  {fmt(leg['minutes'])}  [{leg['network'] or leg['mode']} · {leg['line']}]"
               f"  {len(leg['stops']) - 2} arrêt(s) intermédiaire(s), {leg['trips_per_day']}/jour")
 
 
