@@ -9,7 +9,8 @@ Coût d'un itinéraire = temps passé à bord + pour chaque correspondance :
   - `transfer_min` minutes de changement (descendre, changer de quai),
   - l'attente moyenne du véhicule suivant, estimée par sa fréquence : la moitié de l'intervalle entre
     deux passages sur une journée de service de 16 h (19 trains/jour -> ~25 min).
-Le premier départ n'est pas pénalisé : le voyageur choisit son heure. Les heures précises ne sont pas
+Le premier départ n'est pas pénalisé : le voyageur choisit son heure — sauf s'il ne circule pas le jour de
+référence (car du week-end, des vacances…) : il compte alors l'attente maximale, comme une correspondance rare. Les heures précises ne sont pas
 modélisées ; la durée annoncée est une estimation moyenne.
 
 Un arrêt de car liO et une gare SNCF à moins de 400 m sont reliés à pied (data/walk_links.csv) :
@@ -17,8 +18,8 @@ la marche n'est pas un trajet, elle ne compte pas comme une montée.
 
 Le départ et la destination sont des noms de ville ou de gare, tels que les sort le NER (FROM / TO).
 
-    python -m app.routing Toulouse Perpignan
-    python -m app.routing Toulouse Tarbes --exclude INTERCITES --transfer 5
+    python -m app.routing Toulouse Perpignan                  # TER + liO (data/ter_lio)
+    python -m app.routing Toulouse Tarbes --dataset full --exclude INTERCITES --transfer 5
 
     from app.routing import Network
     route = Network().route("Toulouse", "Perpignan")
@@ -62,6 +63,13 @@ def normalize(s):
 def is_lio(stop_id):
     """Les arrêts liO ont un identifiant préfixé par L ; les gares SNCF, leur code UIC."""
     return stop_id.startswith("L")
+
+
+def boarding_cost(boarded, per_day, transfer_min):
+    """Minutes ajoutées à une montée : correspondance (changement + attente) ou premier départ."""
+    if boarded:
+        return transfer_min + expected_wait(per_day)
+    return 0 if per_day > 0 else MAX_WAIT_MIN
 
 
 class UnknownPlace(KeyError):
@@ -230,7 +238,7 @@ class Network:
                 if mode in exclude or network in exclude_networks:
                     continue
                 ride, _, _, _, per_day = self.rides[(u, v, mode, network)]
-                moves.append((v, True, ride + (transfer_min + expected_wait(per_day) if boarded else 0), (mode, network)))
+                moves.append((v, True, ride + boarding_cost(boarded, per_day, transfer_min), (mode, network)))
             for v, minutes, _ in self.walk[u]:
                 moves.append((v, boarded, minutes, (WALK, "")))
             for v, b, cost, mode in moves:
@@ -258,7 +266,7 @@ class Network:
                 m = self.missions[k]
                 legs.append({"mode": mode, "network": network, "line": m["line"], "from": self.name[p], "to": self.name[u],
                              "from_id": p, "to_id": u, "minutes": round(minutes, 1),
-                             "wait_minutes": round(transfer_min + expected_wait(per_day), 1) if was_boarded else 0,
+                             "wait_minutes": round(boarding_cost(was_boarded, per_day, transfer_min), 1),
                              "stops": m["stops"][i:j + 1], "trips_per_day": per_day})
             state = (p, was_boarded)
         legs.reverse()
@@ -282,11 +290,13 @@ def main():
                    help="type de transport à ignorer (répétable) : " + ", ".join(MODES))
     p.add_argument("--exclude-network", action="append", default=[], metavar="RÉSEAU",
                    help="réseau liO à ignorer (répétable), ex. « liO 34 »")
+    p.add_argument("--dataset", default="ter_lio",
+                   help="sous-dossier de data/ (défaut ter_lio : TER + liO) ; « full » pour la base complète")
     p.add_argument("--transfer", type=float, default=DEFAULT_TRANSFER_MIN,
                    help="minutes de changement par correspondance, en plus de l'attente estimée")
     args = p.parse_args()
 
-    net = Network()
+    net = Network(DATA_DIR if args.dataset == "full" else DATA_DIR / args.dataset)
     unknown = set(args.exclude) - {m["id"] for m in net.modes()}
     if unknown:
         sys.exit(f"Type de transport inconnu : {', '.join(sorted(unknown))}")

@@ -2,6 +2,9 @@
 
     uvicorn app.main:app --reload        (depuis backend/)
 
+Jeu de données : variable d'environnement IA_DATASET, nom d'un sous-dossier de data/ (défaut « ter_lio » :
+trains TER, cars TER et cars liO). IA_DATASET=full charge la base complète (data/, avec Intercités, TGV…).
+
     GET /health
     GET /stations?q=mont&limit=20
     GET /places                          gares + coordonnées
@@ -15,6 +18,7 @@ Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front tradu
 à partir de `code`, `message` (anglais) n'est là que pour le débogage.
 """
 import json
+import os
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,8 +28,10 @@ from .routing import DATA_DIR, DEFAULT_TRANSFER_MIN, Network, SamePlace, Unknown
 app = FastAPI(title="IA Impact — routing API", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
-network = Network()
-build_info = json.loads((DATA_DIR / "build_info.json").read_text(encoding="utf-8"))
+DATASET = os.environ.get("IA_DATASET", "ter_lio")
+data_dir = DATA_DIR if DATASET == "full" else DATA_DIR / DATASET
+network = Network(data_dir)
+build_info = json.loads((data_dir / "build_info.json").read_text(encoding="utf-8"))
 
 
 def error(status, code, message):

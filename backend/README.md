@@ -13,7 +13,8 @@ temps à bord  +  pour chaque correspondance : 5 min de changement + attente moy
 
 L'attente moyenne est déduite de la fréquence réelle : 16 trains/jour sur une journée de 16 h, c'est un
 train par heure, donc 30 min d'attente en moyenne (plafond 2 h). Le premier départ n'est pas pénalisé :
-le voyageur choisit son heure. Les horaires précis ne sont pas modélisés ; la durée est une estimation.
+le voyageur choisit son heure — sauf s'il ne circule pas le jour de référence (car du week-end, des
+vacances…), qui compte alors l'attente maximale. Les horaires précis ne sont pas modélisés ; la durée est une estimation.
 
 Un arrêt de car liO et une gare SNCF à moins de 400 m sont reliés **à pied** (4,5 km/h) : on peut descendre
 du car et prendre le train. La marche ne compte pas comme une correspondance.
@@ -23,19 +24,36 @@ estimé : 0 min pour la gare qui porte son nom (« Toulouse » → Matabiau), 10
 gares routières, 20 min pour un arrêt de car quelconque. C'est ce qui permet « Montpellier → Ganges » en
 car liO depuis Trifontaine plutôt qu'un détour en train par Nîmes.
 
+## Deux bases
+
+| Dossier | Contenu | Utilisée par |
+|---|---|---|
+| `data/ter_lio/` | **trains TER, cars TER, cars liO** — l'offre régionale (5 049 arrêts, 3 267 missions) | l'API et le site, **par défaut** |
+| `data/` | base complète : en plus Intercités (jour et nuit), TGV INOUI, OUIGO, Navette, Car à réservation | `IA_DATASET=full` |
+
+```bash
+uvicorn app.main:app --reload                    # TER + liO
+IA_DATASET=full uvicorn app.main:app --reload    # base complète
+```
+
+La copie est produite par `scripts/filter_dataset.py` à partir de la base complète (mêmes fichiers, réduits aux
+missions des modes gardés et aux arrêts qu'elles desservent).
+
 ```
 backend/
 ├── app/
 │   ├── main.py                 # API HTTP (FastAPI)
 │   └── routing.py              # graphe des trajets directs + Dijkstra, utilisable seul en CLI
-├── data/                       # généré par scripts/build_from_gtfs.py
+├── data/                       # base complète, générée par scripts/build_from_gtfs.py
+│   ├── ter_lio/                # copie TER + liO (même structure), générée par scripts/filter_dataset.py
 │   ├── stations_occitanie.csv  # 5 050 arrêts : 360 gares SNCF (id UIC) + ~4 700 arrêts liO (id « L… »)
 │   ├── missions_occitanie.csv  # 3 381 missions : suites d'arrêts + temps de passage médians + fréquence
 │   ├── walk_links.csv          # 345 correspondances à pied arrêt liO <-> gare SNCF
 │   ├── connections_occitanie.csv  # tronçons entre arrêts consécutifs, ancien format (notebook, Neo4j)
 │   └── build_info.json         # version et validité des horaires, jour de référence
 ├── scripts/
-│   └── build_from_gtfs.py      # télécharge les sources et reconstruit data/
+│   ├── build_from_gtfs.py      # télécharge les sources et reconstruit data/
+│   └── filter_dataset.py       # crée data/ter_lio/ (ou une autre sélection de modes)
 └── tests/
 ```
 
@@ -51,8 +69,9 @@ uvicorn app.main:app --reload       # http://127.0.0.1:8000/docs
 En ligne de commande, sans serveur et sans dépendance :
 
 ```bash
-python -m app.routing Toulouse Perpignan
-python -m app.routing Toulouse Tarbes --exclude INTERCITES --exclude "Car TER" --transfer 10
+python -m app.routing Toulouse Perpignan                       # TER + liO
+python -m app.routing Toulouse Tarbes --exclude "Car TER" --transfer 10
+python -m app.routing Toulouse Lourdes --dataset full --exclude INTERCITES
 python -m app.routing Montpellier Ganges --exclude-network "liO 34"
 ```
 
@@ -62,6 +81,7 @@ Les horaires SNCF changent (le GTFS actuel est valide du 09/10/2026 au 31/03/202
 
 ```bash
 python scripts/build_from_gtfs.py --refresh   # ~2 s, ~150 Mo de RAM, sources dans backend/.cache/
+python scripts/filter_dataset.py               # puis régénérer la copie TER + liO
 ```
 
 Sources :
@@ -87,7 +107,7 @@ Les réseaux urbains (tram de Montpellier, métro de Toulouse…) ne sont pas in
 
 | Méthode | Route | Réponse |
 |---|---|---|
-| GET | `/health` | `{"status": "ok", "stations": 5050}` |
+| GET | `/health` | `{"status": "ok", "stations": 5049}` (TER + liO) |
 | GET | `/info` | source, validité des horaires, jour de référence, volumes |
 | GET | `/stations?q=nimes&limit=20` | `{"stations": ["Nîmes Centre", "Nîmes Pont du Gard"]}` |
 | GET | `/places` | arrêts avec `id, name, lat, lon, department, commune, network` (`sncf` ou `lio`) |

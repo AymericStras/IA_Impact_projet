@@ -1,10 +1,10 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.routing import Network, expected_wait, normalize
+from app.routing import DATA_DIR, Network, expected_wait, normalize
 
-client = TestClient(app)
-ALL_BUT_TER_TRAIN = ["Car TER", "Car liO", "Car à réservation", "INTERCITES", "INTERCITES de nuit", "TGV INOUI", "OUIGO"]
+client = TestClient(app)  # jeu de données par défaut : data/ter_lio (Train TER, Car TER, Car liO)
+ALL_BUT_TER_TRAIN = ["Car TER", "Car liO"]
 
 
 def route(**params):
@@ -43,10 +43,12 @@ def test_direct_trains_are_found():
 
 
 def test_exclude_modes():
-    full = route(**{"from": "Toulouse", "to": "Tarbes"}).json()
-    no_ic = route(**{"from": "Toulouse", "to": "Tarbes", "exclude": ["INTERCITES", "INTERCITES de nuit"]}).json()
-    assert not any("INTERCITES" in leg["mode"] for leg in no_ic["legs"])
-    assert full["minutes"] <= no_ic["minutes"]
+    full = route(**{"from": "Montpellier", "to": "Ganges"}).json()
+    no_lio = route(**{"from": "Montpellier", "to": "Ganges", "exclude": "Car liO"})
+    assert any(leg["mode"] == "Car liO" for leg in full["legs"])
+    assert no_lio.status_code == 404  # Ganges n'a pas de gare : sans liO, pas de trajet
+    trains = route(**{"from": "Toulouse", "to": "Tarbes", "exclude": ["Car TER", "Car liO"]}).json()
+    assert {leg["mode"] for leg in trains["legs"]} == {"Train TER"}
 
 
 def test_lio_coaches():
@@ -73,7 +75,7 @@ def test_lio_networks():
 
 def test_walk_between_coach_stop_and_station():
     # Le Vigan -> Montpellier sans le 608 : car 140 jusqu'à Nîmes, à pied jusqu'à la gare, puis train
-    r = route(**{"from": "Le Vigan", "to": "Montpellier Saint-Roch", "exclude": "INTERCITES"}).json()
+    r = route(**{"from": "Le Vigan", "to": "Montpellier Saint-Roch", "exclude_network": "liO 34"}).json()
     modes = [l["mode"] for l in r["legs"]]
     assert "Car liO" in modes and "Marche" in modes and modes[-1] != "Car liO"
     walk = next(l for l in r["legs"] if l["mode"] == "Marche")
@@ -103,9 +105,23 @@ def test_places_network_modes_info():
     edges = client.get("/network").json()["edges"]
     assert edges and all(e["from_id"] in ids and e["to_id"] in ids for e in edges)
     modes = {m["id"] for m in client.get("/modes").json()["modes"]}
-    assert {"Train TER", "Car TER", "INTERCITES"} <= modes
+    assert modes == {"Train TER", "Car TER", "Car liO"}
     info = client.get("/info").json()
     assert info["valid_until"] > info["valid_from"]
+
+
+def test_full_dataset_is_kept():
+    # La base complète reste dans data/ : Intercités, TGV… pour qui en a besoin (IA_DATASET=full)
+    full = Network(DATA_DIR)
+    assert {"INTERCITES", "TGV INOUI"} <= {m["id"] for m in full.modes()}
+    assert full.route("Toulouse", "Lourdes")["legs"][0]["mode"] == "INTERCITES"
+
+
+def test_first_departure_must_run_on_weekdays():
+    # Un car qui ne roule pas le jour de référence ne sert qu'en dernier recours
+    r = route(**{"from": "Montpellier", "to": "Rodez"}).json()
+    first_ride = next(leg for leg in r["legs"] if leg["mode"] != "Marche")
+    assert first_ride["trips_per_day"] > 0
 
 
 def test_dijkstra_on_small_network(tmp_path):
