@@ -1,13 +1,11 @@
 # Frontend — carte et itinéraires
 
-React + Vite + Leaflet. Carte des gares d'Occitanie, liste des lieux par département,
-et calcul d'itinéraire via le backend (`/route`) : trajets directs, correspondances avec
-attente estimée, nombre d'arrêts et de trains par jour ; filtre par type de transport
-(liste fournie par `/modes`) : un mode désactivé est exclu
-du calcul et masqué sur la carte. Les ~4 700 arrêts de car liO sont dessinés plus discrètement et
-n'apparaissent dans l'onglet Lieux qu'en cherchant. Quand « Car liO » est actif, un volet « Réseaux liO »
-permet d'exclure les cars d'un département (liO 09 … liO 82) ou les lignes régionales (liO TIL). Direction artistique inspirée de la
-charte liO (marine `#0f2149`, rouge `#c90c0f`, jaune `#ffd500`, capsules et points).
+React + Vite + Leaflet. Carte des gares desservies par les **trains liO** (TER Occitanie), liste des
+gares par département, et calcul d'itinéraire via le backend (`/route`) : trajets directs,
+correspondances avec attente estimée, nombre d'arrêts et de trains par jour. Direction artistique
+inspirée de la charte liO (marine `#0f2149`, rouge `#c90c0f`, jaune `#ffd500`, capsules et points).
+Le front affiche ce que sert l'API : avec `IA_DATASET=full` côté backend, les arrêts de car liO
+apparaissent aussi (plus discrets, et dans l'onglet Lieux seulement en cherchant).
 Interface en anglais et en français, langue détectée depuis le navigateur.
 
 ## Lancer

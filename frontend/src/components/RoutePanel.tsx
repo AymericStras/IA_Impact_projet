@@ -1,4 +1,4 @@
-import { WALK, type ErrorCode, type LioNetwork, type Mode, type Place, type Route } from "../api";
+import { WALK, type ErrorCode, type Place, type Route } from "../api";
 import { formatMinutes, useI18n } from "../i18n";
 import Trame from "./Trame";
 
@@ -9,12 +9,6 @@ type Props = {
   setFrom: (v: string) => void;
   setTo: (v: string) => void;
   onSearch: () => void;
-  modes: Mode[];
-  excluded: string[];
-  toggleMode: (mode: string) => void;
-  networks: LioNetwork[];
-  excludedNetworks: string[];
-  setExcludedNetworks: (next: string[]) => void;
   loading: boolean;
   route: Route | null;
   error: ErrorCode | null;
@@ -22,7 +16,7 @@ type Props = {
 
 const slug = (mode: string) => mode.replace(/\s+/g, "-").toLowerCase();
 
-export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, modes, excluded, toggleMode, networks, excludedNetworks, setExcludedNetworks, loading, route, error }: Props) {
+export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch, loading, route, error }: Props) {
   const { t } = useI18n();
   const [first, ...rest] = t.headline.split(" ");
 
@@ -65,69 +59,6 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
             <option key={p.id} value={p.name} />
           ))}
         </datalist>
-        {/* Un seul mode (jeu « trains liO ») : rien à filtrer */}
-        {modes.length > 1 && (
-          <fieldset className="modes">
-            <legend>
-              {t.transports} <small>{t.transportsHint}</small>
-            </legend>
-            {modes.map((m) => {
-              const on = !excluded.includes(m.id);
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-pressed={on}
-                  className={`chip mode-${slug(m.id)}${on ? "" : " off"}`}
-                  onClick={() => toggleMode(m.id)}
-                >
-                  <span className="chip-dot" aria-hidden="true" />
-                  {t.modes[m.id] ?? m.id}
-                </button>
-              );
-            })}
-          </fieldset>
-        )}
-        {!excluded.includes("Car liO") && networks.length > 0 && (
-          <details className="lio-details">
-            <summary>
-              {t.lioNetworks} <span className="lio-count">{networks.length - excludedNetworks.length}/{networks.length}</span>
-              <small>{t.lioNetworksHint}</small>
-            </summary>
-            <fieldset className="modes lio-networks">
-              <legend className="sr-only">{t.lioNetworks}</legend>
-              <div className="legend-actions">
-                <button type="button" onClick={() => setExcludedNetworks([])} disabled={!excludedNetworks.length}>
-                  {t.all}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExcludedNetworks(networks.map((n) => n.id))}
-                  disabled={excludedNetworks.length === networks.length}
-                >
-                  {t.none}
-                </button>
-              </div>
-              {networks.map((n) => {
-                const on = !excludedNetworks.includes(n.id);
-                const code = n.id.replace(/^liO\s*/, "");
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    aria-pressed={on}
-                    title={`${n.id} · ${n.department}`}
-                    className={`chip chip-small${on ? "" : " off"}`}
-                    onClick={() => setExcludedNetworks(on ? [...excludedNetworks, n.id] : excludedNetworks.filter((x) => x !== n.id))}
-                  >
-                    <span className="chip-code">{code}</span>
-                    {n.department}
-                  </button>
-                );
-              })}
-            </fieldset>
-          </details>
-        )}
         <button className="cta" type="submit" disabled={loading || !from.trim() || !to.trim()}>
           {loading ? t.searching : t.search}
         </button>

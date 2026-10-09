@@ -76,49 +76,6 @@ button, input, select { font: inherit; color: inherit; }
   align-self: flex-end; margin: -6px 10px -6px 0; width: 32px; height: 32px; border-radius: 50%;
   border: 2px solid var(--white); background: var(--navy); color: var(--white); cursor: pointer; font-weight: 700; z-index: 1;
 }
-/* Filtre des transports : une pastille par mode, barrée quand elle est désactivée */
-.modes { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.modes legend { padding: 0; margin-bottom: 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.modes legend small { font-weight: 500; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,.65); margin-left: 6px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-  border: 2px solid var(--white); border-radius: var(--pill); padding: 5px 12px 5px 8px;
-  background: var(--white); color: var(--navy); font-size: 13px; font-weight: 700;
-  transition: background .12s, color .12s, opacity .12s;
-}
-.chip-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--navy); }
-.chip.mode-train-ter .chip-dot { background: var(--red); }
-.chip.mode-car-ter .chip-dot { background: var(--yellow); box-shadow: inset 0 0 0 2px var(--navy); }
-.chip.mode-intercites-de-nuit .chip-dot { background: var(--navy-2); box-shadow: inset 0 0 0 3px var(--white), 0 0 0 1px var(--navy); }
-.chip.mode-tgv-inoui .chip-dot { background: var(--grey-2); }
-.chip.mode-car-lio .chip-dot { background: var(--white); box-shadow: inset 0 0 0 3px var(--red); }
-.chip.off { background: transparent; color: rgba(255,255,255,.6); border-color: rgba(255,255,255,.3); text-decoration: line-through; }
-.chip.off .chip-dot { opacity: .35; }
-/* Réseaux liO : pastilles plus petites, code du département en tête */
-.lio-networks { gap: 5px; }
-.lio-details summary {
-  cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 6px;
-  font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-}
-.lio-details summary::-webkit-details-marker { display: none; }
-.lio-details summary::before { content: "▸"; color: var(--yellow); transition: rotate .15s; }
-.lio-details[open] summary::before { rotate: 90deg; }
-.lio-details summary small { font-weight: 500; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,.65); }
-.lio-count { padding: 1px 7px; border-radius: var(--pill); background: var(--red); font-size: 11px; letter-spacing: .02em; }
-.lio-details .lio-networks { margin-top: 8px; }
-.legend-actions { flex-basis: 100%; display: flex; justify-content: flex-end; gap: 4px; }
-.legend-actions button {
-  border: 0; background: none; color: var(--white); font: inherit; font-size: 11px; font-weight: 700;
-  letter-spacing: .06em; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0 2px;
-}
-.legend-actions button:disabled { opacity: .35; cursor: default; text-decoration: none; }
-.chip-small { padding: 3px 10px 3px 4px; font-size: 12px; gap: 6px; }
-.chip-code {
-  min-width: 26px; height: 20px; padding: 0 5px; border-radius: var(--pill); display: inline-flex; align-items: center;
-  justify-content: center; background: var(--red); color: var(--white); font-size: 11px; font-weight: 800;
-}
-.chip.off .chip-code { background: rgba(255,255,255,.25); }
-.chip:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
 .cta {
   margin-top: 4px; border: 0; border-radius: var(--pill); padding: 13px 18px; cursor: pointer;
   background: var(--red); color: var(--white); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
