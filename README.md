@@ -4,8 +4,8 @@ Give it the data of one trip; it produces a PDF recap with the SNCF Voyageurs
 logo and emails it to the traveller from `zhaoyang.fr`.
 
 It does not collect or complete data. What you send is what is shown. The
-recap is not a ticket: the PDF and the email say so, and simulated trips carry
-a "SIMULATION" watermark.
+recap is not a ticket: the PDF and the email say so, and every PDF carries a
+"SIMULATION" watermark (the condition under which SNCF allowed the logo).
 
 - [What data the recap needs](#what-data-the-recap-needs) — read this first
 - [Use it: three ways](#use-it-three-ways)
@@ -45,7 +45,7 @@ leaves the line out. Nothing is guessed or computed for you.
 | `trip.reference` | text ≤ 40 | header, email, file name | omitted; the file is named by date |
 | `trip.title` | text ≤ 160 | above the route | omitted |
 | `recipient.name` | text ≤ 120 | "Bonjour Mme Martin," | "Bonjour," |
-| `trip.simulated` | `true` / `false` (default `false`) | watermark and a notice | no watermark |
+| `trip.simulated` | `true` / `false` (default `false`) | the notice "données simulées" in the PDF and the email | no notice (the watermark is always there) |
 | `locale` | `"fr"` (default) | | |
 
 **Rules that get a request refused (422):**
@@ -98,14 +98,14 @@ The machine-readable contract is `contracts/recap_request.schema.json`.
 
 All three need the **private bundle** from the project owner
 (`sncf-bilan.private.zip`, sent privately, never committed). Unzip it at the
-project root: it adds `credentials.env` (the keys) and the real logo.
+project root: it adds `credentials.env`, the keys.
 
 ```sh
 unzip -o sncf-bilan.private.zip      # at the project root
 ```
 
-Without the bundle everything still runs in dry-run with a placeholder logo;
-only real sending is unavailable.
+Without the bundle everything still runs in dry-run (tests, preview, PDF);
+only the hosted service and real sending are unavailable.
 
 ### A. Call the hosted service (nothing to install)
 
@@ -245,7 +245,7 @@ per recap. Records and PDFs are deleted after 30 days.
 
 | File | Shows | Result |
 |---|---|---|
-| `01-aller-retour-complet.json` | round trip, 30 travellers, 2nd class, both prices, simulated | accepted, watermark |
+| `01-aller-retour-complet.json` | round trip, 30 travellers, 2nd class, both prices, simulated | accepted |
 | `02-aller-simple-minimal.json` | one way, required values only | accepted, "non communiqué" |
 | `03-correspondance-premiere-classe.json` | connection, 1st class, train/coach/seat, long name, total price only | accepted |
 | `90-invalide-prix-incoherent.json` | 30 × 15,00 € ≠ 400,00 € | 422 |

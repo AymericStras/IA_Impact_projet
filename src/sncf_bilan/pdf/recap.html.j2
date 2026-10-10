@@ -11,7 +11,8 @@
   <p class="legal">Ce document est un récapitulatif. Il ne constitue pas un titre de transport et ne permet pas de voyager.{% if trip.simulated %} Les données de ce voyage sont simulées (prototype de démonstration).{% endif %}</p>
   <p class="trace">Établi le {{ issued_on }} · Empreinte des données {{ fingerprint }}</p>
 </div>
-{% if trip.simulated %}<div class="watermark">SIMULATION</div>{% endif %}
+{# Always present: the logo is used on condition that every recap carries it. #}
+<div class="watermark">SIMULATION</div>
 
 <header class="masthead">
   <img class="logo" src="{{ logo_href }}" alt="SNCF Voyageurs">

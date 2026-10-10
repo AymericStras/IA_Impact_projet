@@ -59,15 +59,18 @@ def test_complete_round_trip_shows_every_field():
     assert "Train" not in text  # no seating columns when no leg has seating data
 
 
-def test_simulated_trips_carry_the_watermark_and_real_ones_do_not():
+def test_every_recap_carries_the_watermark_and_only_simulated_ones_the_notice():
     simulated = text_of(pdf_of(example("01-aller-retour-complet")))
     assert "SIMULATION" in simulated
     assert "simulées" in simulated
 
+    # The watermark is the condition for using the logo: it does not depend on the data.
     real = text_of(pdf_of(example("01-aller-retour-complet", simulated=False)))
-    assert "SIMULATION" not in real
+    assert "SIMULATION" in real
     assert "simulées" not in real
     assert "Il ne constitue pas un titre de transport" in real
+
+    assert "SIMULATION" in text_of(pdf_of(example("02-aller-simple-minimal")))
 
 
 def test_missing_optional_values_are_stated_not_invented():
