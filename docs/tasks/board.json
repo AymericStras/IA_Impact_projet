@@ -55,14 +55,16 @@
     },
     {
       "id": "DEPLOY-001",
-      "status": "blocked",
-      "priority": 2,
+      "status": "done",
       "title": "Run the stack at https://zhaoyang.fr/sncf-chatbot/",
-      "requires": [
-        "deploy/deploy.sh preflight returning allowed=true (host memory PSI full < 1 %, host-guard without resource_pressure / production_health failure)",
-        "web image built (needs P6-GUARDRAILS sub-path support)"
-      ],
-      "acceptance": "deploy.sh status shows both containers healthy under their caps; public web and API health return 200; one real conversation completed on the public URL; other services on the host unchanged"
+      "evidence": "release fb06e85d40b5 built on the server (bounded build), public browser test with voice passed, existing sites 200 before and after; see docs/DEPLOYMENT.md"
+    },
+    {
+      "id": "DEPLOY-002",
+      "status": "ready",
+      "priority": 3,
+      "title": "Redeploy once the five-field frontend and the journey UI are committed; exercise a rollback; prune old images",
+      "acceptance": "Public site shows five rows and the simulated journey; rollback to the previous release verified; only current and previous images kept"
     },
     {
       "id": "QA-REAL-VOICE",
