@@ -143,6 +143,8 @@ def main() -> int:
             if patch.get("user_intent") == "confirm" and turn.get("expect", {}).get("user_intent") not in (None, "confirm"):
                 totals["false_confirmations"] += 1
             for field, old in state.items():
+                if field == "participants_breakdown":
+                    continue  # derived detail: dropped on purpose when it no longer adds up
                 if old not in (None, {}) and field in merged and merged[field] is None and not any(
                     o["field"] == field and o["operation"] == "clear" for o in patch.get("operations", [])
                 ):

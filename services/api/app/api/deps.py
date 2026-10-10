@@ -38,7 +38,7 @@ def _openai_provider(
 
 def get_extraction_provider(settings: Settings = Depends(get_settings)) -> ExtractionProvider:
     return _openai_provider(
-        settings.openai_api_key,
+        settings.resolved_openai_api_key,
         settings.extraction_model,
         settings.transcription_model,
         settings.llm_timeout_seconds,
@@ -48,7 +48,7 @@ def get_extraction_provider(settings: Settings = Depends(get_settings)) -> Extra
 
 def get_transcription_provider(settings: Settings = Depends(get_settings)) -> TranscriptionProvider:
     return _openai_provider(
-        settings.openai_api_key,
+        settings.resolved_openai_api_key,
         settings.extraction_model,
         settings.transcription_model,
         settings.llm_timeout_seconds,
@@ -81,6 +81,8 @@ class RateLimiter:
         self._hits: dict[str, deque[float]] = defaultdict(deque)
 
     def allow(self, key: str) -> bool:
+        if self.per_minute <= 0:
+            return True
         now = time.monotonic()
         hits = self._hits[key]
         while hits and now - hits[0] > 60:

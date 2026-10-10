@@ -1,15 +1,13 @@
 {
-  "timestamp": "20261010-022609",
+  "timestamp": "20261010-024146",
   "model": "default (EXTRACTION_MODEL)",
   "totals": {
     "cases": 36,
-    "passed": 35,
+    "passed": 36,
     "unsupported_fills": 0,
     "false_confirmations": 0,
     "dropped_fields": 0
   },
-  "failed": [
-    "approximate_correction_blocks"
-  ],
+  "failed": [],
   "synthetic_text_only": true
 }

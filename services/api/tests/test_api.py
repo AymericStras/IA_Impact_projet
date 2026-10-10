@@ -540,3 +540,30 @@ def test_overwriting_a_known_value_is_always_announced(client: TestClient, provi
         "C'est noté, j'ai mis à jour le nombre de participants : 28 participants (au lieu de 30 participants). "
     )
     assert body["assistant_message"].endswith("Quel jour et à quelle heure souhaitez-vous partir ?")
+
+
+def test_api_key_can_come_from_a_mounted_file(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    key_file = tmp_path / "key"
+    key_file.write_text("unit-test-not-a-secret\n")
+    assert (
+        Settings(_env_file=None, openai_api_key_file=str(key_file)).resolved_openai_api_key
+        == "unit-test-not-a-secret"
+    )
+    assert (
+        Settings(
+            _env_file=None, openai_api_key="from-env", openai_api_key_file=str(key_file)
+        ).resolved_openai_api_key
+        == "from-env"
+    )
+
+
+def test_no_rate_limiting_by_default(client: TestClient, provider: FakeProvider) -> None:
+    cid = _create(client)["conversation_id"]
+    for i in range(40):
+        assert (
+            client.post(
+                f"/api/v1/conversations/{cid}/messages",
+                json={"content": "Bonjour.", "client_message_id": f"n{i}"},
+            ).status_code
+            == 200
+        )

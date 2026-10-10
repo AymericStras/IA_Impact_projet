@@ -58,6 +58,23 @@ def unsupported_operations(patch: RequirementPatch, message: str) -> list[str]:
     return [op.field for op in patch.operations if not evidence_supported(op.evidence, message)]
 
 
+def describe_patch(patch: RequirementPatch) -> str:
+    """Shape of a patch for the logs: fields, operations and which parts are filled — never the text."""
+    operations = []
+    for op in patch.operations:
+        value = op.value
+        if value is None or isinstance(value, int):
+            shape = "int" if isinstance(value, int) else "null"
+        else:
+            shape = "+".join(name for name, part in value.model_dump().items() if part is not None) or "empty"
+        operations.append(f"{op.field}:{op.operation}:{shape}")
+    ambiguities = [f"{a.field}:{a.kind.value}" for a in patch.ambiguities]
+    conflicts = [c.field for c in patch.conflicts]
+    return (
+        f"intent={patch.user_intent.value} ops={operations} ambiguities={ambiguities} conflicts={conflicts}"
+    )
+
+
 def build_user_content(message: str, requirements: PartialRequirements, recent: list[Message]) -> str:
     history = "\n".join(f"{m.role}: {m.content}" for m in recent[-RECENT_MESSAGES:]) or "(aucun)"
     current = json.dumps(requirements.model_dump(mode="json", by_alias=True), ensure_ascii=False)
@@ -88,6 +105,7 @@ class ExtractionService:
         user_content = build_user_content(message, requirements, recent)
         for attempt in (1, 2):
             patch = self._provider.extract(system_prompt=system_prompt, user_content=user_content)
+            log.info("patch %s", describe_patch(patch))
             unsupported = unsupported_operations(patch, message)
             if not unsupported:
                 return patch

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=REPO_ROOT / ".env", extra="ignore")
 
     openai_api_key: str | None = None
+    # Deployment: path of a file holding the key (mounted secret); takes effect when the variable is unset.
+    openai_api_key_file: str | None = None
     transcription_model: str = "gpt-transcribe"
     extraction_model: str = "gpt-5.4-mini"
     # Reasoning effort sent only to gpt-5* models (ignored otherwise).
@@ -28,8 +30,17 @@ class Settings(BaseSettings):
     max_audio_bytes: int = 10 * 1024 * 1024
     max_audio_seconds: int = 120
     llm_timeout_seconds: float = 30.0
-    rate_limit_per_minute: int = 30
+    # Per-conversation limit on messages per minute; 0 disables it (the default: no rate limiting).
+    rate_limit_per_minute: int = 0
     log_level: str = "INFO"
+
+    @property
+    def resolved_openai_api_key(self) -> str | None:
+        if self.openai_api_key:
+            return self.openai_api_key
+        if self.openai_api_key_file:
+            return Path(self.openai_api_key_file).read_text(encoding="utf-8").strip() or None
+        return None
 
     @property
     def cors_origin_list(self) -> list[str]:

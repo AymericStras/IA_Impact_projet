@@ -1,0 +1,21 @@
+# API image. Built on the developer machine (never on the server) for linux/amd64:
+#   docker buildx build --platform linux/amd64 -f deploy/Dockerfile.api -t sncf-chatbot-api:<release> .
+FROM python:3.12-alpine AS build
+COPY --from=ghcr.io/astral-sh/uv:0.6.14 /uv /bin/uv
+WORKDIR /srv/services/api
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
+COPY services/api/pyproject.toml services/api/uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+COPY services/api/app ./app
+
+FROM python:3.12-alpine
+# ffprobe/ffmpeg: real-media check and duration cap on uploaded recordings.
+RUN apk add --no-cache ffmpeg && adduser -D -u 1000 app && mkdir -p /data && chown app /data
+WORKDIR /srv/services/api
+COPY --from=build /srv/services/api /srv/services/api
+ENV PATH="/srv/services/api/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+USER 1000
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]

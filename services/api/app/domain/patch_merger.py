@@ -46,6 +46,19 @@ class MergeResult:
     ambiguities: list[Ambiguity] = field(default_factory=list)
 
 
+_TIME_EXPRESSION = re.compile(r"(?<!\d)(\d{1,2})\s*(?:h|heures?|:)\s*(\d{2})?(?!\d)", re.IGNORECASE)
+
+
+def time_in_evidence(evidence: str) -> str | None:
+    """« Avant 17 h » → 17:00, « 8h30 » → 08:30. None when there is no time or more than one."""
+    found = {
+        f"{int(hour):02d}:{minute or '00'}"
+        for hour, minute in _TIME_EXPRESSION.findall(evidence)
+        if int(hour) < 24 and (not minute or int(minute) < 60)
+    }
+    return found.pop() if len(found) == 1 else None
+
+
 _APPROXIMATION = re.compile(
     r"\b(environ|à peu près|a peu pres|approximativement|presque|autour de|dans les|quelque|une \w+aine)\b"
 )
@@ -113,10 +126,21 @@ def _merge_datetime(
     )
 
 
+_LEADING_ARTICLE = re.compile(r"^(?:l['’]\s*|(?:le|la|les|un|une|des|du|de la|de l['’])\s+)", re.IGNORECASE)
+
+
+def _label(value: str | None) -> str | None:
+    """« la biodiversité » → « biodiversité »: a label, not a noun phrase."""
+    if value is None:
+        return None
+    stripped = _LEADING_ARTICLE.sub("", value.strip(), count=1).strip()
+    return stripped or None
+
+
 def _merge_teaching(
     current: TeachingType | None, incoming: TeachingTypePatch, correction: bool
 ) -> TeachingType:
-    new = TeachingType(subject=incoming.subject, theme=incoming.theme)
+    new = TeachingType(subject=_label(incoming.subject), theme=_label(incoming.theme))
     if current is None or correction:
         if correction and current is not None:
             return TeachingType(subject=new.subject or current.subject, theme=new.theme or current.theme)
@@ -171,6 +195,17 @@ def _apply_participants(reqs: PartialRequirements, patch: RequirementPatch, resu
     else:
         # New breakdown that contradicts an already known total without an explicit correction.
         result.conflicts.append("participants_count")
+
+
+def _drop_stale_breakdown(reqs: PartialRequirements) -> None:
+    """The breakdown is detail for the planner: keep it only while it adds up to the total."""
+    breakdown = reqs.participants_breakdown
+    if breakdown is None or reqs.participants_count is None:
+        return
+    if breakdown.students is None or breakdown.accompanying is None:
+        return  # partial detail (« dont 2 professeurs ») does not contradict a stated total
+    if breakdown.students + breakdown.accompanying != reqs.participants_count:
+        reqs.participants_breakdown = None
 
 
 def _infer_return_date(reqs: PartialRequirements, result: MergeResult) -> None:
@@ -234,6 +269,15 @@ def _apply_patch(current: PartialRequirements, patch: RequirementPatch) -> Merge
         elif op.field in ("departure", "return"):
             if not isinstance(op.value, PartialDateTimePatch):
                 continue
+            if op.value.time is None:
+                # The model sometimes drops the time of a bare answer (« Avant 17 h. »): read it back
+                # from its own quote when that quote contains exactly one time expression.
+                quoted = time_in_evidence(op.evidence)
+                if quoted is not None:
+                    op = op.model_copy(update={"value": op.value.model_copy(update={"time": quoted})})
+            assert isinstance(op.value, PartialDateTimePatch)
+            if op.value.date is None and op.value.time is None:
+                continue  # a constraint alone carries no information: nothing to store
             assert before is None or isinstance(before, PartialDateTime)
             new_dt, conflict = _merge_datetime(before, op.value, correction)
             if conflict:
@@ -251,6 +295,7 @@ def _apply_patch(current: PartialRequirements, patch: RequirementPatch) -> Merge
 
     if not vague_count:
         _apply_participants(reqs, patch, result)
+    _drop_stale_breakdown(reqs)
     _infer_return_date(reqs, result)
 
     # De-duplicate while preserving order.

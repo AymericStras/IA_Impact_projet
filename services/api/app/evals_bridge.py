@@ -19,7 +19,7 @@ from app.services.providers.openai_provider import OpenAIProvider
 def _provider(model: str | None) -> OpenAIProvider:
     settings = get_settings()
     return OpenAIProvider(
-        api_key=settings.openai_api_key,
+        api_key=settings.resolved_openai_api_key,
         extraction_model=model or settings.extraction_model,
         transcription_model=settings.transcription_model,
         timeout_seconds=settings.llm_timeout_seconds,

@@ -166,3 +166,61 @@ def test_approximate_count_is_never_stored_as_exact() -> None:
         ).requirements.participants_count
         == 35
     )
+
+
+def test_constraint_without_date_or_time_stores_nothing() -> None:
+    result = apply_patch(PartialRequirements(), mk_patch(op("return", dt(None, None, "latest"))))
+    assert result.requirements.return_ is None
+    assert result.changed_fields == []
+
+
+def test_missing_time_is_read_back_from_the_quoted_evidence() -> None:
+    from app.domain.patch_merger import time_in_evidence
+
+    assert time_in_evidence("Avant 17 h") == "17:00"
+    assert time_in_evidence("vers 8h30") == "08:30"
+    assert time_in_evidence("à 9:05") == "09:05"
+    assert time_in_evidence("seize heures") is None  # words are left to the model
+    assert time_in_evidence("entre 8 h et 9 h") is None  # two candidates: do not choose
+    assert time_in_evidence("le 12 novembre") is None
+
+    state = PartialRequirements(
+        departure=PartialDateTime(
+            date=date(2026, 11, 12), time="08:00", constraint=TimeConstraint.APPROXIMATE
+        )
+    )
+    dropped = mk_patch(op("return", dt("2026-11-12", None, "latest"), evidence="Avant 17 h"))
+    assert apply_patch(state, dropped).requirements.return_ == PartialDateTime(
+        date=date(2026, 11, 12), time="17:00", constraint=TimeConstraint.LATEST
+    )
+    constraint_only = mk_patch(op("return", dt(None, None, "latest"), evidence="Avant 17 h."))
+    assert apply_patch(state, constraint_only).requirements.return_ == PartialDateTime(
+        date=date(2026, 11, 12), time="17:00", constraint=TimeConstraint.LATEST
+    )
+
+
+def test_breakdown_is_dropped_when_it_no_longer_adds_up() -> None:
+    first = apply_patch(PartialRequirements(), COMPLETE_PATCH).requirements  # 27 + 3 = 30
+    corrected = apply_patch(
+        first,
+        mk_patch(op("participants_count", 32, "replace"), intent=UserIntent.CORRECT_INFORMATION, total=32),
+    ).requirements
+    assert corrected.participants_count == 32
+    assert corrected.participants_breakdown is None
+    # A new consistent breakdown is kept.
+    again = apply_patch(
+        corrected, mk_patch(intent=UserIntent.CORRECT_INFORMATION, students=29, accompanying=3)
+    ).requirements
+    assert again.participants_count == 32 and again.participants_breakdown is not None
+
+
+def test_theme_labels_lose_their_leading_article() -> None:
+    result = apply_patch(PartialRequirements(), mk_patch(op("teaching_type", tt(theme="la biodiversité"))))
+    assert result.requirements.teaching_type == TeachingType(theme="biodiversité")
+    kept = apply_patch(
+        PartialRequirements(), mk_patch(op("teaching_type", tt("Histoire", "l’architecture romane")))
+    )
+    assert kept.requirements.teaching_type == TeachingType(subject="Histoire", theme="architecture romane")
+    assert apply_patch(
+        PartialRequirements(), mk_patch(op("teaching_type", tt(theme="Moyen Âge")))
+    ).requirements.teaching_type == TeachingType(theme="Moyen Âge")

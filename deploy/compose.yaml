@@ -1,0 +1,56 @@
+# Runtime stack on zhao-zenbook: /data/services/sncf-chatbot/compose.yaml
+# Images are built on the developer machine and loaded with `docker load`; nothing is built here.
+# Hard caps keep the stack inside a fixed budget (about 0.75 GiB total, no swap) whatever happens.
+name: sncf-chatbot
+
+services:
+  api:
+    image: sncf-chatbot-api:${RELEASE:?set RELEASE}
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    ports:
+      - "127.0.0.1:${API_PORT:-33451}:8000"
+    environment:
+      OPENAI_API_KEY_FILE: /run/secrets/openai-api-key
+      EXTRACTION_MODEL: ${EXTRACTION_MODEL:-gpt-5.4-mini}
+      TRANSCRIPTION_MODEL: ${TRANSCRIPTION_MODEL:-gpt-transcribe}
+      DATABASE_URL: sqlite:////data/chatbot.db
+      CORS_ORIGINS: https://zhaoyang.fr
+      LOG_LEVEL: INFO
+    volumes:
+      - ./data:/data
+      - ${OPENAI_KEY_FILE:-/home/zhao/.local/share/credentials/sncf-chatbot/openai-api-key}:/run/secrets/openai-api-key:ro
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "3" }
+
+  web:
+    image: sncf-chatbot-web:${RELEASE:?set RELEASE}
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+      - /srv/apps/web/.next/cache:size=64m,uid=1000,gid=1000
+    ports:
+      - "127.0.0.1:${WEB_PORT:-33450}:3000"
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "3" }

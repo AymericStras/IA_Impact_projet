@@ -1,0 +1,24 @@
+# Web image (Next.js standalone). Built on the developer machine for linux/amd64:
+#   docker buildx build --platform linux/amd64 -f deploy/Dockerfile.web \
+#     --build-arg NEXT_PUBLIC_BASE_PATH=/sncf-chatbot -t sncf-chatbot-web:<release> .
+FROM node:22-alpine AS build
+RUN corepack enable
+WORKDIR /srv/apps/web
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY apps/web ./
+ARG NEXT_PUBLIC_BASE_PATH=""
+# Empty API base URL = same origin: the gateway proxies <base path>/api/ to the API container.
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH NEXT_PUBLIC_API_BASE_URL="" NEXT_PUBLIC_DEMO_MODE=false \
+    NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
+RUN pnpm build
+
+FROM node:22-alpine
+WORKDIR /srv/apps/web
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+COPY --from=build --chown=1000:1000 /srv/apps/web/.next/standalone ./
+COPY --from=build --chown=1000:1000 /srv/apps/web/.next/static ./.next/static
+COPY --from=build --chown=1000:1000 /srv/apps/web/public ./public
+USER 1000
+EXPOSE 3000
+CMD ["node", "server.js"]
