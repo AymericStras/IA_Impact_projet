@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
 import { DEFAULT_CLIENT_CONFIG } from "@/lib/env";
 import { formatElapsed } from "@/lib/format";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { FLUID_BUTTON_SM, TOUCH_TARGET } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 import { toApiError } from "@/services";
 import { AudioTranscriptionPreview } from "./AudioTranscriptionPreview";
 import { ErrorMessage } from "./ErrorMessage";
@@ -230,11 +231,11 @@ export function VoiceRecorder({
           onDismiss={onClose}
         />
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void start()} className={TOUCH_TARGET}>
+          <Button type="button" variant="outline" size="sm" onClick={() => void start()} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
             <MicIcon aria-hidden="true" />
             {fr.voice.reRecord}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} className={TOUCH_TARGET}>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
             {fr.voice.writeInstead}
           </Button>
         </div>
@@ -247,13 +248,19 @@ export function VoiceRecorder({
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-xl border bg-card p-3"
+      // One row on short viewports (phone landscape), two otherwise; rows wrap when text is large.
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border bg-card tall:p-3 short:px-2 short:py-1"
       role="group"
       aria-label={fr.voice.title}
       data-testid="voice-recorder"
     >
-      <div className="flex items-center gap-3">
-        <span className="relative flex size-9 shrink-0 items-center justify-center" aria-hidden="true">
+      {/*
+        The timer drops under the status text when the text would otherwise be squeezed into
+        fragments, and the status dot is capped by the shell width (cqw): at a very large
+        text size on a phone the card must not take the height the conversation needs.
+      */}
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 tall:basis-full short:flex-[1_1_12rem]">
+        <span className="relative flex size-[min(2.25rem,12cqw)] shrink-0 items-center justify-center" aria-hidden="true">
           {recording ? (
             <>
               <span className="absolute inset-0 animate-ping rounded-full bg-destructive/30 motion-reduce:animate-none" />
@@ -263,17 +270,17 @@ export function VoiceRecorder({
             <Loader2Icon className="size-5 animate-spin text-muted-foreground motion-reduce:animate-none" />
           )}
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-[1_1_6rem] [overflow-wrap:anywhere]">
           <p className="text-sm font-medium" role="status" aria-live="polite">
             {state.phase === "requesting" ? fr.voice.requesting : uploading ? fr.voice.uploading : fr.voice.recording}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground short:hidden">
             {recording && state.notice ? state.notice : recording ? fr.voice.recordingHint : null}
           </p>
         </div>
         {recording ? (
           <output
-            className="font-mono text-sm tabular-nums text-muted-foreground"
+            className="ml-auto font-mono text-sm tabular-nums text-muted-foreground"
             aria-label={fr.voice.timerLabel}
             data-testid="voice-timer"
           >
@@ -281,13 +288,14 @@ export function VoiceRecorder({
           </output>
         ) : null}
       </div>
-      <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={cancel} disabled={uploading} className={TOUCH_TARGET}>
-          <XIcon aria-hidden="true" />
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={cancel} disabled={uploading} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+          {/* Decorative: dropped on very narrow shells so both buttons fit on one row. */}
+          <XIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.cancel}
         </Button>
-        <Button type="button" size="sm" onClick={stop} disabled={!recording} className={TOUCH_TARGET}>
-          <SquareIcon aria-hidden="true" />
+        <Button type="button" size="sm" onClick={stop} disabled={!recording} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+          <SquareIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.stop}
         </Button>
       </div>

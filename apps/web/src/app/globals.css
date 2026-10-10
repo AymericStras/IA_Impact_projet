@@ -109,6 +109,110 @@
   outline-offset: 2px;
 }
 
+/*
+  Responsive tiers. They are CONTAINER queries on the app shell (`.app-shell`, named
+  `app`), expressed in rem, so the layout follows the space that is effectively available:
+  a narrow window, a short window, browser zoom and a larger text size all land in the
+  same tiers. Do not add width/height media queries or px breakpoints next to these.
+
+    wide      >= 48rem wide   two columns (conversation + panel)
+    single    <  48rem wide   single column, panel collapsed into a summary bar
+    roomy     >= 64rem wide   wider panel
+    spacious  >= 80rem wide   widest panel
+    titled    >= 40rem wide   page title shown next to the brand
+    narrow    <  22.5rem wide icon-only secondary buttons
+    short     <= 32.5rem high compact chrome (slim top bar, one-line summary, no hint)
+    tall      >  32.5rem high
+    low       short and >= 30rem wide (phone landscape): floating controls get a gutter
+    not-low   everything else
+*/
+@custom-variant wide {
+  @container app (min-width: 48rem) {
+    @slot;
+  }
+}
+@custom-variant single {
+  @container app (max-width: 47.999rem) {
+    @slot;
+  }
+}
+@custom-variant roomy {
+  @container app (min-width: 64rem) {
+    @slot;
+  }
+}
+@custom-variant spacious {
+  @container app (min-width: 80rem) {
+    @slot;
+  }
+}
+@custom-variant titled {
+  @container app (min-width: 40rem) {
+    @slot;
+  }
+}
+@custom-variant narrow {
+  @container app (max-width: 22.499rem) {
+    @slot;
+  }
+}
+@custom-variant short {
+  @container app (max-height: 32.5rem) {
+    @slot;
+  }
+}
+@custom-variant tall {
+  @container app (min-height: 32.501rem) {
+    @slot;
+  }
+}
+@custom-variant low {
+  @container app (max-height: 32.5rem) and (min-width: 30rem) {
+    @slot;
+  }
+}
+@custom-variant not-low {
+  @container app (min-height: 32.501rem) or (max-width: 29.999rem) {
+    @slot;
+  }
+}
+/* A real pointer with hover: the only context where keyboard hints make sense. */
+@custom-variant mouse {
+  @media (hover: hover) and (pointer: fine) {
+    @slot;
+  }
+}
+
+/*
+  App shell: fills the dynamic viewport (browser chrome shown or hidden), with a 100vh
+  fallback. `--app-height` is set by useKeyboardInset while an on-screen keyboard covers
+  part of the layout viewport. The shell is the query container for the tiers above.
+*/
+.app-shell {
+  container: app / size;
+  height: 100vh;
+}
+@supports (height: 100dvh) {
+  .app-shell {
+    height: var(--app-height, 100dvh);
+  }
+}
+
+/* Horizontal page gutter that also clears notches and rounded corners. */
+.px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* iOS zooms the page when a focused field is under 16px: never go below it on touch. */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
+  }
+}
+
 @layer utilities {
   .thin-scrollbar {
     scrollbar-width: thin;

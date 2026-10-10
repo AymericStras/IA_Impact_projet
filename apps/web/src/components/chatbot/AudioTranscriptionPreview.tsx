@@ -5,7 +5,8 @@ import { MicIcon, SendHorizontalIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET, isSubmitEnter } from "@/lib/ui";
+import { FLUID_BUTTON_SM, TOUCH_TARGET, isSubmitEnter } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 
 interface AudioTranscriptionPreviewProps {
   transcript: string;
@@ -41,7 +42,7 @@ export function AudioTranscriptionPreview({
 
   return (
     <form
-      className="flex flex-col gap-2 rounded-xl border bg-card p-3"
+      className="flex flex-col rounded-xl border bg-card tall:gap-2 tall:p-3 short:gap-1 short:px-2 short:py-1"
       aria-labelledby="transcription-title"
       data-testid="transcription-preview"
       onSubmit={(event) => {
@@ -50,13 +51,13 @@ export function AudioTranscriptionPreview({
       }}
     >
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0 [overflow-wrap:anywhere]">
           <p id="transcription-title" className="text-sm font-medium">
             {fr.transcription.title}
           </p>
-          <p className="text-xs text-muted-foreground">{fr.transcription.hint}</p>
+          <p className="text-xs text-muted-foreground short:hidden">{fr.transcription.hint}</p>
         </div>
-        <Button type="button" size="icon-sm" variant="ghost" onClick={onCancel} aria-label={fr.transcription.cancel} className={TOUCH_TARGET}>
+        <Button type="button" size="icon-sm" variant="ghost" onClick={onCancel} aria-label={fr.transcription.cancel} className={cn("shrink-0", TOUCH_TARGET)}>
           <XIcon aria-hidden="true" />
         </Button>
       </div>
@@ -71,7 +72,9 @@ export function AudioTranscriptionPreview({
         disabled={disabled}
         rows={3}
         maxLength={maxLength}
-        className="min-h-20 bg-background"
+        // The field grows with its text (field-sizing): capped so that a long dictation
+        // scrolls inside it instead of pushing the buttons out of the viewport.
+        className="bg-background tall:max-h-28 tall:min-h-20 short:max-h-16 short:min-h-11"
         onKeyDown={(event) => {
           if (isSubmitEnter(event)) {
             event.preventDefault();
@@ -81,11 +84,11 @@ export function AudioTranscriptionPreview({
       />
       {demoNotice ? <p className="text-xs text-muted-foreground">{fr.transcription.demoNotice}</p> : null}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onReRecord} disabled={disabled} className={TOUCH_TARGET}>
+        <Button type="button" variant="outline" size="sm" onClick={onReRecord} disabled={disabled} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
           <MicIcon aria-hidden="true" />
           {fr.transcription.reRecord}
         </Button>
-        <Button type="submit" size="sm" disabled={disabled || !trimmed} className={TOUCH_TARGET}>
+        <Button type="submit" size="sm" disabled={disabled || !trimmed} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
           <SendHorizontalIcon aria-hidden="true" />
           {fr.transcription.send}
         </Button>

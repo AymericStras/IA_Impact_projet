@@ -5,6 +5,7 @@ import { MicIcon, SendHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNarrowerThan } from "@/hooks/useViewportTracking";
 import { fr } from "@/i18n/fr";
 import { DEFAULT_CLIENT_CONFIG, isDemoMode } from "@/lib/env";
 import { TOUCH_TARGET, isSubmitEnter } from "@/lib/ui";
@@ -33,6 +34,8 @@ interface MessageComposerProps {
 
 /** The counter only appears once the text gets close to the limit. */
 const COUNTER_THRESHOLD = 0.9;
+/** Below this composer width (in rem) the long placeholder would wrap: use the short one. */
+const SHORT_PLACEHOLDER_BELOW_REM = 20;
 
 export function MessageComposer({
   value,
@@ -49,7 +52,9 @@ export function MessageComposer({
   const [recorderOpen, setRecorderOpen] = useState(false);
   const [micSupported, setMicSupported] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const wasSendingRef = useRef(false);
+  const cramped = useNarrowerThan(formRef, SHORT_PLACEHOLDER_BELOW_REM, [recorderOpen]);
 
   useEffect(() => {
     setMicSupported(isRecordingSupported() || isDemoMode);
@@ -82,7 +87,7 @@ export function MessageComposer({
   };
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className={cn("flex flex-col tall:gap-1.5", className)}>
       {recorderOpen ? (
         <VoiceRecorder
           onTranscribe={onTranscribe}
@@ -98,7 +103,10 @@ export function MessageComposer({
         />
       ) : (
         <form
-          className="flex items-end gap-2 rounded-2xl border border-input bg-card p-2 transition-shadow focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/40"
+          ref={formRef}
+          // The field keeps a usable width: when it cannot (very large text), the buttons
+          // wrap to their own row under it.
+          className="flex flex-wrap items-end justify-end gap-2 rounded-2xl border border-input bg-card transition-shadow focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/40 tall:p-2 short:p-1"
           onSubmit={(event) => {
             event.preventDefault();
             submit();
@@ -113,15 +121,16 @@ export function MessageComposer({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={fr.composer.placeholder}
+            placeholder={cramped ? fr.composer.placeholderShort : fr.composer.placeholder}
             aria-describedby="composer-hint"
             disabled={disabled}
             maxLength={maxLength}
             rows={1}
             // The surrounding form carries the focus ring for this field.
             data-focus-inside=""
-            className="max-h-40 min-h-11 flex-1 resize-none border-0 bg-transparent px-2 py-2.5 shadow-none focus-visible:border-transparent focus-visible:ring-0 lg:min-h-10 lg:py-2"
+            className="min-h-10 min-w-0 flex-[1_1_10rem] resize-none border-0 bg-transparent px-2 py-2 shadow-none placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap focus-visible:border-transparent focus-visible:ring-0 pointer-coarse:min-h-[44px] pointer-coarse:py-2.5 tall:max-h-40 short:max-h-20"
           />
+          <div className="flex shrink-0 items-center gap-2">
           <Tooltip>
             <TooltipTrigger
               render={
@@ -151,14 +160,18 @@ export function MessageComposer({
           >
             <SendHorizontalIcon aria-hidden="true" />
           </Button>
+          </div>
         </form>
       )}
-      <div className="flex items-baseline justify-between gap-3 px-2 text-[0.7rem] text-muted-foreground">
-        <p id="composer-hint">{fr.composer.hint}</p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-2 text-[0.7rem] text-muted-foreground">
+        {/* A keyboard shortcut is only relevant with a physical keyboard, and only when there is room. */}
+        <p id="composer-hint" className="hidden mouse:tall:block">
+          {fr.composer.hint}
+        </p>
         {showCounter && !recorderOpen ? (
           <p
             role="status"
-            className={cn("shrink-0 tabular-nums", atLimit && "font-medium text-foreground")}
+            className={cn("ml-auto tabular-nums", atLimit && "font-medium text-foreground")}
             data-testid="composer-counter"
           >
             {atLimit ? fr.composer.limitReached(maxLength) : fr.composer.counter(value.length, maxLength)}

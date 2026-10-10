@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fr } from "@/i18n/fr";
 import { formatPartialDateTime } from "@/lib/format";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { FLUID_BUTTON_SM, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import {
   TIME_CONSTRAINTS,
@@ -34,7 +34,10 @@ interface RequirementFieldProps {
 }
 
 const SELECT_CLASS =
-  "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm max-lg:h-11 max-lg:text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
+  "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm pointer-coarse:min-h-[44px] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
+
+/** Same limit as the server; the server remains the authority. */
+const STATION_MAX_LENGTH = 80;
 
 /** Readable value of a field: renders server state, no inference. */
 function displayValue(field: FieldName, requirements: PartialRequirements): string {
@@ -46,6 +49,9 @@ function displayValue(field: FieldName, requirements: PartialRequirements): stri
       if (breakdown?.students != null) return fr.fields.participants_count.studentsOnly(breakdown.students);
       return fr.panel.missing;
     }
+    case "departure_station":
+      // Free text from the server, displayed verbatim.
+      return requirements.departure_station || fr.panel.missing;
     case "departure":
       return formatPartialDateTime(requirements.departure);
     case "return":
@@ -95,6 +101,7 @@ export function RequirementField({
 
   // Editor drafts, pre-filled from server state.
   const [count, setCount] = useState("");
+  const [station, setStation] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [constraint, setConstraint] = useState<TimeConstraint>("exact");
@@ -103,6 +110,7 @@ export function RequirementField({
 
   const openEditor = () => {
     setCount(requirements.participants_count?.toString() ?? "");
+    setStation(requirements.departure_station ?? "");
     const dt = field === "departure" ? requirements.departure : field === "return" ? requirements.return : null;
     setDate(dt?.date ?? "");
     setTime(dt?.time ?? "");
@@ -126,6 +134,7 @@ export function RequirementField({
 
   const canSave = (() => {
     if (field === "participants_count") return count.trim() !== "";
+    if (field === "departure_station") return station.trim() !== "";
     if (field === "departure" || field === "return") return date !== "" && time !== "";
     return subject.trim() !== "" || theme.trim() !== "";
   })();
@@ -138,6 +147,8 @@ export function RequirementField({
     try {
       if (field === "participants_count") {
         ok = await onEdit("participants_count", Number(count));
+      } else if (field === "departure_station") {
+        ok = await onEdit("departure_station", station.trim());
       } else if (field === "departure" || field === "return") {
         ok = await onEdit(field, { date, time, constraint });
       } else {
@@ -153,7 +164,7 @@ export function RequirementField({
     <li
       ref={itemRef}
       className={cn(
-        "rounded-xl border bg-card p-3 transition-colors",
+        "rounded-xl border bg-card p-3 transition-colors narrow:p-2",
         clarificationPending && "border-warning/60",
         editing && "border-ring",
       )}
@@ -170,8 +181,8 @@ export function RequirementField({
         >
           {known ? <CheckIcon className="size-3.5" strokeWidth={3} /> : <CircleDashedIcon className="size-5" />}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+        <div className={cn("flex-1", WRAP_ANYWHERE)}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <h3 className="text-sm font-medium">{labels.label}</h3>
             <span className="sr-only">{known ? fr.panel.known : fr.panel.missing}</span>
             <AnimatePresence>
@@ -199,7 +210,7 @@ export function RequirementField({
                 <p className="text-xs text-muted-foreground">{breakdownText(requirements)}</p>
               ) : null}
               {clarificationPending ? (
-                <p className="mt-1 flex items-center gap-1 text-xs text-foreground" data-testid={`field-${field}-clarification`}>
+                <p className="mt-1 flex items-start gap-1 text-xs text-foreground" data-testid={`field-${field}-clarification`}>
                   <TriangleAlertIcon className="size-3.5 shrink-0 text-warning" aria-hidden="true" />
                   {fr.panel.clarificationPending}
                 </p>
@@ -217,10 +228,14 @@ export function RequirementField({
             disabled={disabled}
             aria-label={fr.panel.editingLabel(labels.label)}
             data-edit-button=""
-            className={cn("-mr-1 -mt-1 text-primary", TOUCH_TARGET)}
+            className={cn("-mr-1 -mt-1 shrink-0 text-primary", TOUCH_TARGET)}
           >
             <PencilIcon aria-hidden="true" />
-            {fr.panel.edit}
+            {/*
+              Icon-only when the panel is narrow (tablet column, small phones, large text), so
+              that five rows of values keep a readable width; aria-label names the field.
+            */}
+            <span className="@max-[19rem]/panel:sr-only">{fr.panel.edit}</span>
           </Button>
         ) : null}
       </div>
@@ -241,13 +256,32 @@ export function RequirementField({
                 value={count}
                 onChange={(event) => setCount(event.target.value)}
                 disabled={saving}
-                className="max-lg:h-11"
+                className="pointer-coarse:min-h-[44px]"
+              />
+            </div>
+          ) : null}
+
+          {field === "departure_station" ? (
+            <div className="grid gap-1.5">
+              <Label htmlFor={`${baseId}-station`}>{fr.fields.departure_station.inputLabel}</Label>
+              <Input
+                id={`${baseId}-station`}
+                ref={firstInputRef}
+                type="text"
+                required
+                maxLength={STATION_MAX_LENGTH}
+                autoComplete="off"
+                value={station}
+                placeholder={fr.fields.departure_station.placeholder}
+                onChange={(event) => setStation(event.target.value)}
+                disabled={saving}
+                className="pointer-coarse:min-h-[44px]"
               />
             </div>
           ) : null}
 
           {field === "departure" || field === "return" ? (
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-2.5 @[21.5rem]/panel:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label htmlFor={`${baseId}-date`}>{fr.fields[field].dateLabel}</Label>
                 <Input
@@ -258,7 +292,7 @@ export function RequirementField({
                   value={date}
                   onChange={(event) => setDate(event.target.value)}
                   disabled={saving}
-                  className="max-lg:h-11"
+                  className="pointer-coarse:min-h-[44px]"
                 />
               </div>
               <div className="grid gap-1.5">
@@ -270,10 +304,10 @@ export function RequirementField({
                   value={time}
                   onChange={(event) => setTime(event.target.value)}
                   disabled={saving}
-                  className="max-lg:h-11"
+                  className="pointer-coarse:min-h-[44px]"
                 />
               </div>
-              <div className="grid gap-1.5 sm:col-span-2">
+              <div className="grid gap-1.5 @[21.5rem]/panel:col-span-2">
                 <Label htmlFor={`${baseId}-constraint`}>{fr.fields[field].constraintLabel}</Label>
                 <select
                   id={`${baseId}-constraint`}
@@ -293,7 +327,7 @@ export function RequirementField({
           ) : null}
 
           {field === "teaching_type" ? (
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-2.5 @[21.5rem]/panel:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label htmlFor={`${baseId}-subject`}>{fr.fields.teaching_type.subjectLabel}</Label>
                 <Input
@@ -303,7 +337,7 @@ export function RequirementField({
                   placeholder={fr.fields.teaching_type.subjectPlaceholder}
                   onChange={(event) => setSubject(event.target.value)}
                   disabled={saving}
-                  className="max-lg:h-11"
+                  className="pointer-coarse:min-h-[44px]"
                 />
               </div>
               <div className="grid gap-1.5">
@@ -314,17 +348,17 @@ export function RequirementField({
                   placeholder={fr.fields.teaching_type.themePlaceholder}
                   onChange={(event) => setTheme(event.target.value)}
                   disabled={saving}
-                  className="max-lg:h-11"
+                  className="pointer-coarse:min-h-[44px]"
                 />
               </div>
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={close} disabled={saving} className={TOUCH_TARGET}>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={close} disabled={saving} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
               {fr.panel.cancel}
             </Button>
-            <Button type="submit" size="sm" disabled={!canSave || saving} className={TOUCH_TARGET}>
+            <Button type="submit" size="sm" disabled={!canSave || saving} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
               {saving ? <Loader2Icon className="animate-spin" aria-hidden="true" /> : null}
               {saving ? fr.panel.saving : fr.panel.save}
             </Button>

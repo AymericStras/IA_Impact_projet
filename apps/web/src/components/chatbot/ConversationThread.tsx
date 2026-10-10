@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { ArrowDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { FLUID_BUTTON_SM, TOUCH_TARGET } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/types/contracts";
 import { MessageBubble } from "./MessageBubble";
@@ -22,6 +22,8 @@ interface ConversationThreadProps {
   /** Area below the messages: confirmation card, error, etc. */
   children?: ReactNode;
   className?: string;
+  /** Outer element: its height is the conversation area. */
+  ref?: Ref<HTMLDivElement>;
 }
 
 /** Distance from the bottom (px) under which the thread counts as "at the bottom". */
@@ -38,6 +40,9 @@ const REPLY_TOP_OFFSET = 12;
  * confirmation card and its JSON) is taller than the viewport, the START of that reply is
  * aligned to the top instead of jumping to the very end, so nothing is skipped.
  * Scrolling is instant: the list never animates under the reader.
+ *
+ * "Revenir en bas" never covers message text: it gets its own row under the list, or, on
+ * phone-landscape sized viewports (`low`), an icon-only button in a reserved right gutter.
  */
 export function ConversationThread({
   messages,
@@ -47,6 +52,7 @@ export function ConversationThread({
   footerKey = "",
   children,
   className,
+  ref,
 }: ConversationThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -142,14 +148,14 @@ export function ConversationThread({
   }, [measure, scrollToBottom]);
 
   return (
-    <div className={cn("relative min-h-0", className)}>
+    <div ref={ref} className={cn("relative flex min-h-32 flex-col", className)} data-testid="conversation-area">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="thin-scrollbar h-full overflow-y-auto overscroll-contain lg:pr-1"
+        className="@container/thread thin-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain wide:pr-1"
         data-testid="conversation-scroll"
       >
-        <div ref={contentRef} className="flex flex-col gap-4 pt-4 pb-6">
+        <div ref={contentRef} className="flex flex-col gap-4 tall:pt-4 tall:pb-6 short:pt-2 short:pb-3 low:pr-12">
           <ul role="log" aria-label={fr.conversation.logLabel} aria-relevant="additions" className="flex flex-col gap-3">
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
@@ -163,20 +169,23 @@ export function ConversationThread({
         </div>
       </div>
       {showJump ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            userScrolledUpRef.current = false;
-            scrollToBottom();
-          }}
-          className={cn("absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-card", TOUCH_TARGET)}
-          data-testid="scroll-to-bottom"
-        >
-          <ArrowDownIcon aria-hidden="true" />
-          {fr.conversation.scrollToBottom}
-        </Button>
+        <div className="flex shrink-0 justify-center not-low:pt-1.5 low:absolute low:right-0.5 low:bottom-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              userScrolledUpRef.current = false;
+              scrollToBottom();
+            }}
+            className={cn("rounded-full bg-card low:aspect-square low:px-0", FLUID_BUTTON_SM, TOUCH_TARGET)}
+            data-testid="scroll-to-bottom"
+          >
+            <ArrowDownIcon aria-hidden="true" />
+            {/* Icon-only in the gutter; the label stays the accessible name. */}
+            <span className="low:sr-only">{fr.conversation.scrollToBottom}</span>
+          </Button>
+        </div>
       ) : null}
     </div>
   );

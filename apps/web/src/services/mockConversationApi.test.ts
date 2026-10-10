@@ -56,11 +56,12 @@ describe("mockConversationApi", () => {
 
     const first = await say(
       id,
-      "Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.",
+      "Bonjour, je voudrais organiser une sortie le 12 novembre au départ de Toulouse Matabiau. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.",
     );
     expectValid(first);
     expect(first.requirements.participants_count).toBe(30);
     expect(first.requirements.participants_breakdown).toEqual({ students: 27, accompanying: 3 });
+    expect(first.requirements.departure_station).toBe("Toulouse Matabiau");
     expect(first.requirements.departure).toEqual({ date: "2026-11-12", time: "08:00", constraint: "approximate" });
     expect(first.requirements.teaching_type).toEqual({ subject: "Histoire", theme: "Moyen Âge" });
     expect(first.missing_fields).toEqual(["return"]);
@@ -72,7 +73,9 @@ describe("mockConversationApi", () => {
     expect(second.requirements.return).toEqual({ date: "2026-11-12", time: "17:00", constraint: "latest" });
     expect(second.state).toBe("AWAITING_CONFIRMATION");
     expect(second.ready_for_confirmation).toBe(true);
-    expect(second.assistant_message).toMatch(/^J'ai bien compris votre projet : 30 participants/);
+    expect(second.assistant_message).toBe(
+      "J'ai bien compris votre projet : 30 participants, au départ de Toulouse Matabiau, départ le jeudi 12 novembre 2026 vers 8 h 00, retour le jeudi 12 novembre 2026 au plus tard à 17 h 00, thème : Histoire (Moyen Âge). Pouvez-vous vérifier ces informations avant de continuer ?",
+    );
 
     const edited = await service.editField(id, "participants_count", 32, second.version);
     expectValid(edited);
@@ -86,7 +89,8 @@ describe("mockConversationApi", () => {
     expectValid(confirmed);
     expect(confirmed.state).toBe("CONFIRMED");
     const payload = confirmed.confirmed_requirements as ConfirmedRequirements;
-    expect(payload.schema_version).toBe("1.0");
+    expect(payload.schema_version).toBe("1.1");
+    expect(payload.requirements.departure_station).toBe("Toulouse Matabiau");
     expect(payload.requirements.return.constraint).toBe("latest");
     expect(payload.requirements.participants_count).toBe(32);
 
@@ -167,7 +171,79 @@ describe("mockConversationApi", () => {
       max_audio_bytes: 10_485_760,
       max_message_chars: 4_000,
       timezone: "Europe/Paris",
+      planner_mode: "simulated",
     });
+  });
+
+  it("starts with five missing fields in the canonical order", async () => {
+    const created = await service.create();
+    expect(created.requirements.departure_station).toBeNull();
+    expect(created.missing_fields).toEqual(["participants_count", "departure_station", "departure", "return", "teaching_type"]);
+  });
+
+  it("asks for the station right after the participants and accepts a short answer", async () => {
+    const { conversation_id: id } = await service.create();
+    const first = await say(id, "Nous serons 30, départ le 12 novembre vers 8 h, retour avant 17 h, en histoire.");
+    expectValid(first);
+    expect(first.missing_fields).toEqual(["departure_station"]);
+    expect(first.assistant_message).toBe("De quelle gare souhaitez-vous partir ?");
+    expect(first.ready_for_confirmation).toBe(false);
+
+    const answer = await say(id, "Montpellier Saint-Roch.");
+    expectValid(answer);
+    expect(answer.requirements.departure_station).toBe("Montpellier Saint-Roch");
+    expect(answer.missing_fields).toEqual([]);
+    expect(answer.state).toBe("AWAITING_CONFIRMATION");
+    expect(answer.assistant_message).toContain("30 participants, au départ de Montpellier Saint-Roch, départ le");
+  });
+
+  it.each([
+    ["Nous partirons au départ de Toulouse Matabiau le 3 mars.", "Toulouse Matabiau"],
+    ["On part depuis Montpellier vers 9 h.", "Montpellier"],
+    ["Le rendez-vous est de la gare de Narbonne, avec 20 élèves.", "Narbonne"],
+    ["Gare de nîmes.", "Nîmes"],
+    ["Depuis Saint-Jean-de-Luz.", "Saint-Jean-de-Luz"],
+  ])("extracts the station from « %s »", async (sentence, station) => {
+    const { conversation_id: id } = await service.create();
+    const res = await say(id, sentence);
+    expectValid(res);
+    expect(res.requirements.departure_station).toBe(station);
+  });
+
+  it.each([
+    "Nous préparons cette sortie depuis longtemps avec les collègues.",
+    "Quelle est la gare de départ ?",
+    "Bonjour",
+  ])("does not invent a station from « %s »", async (sentence) => {
+    const { conversation_id: id } = await service.create();
+    const res = await say(id, sentence);
+    expect(res.requirements.departure_station).toBeNull();
+    expect(res.missing_fields).toContain("departure_station");
+  });
+
+  it("edits the station from the panel, and asks before replacing it from the chat", async () => {
+    const { conversation_id: id } = await service.create();
+    const first = await say(id, "Nous serons 30 au départ de Toulouse Matabiau.");
+    expect(first.requirements.departure_station).toBe("Toulouse Matabiau");
+
+    const edited = await service.editField(id, "departure_station", "  Montauban ", first.version);
+    expectValid(edited);
+    expect(edited.requirements.departure_station).toBe("Montauban");
+    expect(edited.messages.at(-2)).toMatchObject({ source: "edit", content: "Gare de départ : Montauban" });
+    await expect(service.editField(id, "departure_station", "   ", edited.version)).rejects.toMatchObject({ status: 422 });
+    await expect(service.editField(id, "departure_station", "x".repeat(81), edited.version)).rejects.toMatchObject({ status: 422 });
+
+    const conflict = await say(id, "On part depuis Agen.");
+    expectValid(conflict);
+    expect(conflict.requirements.departure_station).toBe("Montauban");
+    expect(conflict.pending_clarification).toEqual({ field: "departure_station", kind: "conflict" });
+    expect(conflict.assistant_message).toBe(
+      "J'ai noté Montauban pour la gare de départ, mais vous indiquez maintenant autre chose. Quelle valeur dois-je retenir ?",
+    );
+
+    const corrected = await say(id, "Finalement, depuis Agen.");
+    expect(corrected.requirements.departure_station).toBe("Agen");
+    expect(corrected.pending_clarification).toBeNull();
   });
 
   it("returns a canned transcript without extracting", async () => {
@@ -175,7 +251,7 @@ describe("mockConversationApi", () => {
     const res = await service.sendAudio(created.conversation_id, new Blob([]));
     expectValid(res);
     expect(res.assistant_message).toBeNull();
-    expect(res.transcript).toMatch(/27 élèves et 3 accompagnateurs/);
+    expect(res.transcript).toMatch(/au départ de Toulouse Matabiau\. J'ai 27 élèves et 3 accompagnateurs/);
     expect(res.requirements.participants_count).toBeNull();
     expect(res.version).toBe(0);
   });

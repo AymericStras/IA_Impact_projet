@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { FLUID_BUTTON_SM, TOUCH_TARGET } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { ConfirmedRequirements } from "@/types/contracts";
 
@@ -35,8 +35,8 @@ export function ConfirmedJsonBlock({ payload, defaultOpen = true }: ConfirmedJso
   };
 
   return (
-    <div className="rounded-xl border bg-muted/40" data-testid="confirmed-json">
-      <div className="flex items-center justify-between gap-2 px-3 py-2">
+    <div className="min-w-0 rounded-xl border bg-muted/40" data-testid="confirmed-json">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
         <Button
           type="button"
           variant="ghost"
@@ -44,20 +44,25 @@ export function ConfirmedJsonBlock({ payload, defaultOpen = true }: ConfirmedJso
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="confirmed-json-content"
-          className={cn("-ml-2", TOUCH_TARGET)}
+          className={cn("-ml-2", FLUID_BUTTON_SM, TOUCH_TARGET)}
         >
           {open ? <ChevronUpIcon aria-hidden="true" /> : <ChevronDownIcon aria-hidden="true" />}
           {fr.confirmation.jsonTitle}
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => void copy()} aria-live="polite" className={TOUCH_TARGET}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void copy()} aria-live="polite" className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
           {copyState === "copied" ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
           {copyState === "copied" ? fr.confirmation.jsonCopied : fr.confirmation.jsonCopy}
         </Button>
       </div>
       {open ? (
         <div id="confirmed-json-content" className="border-t px-3 py-2">
-          <p className="mb-2 text-xs text-muted-foreground">{fr.confirmation.jsonHint}</p>
-          <pre className="thin-scrollbar overflow-x-auto rounded-lg bg-card p-3 font-mono text-xs leading-relaxed ring-1 ring-foreground/10">
+          <p className="mb-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{fr.confirmation.jsonHint}</p>
+          <pre
+            // The only intentionally horizontally scrollable region; focusable for keyboard scrolling.
+            tabIndex={0}
+            data-scroll-x=""
+            aria-label={fr.confirmation.jsonTitle}
+            className="thin-scrollbar overflow-x-auto rounded-lg bg-card p-3 font-mono text-xs leading-relaxed ring-1 ring-foreground/10">
             {json.split("\n").map((line, index) => (
               <span
                 key={index}

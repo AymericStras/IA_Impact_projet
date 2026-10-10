@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:ci": "playwright test demo-flow responsive",
     "gen:types": "openapi-typescript http://localhost:8000/openapi.json -o src/types/openapi.d.ts"
   },
   "dependencies": {

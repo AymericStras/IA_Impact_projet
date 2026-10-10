@@ -17,7 +17,7 @@ test("conversation states", async ({ page }) => {
 
   await send(page, FIRST_MESSAGE);
   await settle(page);
-  await expect.soft(page).toHaveScreenshot("02-partial-3-of-4.png");
+  await expect.soft(page).toHaveScreenshot("02-partial-4-of-5.png");
 
   await setPanelExpanded(page, true);
   await page.getByRole("button", { name: "Modifier : Retour" }).click();

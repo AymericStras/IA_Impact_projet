@@ -35,9 +35,10 @@ Keep responses concise and conversational: one or two sentences.
 
 | Action | French template |
 |---|---|
-| welcome | Bonjour ! Décrivez-moi votre projet de sortie pédagogique : combien de participants, quand partir et revenir, et sur quel thème. Vous pouvez écrire ou parler. |
+| welcome | Bonjour ! Décrivez-moi votre projet de sortie pédagogique : combien de participants, de quelle gare vous partez, quand partir et revenir, et sur quel thème. Vous pouvez écrire ou parler. |
 | ask_missing(participants_count) | Combien de personnes participeront à la sortie, élèves et accompagnateurs compris ? |
 | clarify(students_only) | Combien d'accompagnateurs participeront à la sortie avec les {students} élèves ? |
+| ask_missing(departure_station) | De quelle gare souhaitez-vous partir ? |
 | ask_missing(departure) | Quel jour et à quelle heure souhaitez-vous partir ? |
 | ask_missing(departure.time) | À quelle heure souhaitez-vous partir le {date} ? |
 | ask_missing(return) | Quel jour et à quelle heure souhaitez-vous être de retour ? |

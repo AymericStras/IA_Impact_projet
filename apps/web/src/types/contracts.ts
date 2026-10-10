@@ -1,6 +1,6 @@
 /**
  * Hand-written mirror of `packages/contracts/conversation_response.schema.json`
- * (schema_version 1.0). To be replaced by the OpenAPI generation (`pnpm gen:types`)
+ * (schema_version 1.1). To be replaced by the OpenAPI generation (`pnpm gen:types`)
  * once the API is available; key names follow the JSON exactly,
  * including `return`.
  */
@@ -13,10 +13,12 @@ export type ConversationState =
   | "CONFIRMED"
   | "HANDOFF";
 
-export type FieldName = "participants_count" | "departure" | "return" | "teaching_type";
+export type FieldName = "participants_count" | "departure_station" | "departure" | "return" | "teaching_type";
 
+/** Canonical order, used everywhere a list of fields is shown or asked. */
 export const FIELD_NAMES: readonly FieldName[] = [
   "participants_count",
+  "departure_station",
   "departure",
   "return",
   "teaching_type",
@@ -58,6 +60,8 @@ export interface TeachingType {
 export interface PartialRequirements {
   participants_count: number | null;
   participants_breakdown?: ParticipantsBreakdown | null;
+  /** Departure station or city, free text as the teacher said it (max 80 characters). */
+  departure_station: string | null;
   departure: PartialDateTime | null;
   return: PartialDateTime | null;
   teaching_type: TeachingType | null;
@@ -66,13 +70,14 @@ export interface PartialRequirements {
 export interface CompleteRequirements {
   participants_count: number;
   participants_breakdown?: ParticipantsBreakdown | null;
+  departure_station: string;
   departure: DateTimeRequirement;
   return: DateTimeRequirement;
   teaching_type: TeachingType;
 }
 
 export interface ConfirmedRequirements {
-  schema_version: "1.0";
+  schema_version: "1.1";
   conversation_id: string;
   status: "confirmed";
   timezone: "Europe/Paris";
@@ -120,9 +125,11 @@ export interface SendMessageBody {
 /** Value accepted by `PATCH /conversations/{id}/requirements`, per field. */
 export type RequirementValue<F extends FieldName = FieldName> = F extends "participants_count"
   ? number
-  : F extends "departure" | "return"
-    ? DateTimeRequirement
-    : TeachingType;
+  : F extends "departure_station"
+    ? string
+    : F extends "departure" | "return"
+      ? DateTimeRequirement
+      : TeachingType;
 
 export interface RequirementEditBody<F extends FieldName = FieldName> {
   field: F;
@@ -150,4 +157,6 @@ export interface ClientConfig {
   max_audio_bytes: number;
   max_message_chars: number;
   timezone: string;
+  /** How the backend reaches the planner. Informational; the UI does not act on it. */
+  planner_mode?: "off" | "simulated" | "http";
 }

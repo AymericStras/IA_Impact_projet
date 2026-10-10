@@ -4,7 +4,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { CheckCircle2Icon, ClipboardCheckIcon, Loader2Icon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 import type { ConfirmedRequirements } from "@/types/contracts";
 import { ConfirmedJsonBlock } from "./ConfirmedJsonBlock";
 
@@ -34,12 +35,12 @@ export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEd
       <motion.section
         {...animation}
         aria-labelledby="confirmation-done-title"
-        className="rounded-2xl border border-success/30 bg-success-soft/60 p-4"
+        className="min-w-0 rounded-2xl border border-success/30 bg-success-soft/60 tall:p-4 short:p-3"
         data-testid="confirmation-done"
       >
         <div className="flex items-start gap-3">
           <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
+          <div className={cn("flex-1", WRAP_ANYWHERE)}>
             <h2 id="confirmation-done-title" className="text-sm font-semibold text-foreground">
               {fr.confirmation.confirmedTitle}
             </h2>
@@ -58,24 +59,25 @@ export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEd
     <motion.section
       {...animation}
       aria-labelledby="confirmation-title"
-      className="rounded-2xl border border-primary/25 bg-accent/40 p-4"
+      className="@container/card min-w-0 rounded-2xl border border-primary/25 bg-accent/40 tall:p-4 short:p-3"
       data-testid="confirmation-card"
     >
       <div className="flex items-start gap-3">
         <ClipboardCheckIcon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-        <div className="min-w-0 flex-1">
+        <div className={cn("flex-1", WRAP_ANYWHERE)}>
           <h2 id="confirmation-title" className="text-sm font-semibold">
             {fr.confirmation.title}
           </h2>
           <p className="mt-1 text-sm">{fr.confirmation.message}</p>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onEdit} disabled={pending} className={TOUCH_TARGET}>
+      {/* Side by side when both fit, otherwise stacked full-width. */}
+      <div className="mt-3 flex flex-col gap-2 @[19.5rem]/card:flex-row @[19.5rem]/card:justify-end">
+        <Button type="button" variant="outline" onClick={onEdit} disabled={pending} className={cn(FLUID_BUTTON, TOUCH_TARGET)}>
           <PencilIcon aria-hidden="true" />
           {fr.confirmation.edit}
         </Button>
-        <Button type="button" onClick={onConfirm} disabled={pending} data-testid="confirm-button" className={TOUCH_TARGET}>
+        <Button type="button" onClick={onConfirm} disabled={pending} data-testid="confirm-button" className={cn(FLUID_BUTTON, TOUCH_TARGET)}>
           {pending ? <Loader2Icon className="animate-spin" aria-hidden="true" /> : <CheckCircle2Icon aria-hidden="true" />}
           {pending ? fr.confirmation.confirming : fr.confirmation.confirm}
         </Button>

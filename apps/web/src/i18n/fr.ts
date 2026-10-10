@@ -9,7 +9,7 @@ export const fr = {
     title: "Assistant de voyage pédagogique",
     pageTitle: "liO — Assistant de voyage pédagogique",
     pageDescription:
-      "Décrivez votre sortie scolaire par écrit ou à la voix : l'assistant recueille les quatre informations nécessaires à la préparation de l'itinéraire.",
+      "Décrivez votre sortie scolaire par écrit ou à la voix : l'assistant recueille les cinq informations nécessaires à la préparation de l'itinéraire.",
     help: "Aide",
     skipToComposer: "Aller à la zone de saisie",
     newConversation: "Nouvelle conversation",
@@ -23,11 +23,15 @@ export const fr = {
   help: {
     title: "Comment décrire votre projet",
     intro:
-      "Expliquez votre sortie comme vous le feriez à un collègue, par écrit ou à la voix. L'assistant recueille quatre informations, puis vous demande de les confirmer.",
+      "Expliquez votre sortie comme vous le feriez à un collègue, par écrit ou à la voix. L'assistant recueille cinq informations, puis vous demande de les confirmer.",
     items: [
       {
         label: "Nombre de participants",
         hint: "élèves et accompagnateurs compris, par exemple « 27 élèves et 3 accompagnateurs »",
+      },
+      {
+        label: "Gare de départ",
+        hint: "la gare ou la ville d'où vous partez, par exemple « au départ de Toulouse Matabiau »",
       },
       {
         label: "Départ",
@@ -43,9 +47,9 @@ export const fr = {
       },
     ],
     privacy:
-      "Aucune autre information n'est demandée ni conservée : ni budget, ni gare, ni nom d'établissement.",
+      "Aucune autre information n'est demandée ni conservée : ni budget, ni nom d'établissement.",
     example:
-      "Exemple : « Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h et on rentrerait avant 17 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. »",
+      "Exemple : « Bonjour, je voudrais organiser une sortie le 12 novembre au départ de Toulouse Matabiau. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h et on rentrerait avant 17 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. »",
     close: "Fermer",
   },
   conversation: {
@@ -62,6 +66,7 @@ export const fr = {
   composer: {
     label: "Votre message",
     placeholder: "Écrivez votre message…",
+    placeholderShort: "Votre message…",
     hint: "Entrée pour envoyer, Maj + Entrée pour un saut de ligne",
     send: "Envoyer",
     sending: "Envoi en cours…",
@@ -109,7 +114,7 @@ export const fr = {
     title: "Votre projet",
     subtitle: "Les informations recueillies pour préparer l'itinéraire.",
     progress: (known: number, total: number) => `${known} / ${total} informations`,
-    progressComplete: "Toutes les informations sont réunies",
+    progressComplete: (total: number) => `${total} / ${total} informations · complet`,
     toggleShow: "Afficher le détail",
     toggleHide: "Masquer le détail",
     missing: "À préciser",
@@ -140,6 +145,12 @@ export const fr = {
       },
       studentsOnly: (students: number) =>
         `${students} élèves — nombre d'accompagnateurs à préciser`,
+    },
+    departure_station: {
+      label: "Gare de départ",
+      description: "La gare ou la ville de départ",
+      inputLabel: "Gare de départ",
+      placeholder: "ex. Toulouse Matabiau",
     },
     departure: {
       label: "Départ",
@@ -190,7 +201,7 @@ export const fr = {
     jsonCopy: "Copier",
     jsonCopied: "Copié",
     jsonHint:
-      "Charge utile versionnée transmise au module de planification (schema_version 1.0).",
+      "Charge utile versionnée transmise au module de planification (schema_version 1.1).",
   },
   states: {
     COLLECTING: "Collecte des informations",

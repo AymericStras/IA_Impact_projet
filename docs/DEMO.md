@@ -10,8 +10,8 @@
 ## Presentation script (real AI mode, ~3 min)
 
 1. Open the chatbot. Welcome message in French.
-2. Voice: « Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. » → transcript displayed → send.
-3. The panel fills up to 3/4; the assistant only asks for the return time.
+2. Voice: « Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait de Toulouse vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. » → transcript displayed → send.
+3. The panel fills up to 4/5; the assistant only asks for the return time.
 4. Type « Avant 17 h. » → summary + « Confirmer et continuer » / « Modifier ».
 5. Click on the participants → change to 32 → the panel updates, a new confirmation is requested.
 6. Confirm → JSON (`schema_version 1.0`) displayed, `constraint: "latest"` highlighted as the value handed to the planner.

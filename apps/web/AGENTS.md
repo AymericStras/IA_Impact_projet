@@ -7,7 +7,7 @@ These rules apply to everything under `apps/web`. They complement the root `AGEN
 ## Scope
 
 - Only the teacher chatbot: one page, conversation + "Votre projet" panel + composer with voice input.
-- Out of scope: new pages, navigation, authentication, dashboards, itinerary/train/destination features, analytics, any data beyond the four requirements.
+- Out of scope: new pages, navigation, authentication, dashboards, itinerary/train/destination features, analytics, any data beyond the five requirements (participants, departure station, departure, return, subject or theme).
 - Do not edit `services/api` or `packages/contracts` from a frontend task.
 
 ## The one rule
@@ -24,13 +24,14 @@ If the API seems insufficient for what you need: **stop, and write the need in `
 | `src/components/chatbot/` | One component per file, co-located `*.test.tsx` |
 | `src/components/ui/` | shadcn primitives — use as generated, do not restyle |
 | `src/hooks/useConversation.ts` | All conversation state and error handling |
+| `src/hooks/useViewportTracking.ts` | On-screen keyboard inset (`--app-height`), panel height cap, narrow-composer detection. Also imported by the `/vocal` route: keep its exports stable |
 | `src/services/conversationApi.ts` | Real HTTP client |
 | `src/services/mockConversationApi.ts` | Demo-mode state machine (scripted) |
 | `src/services/types.ts` | `ConversationService` interface, `ApiError`, error-code → reaction mapping |
 | `src/types/contracts.ts` | Types mirroring `packages/contracts/*.schema.json` |
 | `src/i18n/fr.ts` | **Every** user-facing string |
-| `src/lib/` | `env.ts` (env, API root, defaults), `format.ts` (dates/times), `storage.ts`, `ui.ts` |
-| `e2e/` | Playwright specs, helpers, screenshot baselines (`__screenshots__/`) |
+| `src/lib/` | `env.ts` (env, API root, defaults), `format.ts` (dates/times), `storage.ts`, `ui.ts` (`TOUCH_TARGET`, `FLUID_BUTTON`, `WRAP_ANYWHERE`; exports are shared with `/vocal`) |
+| `e2e/` | Playwright specs (`demo-flow`, `responsive` + `layout-audit.ts`, `visual`), helpers, screenshot baselines (`__screenshots__/`) |
 
 ## Commands that must pass
 
@@ -44,7 +45,10 @@ pnpm build
 pnpm test:e2e
 ```
 
-- `pnpm test:e2e` builds the app in demo mode into `.next-e2e` and serves it on port **3100**; it does not touch a `pnpm dev` running on port 3000.
+- `pnpm test:e2e` builds the app in demo mode into `.next-e2e` and serves it on port **3100**; it does not touch a `pnpm dev` running on port 3000. It runs three specs: `demo-flow` (flows, on the `desktop`, `mobile`, `tablet` and `landscape` projects), `visual` (screenshots, same four projects, macOS baselines only) and `responsive` (programmatic layout audit over a viewport matrix).
+- `pnpm test:e2e:ci` runs the portable subset (`demo-flow` + `responsive`, no screenshots): this is the one for Linux/CI until Linux baselines exist.
+- **`e2e/responsive.spec.ts` must pass at every size of its matrix** (`docs/DESIGN.md` §13). When it fails, the layout is broken at that size: fix the layout. Never make it pass by hiding content, removing a control, lowering a threshold, loosening `auditLayout`, or restricting zoom (`maximum-scale`, `user-scalable`). The spec contains a self-test that fails if the audit stops detecting a kind of breakage.
+- Two builds must not run at the same time in this directory (Next rewrites `tsconfig.json` during a build): if a build fails with "Cannot read file tsconfig.json", another build was running — rerun.
 - If a dev server is running, build with `NEXT_DIST_DIR=.next-build pnpm build` so you do not overwrite its `.next`.
 - First run on a machine: `pnpm exec playwright install chromium-headless-shell`.
 
@@ -71,6 +75,7 @@ Same list as "Do not" in `docs/DESIGN.md`:
 - No streaming of partial JSON / partial model output into the requirements state.
 - No hardcoded French strings in components — add them to `src/i18n/fr.ts`. Code, comments, tests and docs are in English.
 - No `fixed`/`sticky` composer, no animated scrolling.
+- No `sm:`/`md:`/`lg:` width breakpoints or px media queries for layout: use the shell tiers of `globals.css` (`narrow`, `single`, `wide`, `roomy`, `spacious`, `short`, `tall`, `low`, `mouse`; `docs/DESIGN.md` §5.1). No hover-only information, no control under 44 × 44 px on coarse pointers, no input under 16 px on touch, no `maximum-scale` / `user-scalable=no`.
 - No AI SDK transport, no new state-management or data-fetching library; keep `useConversation` + the JSON API.
 - No removal or weakening of tests, e2e assertions or screenshot baselines to get a green run.
 

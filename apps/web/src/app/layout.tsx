@@ -22,6 +22,11 @@ export const viewport: Viewport = {
   themeColor: "#f7f8fa",
   width: "device-width",
   initialScale: 1,
+  // Lets the page extend under notches; the shell pads itself with safe-area insets.
+  viewportFit: "cover",
+  // Where supported, the on-screen keyboard resizes the layout so the composer stays visible.
+  interactiveWidget: "resizes-content",
+  // Zoom is never restricted (no maximumScale / userScalable).
 };
 
 export default function RootLayout({

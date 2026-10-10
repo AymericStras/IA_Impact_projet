@@ -39,6 +39,7 @@ const T = {
   askParticipants: "Combien de personnes participeront à la sortie, élèves et accompagnateurs compris ?",
   clarifyStudentsOnly: (students: number) =>
     `Combien d'accompagnateurs participeront à la sortie avec les ${students} élèves ?`,
+  askStation: "De quelle gare souhaitez-vous partir ?",
   askDeparture: "Quel jour et à quelle heure souhaitez-vous partir ?",
   askDepartureTime: (date: string) => `À quelle heure souhaitez-vous partir le ${date} ?`,
   askReturn: "Quel jour et à quelle heure souhaitez-vous être de retour ?",
@@ -50,8 +51,8 @@ const T = {
     `J'ai noté ${old} pour ${label}, mais vous indiquez maintenant autre chose. Quelle valeur dois-je retenir ?`,
   invalidReturnBeforeDeparture: (ret: string, dep: string) =>
     `L'heure de retour (${ret}) est antérieure au départ (${dep}). Pouvez-vous corriger l'heure de retour ?`,
-  summarize: (participants: number, dep: string, ret: string, theme: string) =>
-    `J'ai bien compris votre projet : ${participants} participants, départ le ${dep}, retour le ${ret}, thème : ${theme}. Pouvez-vous vérifier ces informations avant de continuer ?`,
+  summarize: (participants: number, station: string, dep: string, ret: string, theme: string) =>
+    `J'ai bien compris votre projet : ${participants} participants, au départ de ${station}, départ le ${dep}, retour le ${ret}, thème : ${theme}. Pouvez-vous vérifier ces informations avant de continuer ?`,
   acknowledge:
     "Merci, votre projet est confirmé. Je transmets ces informations pour la préparation de l'itinéraire.",
   reopen: (label: string, value: string, summary: string) => `Très bien, j'ai mis à jour ${label} : ${value}. ${summary}`,
@@ -66,6 +67,7 @@ const T = {
   emptyMessage: "Le message est vide.",
   invalidValue: "La valeur fournie n'est pas valide.",
   participantsLabel: "le nombre de participants",
+  stationLabel: "la gare de départ",
   departureLabel: "le départ",
   returnLabel: "le retour",
   teachingLabel: "le thème pédagogique",
@@ -73,6 +75,7 @@ const T = {
 
 const FIELD_LABELS: Record<FieldName, string> = {
   participants_count: T.participantsLabel,
+  departure_station: T.stationLabel,
   departure: T.departureLabel,
   return: T.returnLabel,
   teaching_type: T.teachingLabel,
@@ -80,7 +83,8 @@ const FIELD_LABELS: Record<FieldName, string> = {
 
 // "Dictated" sentences returned by the simulated transcription (script from docs/DEMO.md).
 const CANNED_TRANSCRIPTS = {
-  full: "Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.",
+  full: "Bonjour, je voudrais organiser une sortie le 12 novembre au départ de Toulouse Matabiau. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.",
+  stationOnly: "Nous partirons de la gare de Toulouse Matabiau.",
   returnOnly: "Nous aimerions être rentrés avant 17 h.",
   correction: "Finalement, nous serons 32.",
 };
@@ -189,6 +193,44 @@ const VAGUE_QUANTITY =
 const RELATIVE_DATE =
   /\b(mois prochain|semaine prochaine|bientot|prochainement|dans quelques (jours|semaines)|au printemps|cet hiver|cet automne|cet ete|un de ces jours|plus tard dans l'annee)\b/;
 
+/** Longest station name accepted (same limit as the backend). */
+const STATION_MAX_LENGTH = 80;
+
+// Where a station name ends: punctuation, a digit, or a word that starts another clause.
+const STATION_END =
+  "(?=\\s*(?:[.,;:!?()]|$)|\\s+\\d|\\s+(?:le|les|vers|a|avec|pour|et|on|nous|je|j'ai|avant|apres|au|qui|ou|car|puis|si|mais|donc|pendant|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|demain)\\b)";
+const STATION_NAME = "([a-z][a-z' -]*?)";
+// An explicit "gare de X" is trusted as written ("la gare de départ" names no station).
+const STATION_EXPLICIT = new RegExp(`\\bgare\\s+d(?:e\\s+|')(?!depart\\b)${STATION_NAME}${STATION_END}`);
+// "au départ de X" / "depuis X" also introduce ordinary words ("depuis longtemps"):
+// X only counts as a station when it is written as a proper noun (capital initial).
+const STATION_IMPLICIT = new RegExp(`\\b(?:au depart\\s+d(?:e\\s+|')|depuis\\s+)${STATION_NAME}${STATION_END}`);
+const NOT_A_STATION_ANSWER = /^(je|j'|nous|on|oui|non|bonjour|bonsoir|merci|ok|d'accord|aucune?|pas)\b/;
+
+function tidyStation(raw: string): string | undefined {
+  const name = raw.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > STATION_MAX_LENGTH) return undefined;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** Station named in the text ("au départ de X", "depuis X", "(de la) gare de X"). */
+function findStation(text: string, norm: string): string | undefined {
+  // `norm` has one character per NFC character of the text: slice the NFC form.
+  const original = text.normalize("NFC");
+  const slice = (m: RegExpExecArray) => {
+    const start = m.index + m[0].length - (m[1] ?? "").length;
+    return original.slice(start, start + (m[1] ?? "").length);
+  };
+  const explicit = STATION_EXPLICIT.exec(norm);
+  if (explicit) return tidyStation(slice(explicit));
+  const implicit = STATION_IMPLICIT.exec(norm);
+  if (implicit) {
+    const raw = slice(implicit);
+    if (/^\p{Lu}/u.test(raw)) return tidyStation(raw);
+  }
+  return undefined;
+}
+
 /** Index of the last match of a pattern inside a text window (-1 when absent). */
 function lastMatchIndex(window: string, pattern: RegExp): number {
   const global = new RegExp(pattern.source, "g");
@@ -235,6 +277,7 @@ interface Parsed {
   departure: Partial<PartialDateTime>;
   return: Partial<PartialDateTime>;
   teaching?: Partial<TeachingType>;
+  station?: string;
   correction: boolean;
   bareNumber?: number;
   nothing: boolean;
@@ -413,6 +456,9 @@ function parseUtterance(text: string, current: PartialRequirements, now: Date): 
   }
   if (subject || theme) parsed.teaching = { subject, theme };
 
+  // Departure station
+  parsed.station = findStation(text, norm);
+
   parsed.nothing =
     parsed.students === undefined &&
     parsed.accompanying === undefined &&
@@ -421,7 +467,17 @@ function parseUtterance(text: string, current: PartialRequirements, now: Date): 
     !parsed.relativeDate &&
     tokens.length === 0 &&
     !parsed.teaching &&
+    parsed.station === undefined &&
     parsed.bareNumber === undefined;
+
+  // A short reply to "De quelle gare souhaitez-vous partir ?" is the station itself.
+  if (parsed.nothing && computeMissing(current, false)[0] === "departure_station" && !NOT_A_STATION_ANSWER.test(norm) && !text.includes("?")) {
+    const answer = tidyStation(text.replace(/[.!\s]+$/, ""));
+    if (answer && answer.split(" ").length <= 6) {
+      parsed.station = answer;
+      parsed.nothing = false;
+    }
+  }
   return parsed;
 }
 
@@ -443,6 +499,7 @@ function isComplete(value: PartialDateTime | null | undefined): value is DateTim
 function computeMissing(req: PartialRequirements, returnInvalid: boolean): FieldName[] {
   const missing: FieldName[] = [];
   if (req.participants_count === null) missing.push("participants_count");
+  if (!req.departure_station || !req.departure_station.trim()) missing.push("departure_station");
   if (!isComplete(req.departure)) missing.push("departure");
   if (!isComplete(req.return) || returnInvalid) missing.push("return");
   if (!req.teaching_type || (!req.teaching_type.subject && !req.teaching_type.theme)) missing.push("teaching_type");
@@ -467,6 +524,8 @@ function describeValue(field: FieldName, req: PartialRequirements, now: Date): s
   switch (field) {
     case "participants_count":
       return req.participants_count === null ? fr.panel.missing : `${req.participants_count} participants`;
+    case "departure_station":
+      return req.departure_station || fr.panel.missing;
     case "departure":
       return isComplete(req.departure) ? describeDateTime(req.departure, now) : fr.panel.missing;
     case "return":
@@ -572,6 +631,20 @@ function merge(current: PartialRequirements, parsed: Parsed, pending: PendingCla
         if (current.participants_count !== null) changed.push("participants_count");
         nextPending = { field: "participants_count", kind: "students_only" };
       }
+    }
+  }
+
+  // Departure station
+  if (parsed.station !== undefined) {
+    const known = current.departure_station ?? null;
+    if (known !== null && normalize(known) !== normalize(parsed.station) && !correction) {
+      conflict = { field: "departure_station", old: known };
+      nextPending = { field: "departure_station", kind: "conflict" };
+    } else if (known === null || normalize(known) !== normalize(parsed.station)) {
+      req.departure_station = parsed.station;
+      changed.push("departure_station");
+      noteReplaced("departure_station", known !== null);
+      if (nextPending?.field === "departure_station") nextPending = null;
     }
   }
 
@@ -693,6 +766,9 @@ function decide(
       case "participants_count":
         question = T.askParticipants;
         break;
+      case "departure_station":
+        question = T.askStation;
+        break;
       case "departure":
         question = req.departure?.date && !req.departure.time ? T.askDepartureTime(formatDate(req.departure.date, now)) : T.askDeparture;
         break;
@@ -715,6 +791,7 @@ function decide(
   const changedField = merge.changed[0];
   const summaryText = T.summarize(
     req.participants_count as number,
+    req.departure_station as string,
     describeDateTime(departure, now, true),
     describeDateTime(ret, now, true),
     describeTeaching(teaching),
@@ -741,7 +818,8 @@ export interface MockOptions {
   persist?: boolean;
 }
 
-const STORAGE_KEY = storageKey("demo.conversations");
+// "v2": conversations stored before the departure station existed are not reloaded.
+const STORAGE_KEY = storageKey("demo.conversations.v2");
 /**
  * One-shot switch for demos and visual tests: when this localStorage key exists, the next
  * message fails once with a provider error (state unchanged), then the key is removed.
@@ -816,7 +894,7 @@ export function createMockConversationService(options: MockOptions = {}): Conver
 
   return {
     async getConfig() {
-      return { ...DEFAULT_CLIENT_CONFIG };
+      return { ...DEFAULT_CLIENT_CONFIG, planner_mode: "simulated" };
     },
 
     async create() {
@@ -831,11 +909,12 @@ export function createMockConversationService(options: MockOptions = {}): Conver
           requirements: {
             participants_count: null,
             participants_breakdown: null,
+            departure_station: null,
             departure: null,
             return: null,
             teaching_type: null,
           },
-          missing_fields: ["participants_count", "departure", "return", "teaching_type"],
+          missing_fields: ["participants_count", "departure_station", "departure", "return", "teaching_type"],
           pending_clarification: null,
           ready_for_confirmation: false,
           transcript: null,
@@ -887,6 +966,7 @@ export function createMockConversationService(options: MockOptions = {}): Conver
       const req = conv.response.requirements;
       let transcript = CANNED_TRANSCRIPTS.full;
       if (conv.response.ready_for_confirmation || conv.response.state === "CONFIRMED") transcript = CANNED_TRANSCRIPTS.correction;
+      else if (req.participants_count !== null && !req.departure_station) transcript = CANNED_TRANSCRIPTS.stationOnly;
       else if (isComplete(req.departure) && !isComplete(req.return)) transcript = CANNED_TRANSCRIPTS.returnOnly;
       return publicResponse(conv, { assistant_message: null, transcript });
     },
@@ -907,6 +987,13 @@ export function createMockConversationService(options: MockOptions = {}): Conver
           req.participants_count = count;
           req.participants_breakdown = consistent ? breakdown : null;
           summary = `${fr.fields.participants_count.label} : ${count}`;
+          break;
+        }
+        case "departure_station": {
+          const station = typeof value === "string" ? value.trim() : "";
+          if (!station || station.length > STATION_MAX_LENGTH) throw new ApiError(422, "Valeur invalide", T.invalidValue, "VALIDATION_ERROR");
+          req.departure_station = station;
+          summary = `${fr.fields.departure_station.label} : ${station}`;
           break;
         }
         case "departure":
@@ -942,7 +1029,7 @@ export function createMockConversationService(options: MockOptions = {}): Conver
       if (expectedVersion !== conv.response.version) throw new ApiError(409, "Version obsolète", T.staleVersion, "VERSION_CONFLICT");
       const req = conv.response.requirements;
       const confirmed: ConfirmedRequirements = {
-        schema_version: "1.0",
+        schema_version: "1.1",
         conversation_id: conv.response.conversation_id,
         status: "confirmed",
         timezone: "Europe/Paris",
@@ -950,6 +1037,7 @@ export function createMockConversationService(options: MockOptions = {}): Conver
         requirements: {
           participants_count: req.participants_count as number,
           participants_breakdown: req.participants_breakdown ?? null,
+          departure_station: req.departure_station as string,
           departure: req.departure as DateTimeRequirement,
           return: req.return as DateTimeRequirement,
           teaching_type: req.teaching_type as TeachingType,

@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 export const FIRST_MESSAGE =
-  "Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.";
+  "Bonjour, je voudrais organiser une sortie le 12 novembre au départ de Toulouse Matabiau. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge.";
 
 /** Same key as DEMO_FAIL_NEXT_KEY in src/services/mockConversationApi.ts (root base path). */
 const FAIL_NEXT_KEY = "lio.demo.fail_next";

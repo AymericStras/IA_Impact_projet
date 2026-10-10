@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { InfoIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useConversation } from "@/hooks/useConversation";
+import { useHeightVariable, useKeyboardInset } from "@/hooks/useViewportTracking";
 import { fr } from "@/i18n/fr";
 import { isDemoMode } from "@/lib/env";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 import type { ConversationService } from "@/services";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { ConversationThread } from "./ConversationThread";
@@ -28,20 +30,32 @@ interface ChatContainerProps {
  * Orchestrates the page: top bar, conversation thread + composer,
  * "Votre projet" panel. All business state comes from `useConversation`.
  *
- * The page is a fixed-height shell (`h-dvh`): only the thread (and, on desktop, the
- * panel column) scrolls. The composer is a normal flex item below the thread, so it can
- * never cover a message or the confirmation card.
+ * The page is a viewport-high shell (`.app-shell`): only the thread (and, in two-column
+ * layouts, the panel column) scrolls. The composer is a normal flex item below the thread,
+ * so it can never cover a message or the confirmation card. If the shell cannot hold its
+ * minimum content (extreme zoom, very large text) it scrolls as a whole instead of
+ * squeezing the thread to nothing.
+ *
+ * Responsive behaviour is driven by the tiers declared in globals.css (`wide`, `single`,
+ * `short`, `narrow`…), which are container queries on the shell.
  */
 export function ChatContainer({ service }: ChatContainerProps) {
   const chat = useConversation(service);
   const [draft, setDraft] = useState("");
   const [editRequest, setEditRequest] = useState(0);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   const { conversation, config, pending, error, notice } = chat;
   const busy = pending !== null;
   const latestAssistant = conversation?.assistant_message ?? null;
   const confirmed =
     conversation?.state === "CONFIRMED" ? (conversation.confirmed_requirements ?? null) : null;
+
+  useKeyboardInset(shellRef);
+  // The expanded panel (single-column layouts) is capped to the conversation area.
+  useHeightVariable(threadRef, mainRef, "--thread-height", conversation !== null);
 
   const sendText = useCallback(
     async (content: string, source: "text" | "audio") => {
@@ -64,7 +78,7 @@ export function ChatContainer({ service }: ChatContainerProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex h-dvh flex-col overflow-hidden">
+      <div ref={shellRef} className="app-shell flex flex-col overflow-x-hidden overflow-y-auto" data-testid="app-shell">
         <a
           href="#composer-input"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
@@ -84,8 +98,22 @@ export function ChatContainer({ service }: ChatContainerProps) {
           {latestAssistant}
         </div>
 
-        <main className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-4 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
-          <aside className="thin-scrollbar shrink-0 pt-3 pb-1 lg:order-2 lg:min-h-0 lg:overflow-y-auto lg:py-6">
+        <main
+          ref={mainRef}
+          className={cn(
+            "px-safe mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col",
+            "wide:grid wide:grid-cols-[minmax(0,1fr)_17.5rem] wide:grid-rows-[minmax(0,1fr)] wide:gap-4",
+            "roomy:grid-cols-[minmax(0,1fr)_22rem] roomy:gap-6 spacious:grid-cols-[minmax(0,1fr)_24rem]",
+          )}
+        >
+          <aside
+            className={cn(
+              "thin-scrollbar relative z-10 shrink-0",
+              "single:tall:pt-3 single:tall:pb-1 single:short:pt-1.5",
+              "wide:order-2 wide:min-h-0 wide:overflow-y-auto wide:tall:py-6 wide:short:py-2",
+            )}
+            data-testid="panel-region"
+          >
             {conversation ? (
               <RequirementsPanel
                 id={PANEL_ID}
@@ -100,9 +128,10 @@ export function ChatContainer({ service }: ChatContainerProps) {
             ) : null}
           </aside>
 
-          <section className="flex min-h-0 flex-1 flex-col lg:order-1" aria-label={fr.conversation.heading}>
+          <section className="flex min-h-0 min-w-0 flex-1 flex-col wide:order-1" aria-label={fr.conversation.heading}>
             {conversation ? (
               <ConversationThread
+                ref={threadRef}
                 className="flex-1"
                 messages={conversation.messages}
                 optimisticMessage={chat.optimisticMessage}
@@ -142,7 +171,10 @@ export function ChatContainer({ service }: ChatContainerProps) {
               </div>
             )}
 
-            <div className="shrink-0 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div
+              className="shrink-0 tall:pt-2 tall:pb-[max(0.75rem,env(safe-area-inset-bottom))] short:pt-1 short:pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+              data-testid="composer-region"
+            >
               {notice ? (
                 <div
                   role="status"
@@ -150,13 +182,13 @@ export function ChatContainer({ service }: ChatContainerProps) {
                   data-testid="notice"
                 >
                   <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-                  <p className="min-w-0 flex-1">{notice}</p>
+                  <p className={cn("flex-1", WRAP_ANYWHERE)}>{notice}</p>
                   <Button
                     size="icon-sm"
                     variant="ghost"
                     onClick={chat.dismissNotice}
                     aria-label={fr.errors.dismiss}
-                    className={TOUCH_TARGET}
+                    className={cn("shrink-0", TOUCH_TARGET)}
                   >
                     <XIcon aria-hidden="true" />
                   </Button>

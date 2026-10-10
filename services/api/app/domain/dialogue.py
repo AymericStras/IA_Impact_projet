@@ -14,7 +14,7 @@ from app.schemas.requirements import PartialDateTime, PartialRequirements
 
 WELCOME = (
     "Bonjour ! Décrivez-moi votre projet de sortie pédagogique : combien de participants, "
-    "quand partir et revenir, et sur quel thème. Vous pouvez écrire ou parler."
+    "de quelle gare vous partez, quand partir et revenir, et sur quel thème. Vous pouvez écrire ou parler."
 )
 PROVIDER_ERROR = "Désolé, je n'ai pas pu traiter votre message. Pouvez-vous réessayer ?"
 TRANSCRIPTION_ERROR = (

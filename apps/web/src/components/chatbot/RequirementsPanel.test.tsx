@@ -6,6 +6,7 @@ import { RequirementsPanel } from "./RequirementsPanel";
 const partial: PartialRequirements = {
   participants_count: 30,
   participants_breakdown: { students: 27, accompanying: 3 },
+  departure_station: "Toulouse Matabiau",
   departure: { date: "2026-11-12", time: "08:00", constraint: "approximate" },
   return: null,
   teaching_type: { subject: "Histoire", theme: "Moyen Âge" },
@@ -22,7 +23,19 @@ describe("RequirementsPanel", () => {
       />,
     );
 
-    expect(screen.getByTestId("panel-progress")).toHaveTextContent("3 / 4 informations");
+    expect(screen.getByTestId("panel-progress")).toHaveTextContent("4 / 5 informations");
+
+    // Five rows, in the canonical order.
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Participants",
+      "Gare de départ",
+      "Départ",
+      "Retour",
+      "Matière ou thème",
+    ]);
+    const station = screen.getByTestId("field-departure_station");
+    expect(station).toHaveAttribute("data-state", "known");
+    expect(within(station).getByTestId("field-departure_station-value")).toHaveTextContent("Toulouse Matabiau");
 
     const participants = screen.getByTestId("field-participants_count");
     expect(participants).toHaveAttribute("data-state", "known");
@@ -50,7 +63,7 @@ describe("RequirementsPanel", () => {
       />,
     );
 
-    expect(screen.getByTestId("panel-progress")).toHaveTextContent("Toutes les informations sont réunies");
+    expect(screen.getByTestId("panel-progress")).toHaveTextContent("5 / 5 informations · complet");
     expect(screen.getByTestId("field-return")).toHaveTextContent("au plus tard à 17 h 00");
     expect(screen.getByTestId("panel-state")).toHaveTextContent("En attente de votre confirmation");
   });
@@ -109,6 +122,22 @@ describe("RequirementsPanel", () => {
     const participants = screen.getByTestId("field-participants_count");
     expect(participants).toHaveTextContent("25 élèves — nombre d'accompagnateurs à préciser");
     expect(participants).toHaveTextContent("Une précision est attendue");
-    expect(screen.getByTestId("panel-progress")).toHaveTextContent("2 / 4 informations");
+    expect(screen.getByTestId("panel-progress")).toHaveTextContent("3 / 5 informations");
+  });
+
+  it("shows the station as missing when the server lists it, whatever the value", () => {
+    render(
+      <RequirementsPanel
+        requirements={{ ...partial, departure_station: null }}
+        missingFields={["departure_station", "return"]}
+        state="COLLECTING"
+        onEdit={vi.fn(async () => true)}
+      />,
+    );
+
+    const station = screen.getByTestId("field-departure_station");
+    expect(station).toHaveAttribute("data-state", "missing");
+    expect(within(station).getByTestId("field-departure_station-value")).toHaveTextContent("À préciser");
+    expect(screen.getByTestId("panel-progress")).toHaveTextContent("3 / 5 informations");
   });
 });

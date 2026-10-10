@@ -7,6 +7,7 @@ import { RequirementField } from "./RequirementField";
 const base: PartialRequirements = {
   participants_count: 30,
   participants_breakdown: null,
+  departure_station: null,
   departure: { date: "2026-11-12", time: "08:00", constraint: "approximate" },
   return: null,
   teaching_type: null,
@@ -31,6 +32,50 @@ describe("RequirementField", () => {
 
     expect(onEdit).toHaveBeenCalledWith("participants_count", 32);
     await waitFor(() => expect(screen.queryByLabelText("Nombre total de participants")).not.toBeInTheDocument());
+  });
+
+  it("edits the departure station as trimmed single-line text and refuses an empty value", async () => {
+    const onEdit = vi.fn(async () => true);
+    const user = userEvent.setup();
+    render(
+      <ul>
+        <RequirementField field="departure_station" requirements={base} missing onEdit={onEdit} />
+      </ul>,
+    );
+    expect(screen.getByTestId("field-departure_station-value")).toHaveTextContent("À préciser");
+
+    await user.click(screen.getByRole("button", { name: "Modifier : Gare de départ" }));
+    const input = screen.getByRole("textbox", { name: "Gare de départ" });
+    expect(input).toHaveFocus();
+    expect(input).toHaveAttribute("maxlength", "80");
+    const save = screen.getByRole("button", { name: "Enregistrer" });
+    expect(save).toBeDisabled();
+    await user.type(input, "   ");
+    expect(save).toBeDisabled();
+
+    await user.clear(input);
+    await user.type(input, "  Toulouse Matabiau ");
+    await user.click(save);
+
+    expect(onEdit).toHaveBeenCalledWith("departure_station", "Toulouse Matabiau");
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Gare de départ" })).not.toBeInTheDocument());
+  });
+
+  it("pre-fills the station editor with the server value", async () => {
+    const user = userEvent.setup();
+    render(
+      <ul>
+        <RequirementField
+          field="departure_station"
+          requirements={{ ...base, departure_station: "Montpellier" }}
+          missing={false}
+          onEdit={vi.fn(async () => true)}
+        />
+      </ul>,
+    );
+    expect(screen.getByTestId("field-departure_station-value")).toHaveTextContent("Montpellier");
+    await user.click(screen.getByRole("button", { name: "Modifier : Gare de départ" }));
+    expect(screen.getByRole("textbox", { name: "Gare de départ" })).toHaveValue("Montpellier");
   });
 
   it("edits a date/time field and sends date, time and constraint", async () => {

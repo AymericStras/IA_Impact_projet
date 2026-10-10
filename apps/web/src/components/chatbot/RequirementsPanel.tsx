@@ -35,8 +35,14 @@ interface RequirementsPanelProps {
 const UPDATE_TICK_MS = 2_200;
 
 /**
- * "Votre projet": the four requirements, their status and inline editing.
+ * "Votre projet": the five requirements (canonical order of `FIELD_NAMES`), their status and inline editing.
  * Progress is read from `missing_fields`; nothing is recomputed client-side.
+ *
+ * Two presentations, chosen by the app-shell tiers (see globals.css):
+ * - `wide`: a column next to the conversation, always expanded;
+ * - `single`: a one- or two-line summary bar above the conversation. Expanding it opens
+ *   the details as a layer OVER the conversation area (never taller than it, see
+ *   `--thread-height`), so neither the conversation nor the composer is squeezed.
  */
 export function RequirementsPanel({
   requirements,
@@ -55,7 +61,7 @@ export function RequirementsPanel({
   const sectionRef = useRef<HTMLElement>(null);
   const handledEditRequestRef = useRef(0);
 
-  // Step 1: expand (the body is hidden on mobile while collapsed).
+  // Step 1: expand (the body is hidden on single-column layouts while collapsed).
   useEffect(() => {
     if (editRequest > 0) setExpanded(true);
   }, [editRequest]);
@@ -93,44 +99,54 @@ export function RequirementsPanel({
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
-      className={cn("rounded-2xl border bg-card/60", className)}
+      className={cn(
+        "@container/panel relative rounded-2xl border wide:bg-card/60 single:bg-card",
+        expanded && "single:rounded-b-none",
+        className,
+      )}
       data-testid="requirements-panel"
+      data-expanded={expanded}
     >
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="min-w-0 flex-1">
+      <div className="flex items-center gap-2 wide:px-4 wide:py-3 single:py-1 single:pr-1 single:pl-4">
+        {/* Title and progress share a line when they fit, and wrap to two tight lines otherwise. */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 leading-tight wide:flex-col wide:items-start wide:gap-y-0.5">
           <h2 id={`${id}-title`} className="text-sm font-semibold">
             {fr.panel.title}
           </h2>
           <p className="text-xs text-muted-foreground" data-testid="panel-progress" aria-live="polite">
-            {complete ? fr.panel.progressComplete : fr.panel.progress(known, total)}
+            {complete ? fr.panel.progressComplete(total) : fr.panel.progress(known, total)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="hidden rounded-full bg-muted px-2 py-0.5 text-[0.7rem] font-medium text-muted-foreground lg:inline-flex"
-            data-testid="panel-state"
-          >
-            {fr.states[state]}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn("lg:hidden", TOUCH_TARGET)}
-            data-testid="panel-toggle"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            aria-controls={`${id}-body`}
-          >
-            {expanded ? <ChevronUpIcon aria-hidden="true" /> : <ChevronDownIcon aria-hidden="true" />}
-            {expanded ? fr.panel.toggleHide : fr.panel.toggleShow}
-          </Button>
-        </div>
+        <span
+          className="hidden shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.7rem] font-medium text-muted-foreground wide:@[19rem]/panel:inline-flex"
+          data-testid="panel-state"
+        >
+          {fr.states[state]}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={cn("shrink-0 wide:hidden", TOUCH_TARGET)}
+          data-testid="panel-toggle"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-controls={`${id}-body`}
+        >
+          {expanded ? <ChevronUpIcon aria-hidden="true" /> : <ChevronDownIcon aria-hidden="true" />}
+          {/* Chevron only where space is tight; the label stays the accessible name. */}
+          <span className="short:sr-only narrow:sr-only">{expanded ? fr.panel.toggleHide : fr.panel.toggleShow}</span>
+        </Button>
       </div>
-      <div id={`${id}-body`} className={cn(
-          "thin-scrollbar px-4 pb-4 max-lg:max-h-[50dvh] max-lg:overflow-y-auto",
-          expanded ? "block" : "hidden lg:block",
-        )}>
+      <div
+        id={`${id}-body`}
+        className={cn(
+          "thin-scrollbar px-4 pb-4 narrow:px-2 narrow:pb-2",
+          "single:absolute single:-inset-x-px single:top-full single:z-20 single:max-h-[var(--thread-height,60cqh)] single:overflow-y-auto single:overscroll-contain single:rounded-b-2xl single:border single:border-t-0 single:bg-card single:pt-1",
+          expanded ? "block" : "hidden wide:block",
+        )}
+        data-testid="panel-body"
+      >
         <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
           <div
             className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"

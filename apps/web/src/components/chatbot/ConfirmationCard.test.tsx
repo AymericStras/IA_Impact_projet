@@ -5,7 +5,7 @@ import type { ConfirmedRequirements } from "@/types/contracts";
 import { ConfirmationCard } from "./ConfirmationCard";
 
 const confirmed: ConfirmedRequirements = {
-  schema_version: "1.0",
+  schema_version: "1.1",
   conversation_id: "conv_test",
   status: "confirmed",
   timezone: "Europe/Paris",
@@ -13,6 +13,7 @@ const confirmed: ConfirmedRequirements = {
   requirements: {
     participants_count: 30,
     participants_breakdown: { students: 27, accompanying: 3 },
+    departure_station: "Toulouse Matabiau",
     departure: { date: "2026-11-12", time: "08:00", constraint: "approximate" },
     return: { date: "2026-11-12", time: "17:00", constraint: "latest" },
     teaching_type: { subject: "Histoire", theme: "Moyen Âge" },
@@ -51,7 +52,8 @@ describe("ConfirmationCard", () => {
 
     expect(screen.getByTestId("confirmation-done")).toHaveTextContent("Projet confirmé");
     const json = screen.getByTestId("confirmed-json");
-    expect(json).toHaveTextContent('"schema_version": "1.0"');
+    expect(json).toHaveTextContent('"schema_version": "1.1"');
+    expect(json).toHaveTextContent('"departure_station": "Toulouse Matabiau"');
     expect(json).toHaveTextContent('"constraint": "latest"');
     expect(screen.getByRole("button", { name: "Copier" })).toBeInTheDocument();
   });

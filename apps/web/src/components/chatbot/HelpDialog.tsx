@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { CircleHelpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,17 +14,34 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { isDemoMode } from "@/lib/env";
+import { FLUID_BUTTON, TOUCH_TARGET } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 
-/** "Aide" button and dialog explaining the four expected pieces of information. */
+/** "Aide" button and dialog explaining the five expected pieces of information. */
 export function HelpDialog() {
+  const popupRef = useRef<HTMLDivElement>(null);
   return (
     <Dialog>
       <DialogTrigger render={<Button variant="ghost" size="sm" className={TOUCH_TARGET} />}>
         <CircleHelpIcon aria-hidden="true" />
-        {fr.app.help}
+        {/* Icon-only on narrow screens; the label stays the accessible name. */}
+        <span className="narrow:sr-only">{fr.app.help}</span>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      {/*
+        Never taller than the viewport: the content scrolls. The footer button closes it.
+        Focus goes to the dialog itself, not to its only button (« Fermer », at the end):
+        on a short viewport that would open the dialog scrolled to its last lines.
+        The single grid column may shrink below its longest word (large text on a phone):
+        the word then breaks instead of making the dialog scroll sideways.
+      */}
+      <DialogContent
+        ref={popupRef}
+        initialFocus={popupRef}
+        className="max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] overflow-y-auto [overflow-wrap:anywhere] sm:max-w-lg"
+        showCloseButton={false}
+        data-testid="help-dialog"
+      >
         <DialogHeader>
           <DialogTitle>{fr.help.title}</DialogTitle>
           <DialogDescription>{fr.help.intro}</DialogDescription>
@@ -37,7 +55,7 @@ export function HelpDialog() {
               >
                 {index + 1}
               </span>
-              <span>
+              <span className="min-w-0">
                 <span className="font-medium">{item.label}</span>
                 <span className="text-muted-foreground"> — {item.hint}</span>
               </span>
@@ -46,8 +64,10 @@ export function HelpDialog() {
         </ol>
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">{fr.help.example}</p>
         <p className="text-xs text-muted-foreground">{fr.help.privacy}</p>
+        {/* The badge tooltip needs hover: the same information is always readable here. */}
+        {isDemoMode ? <p className="text-xs text-muted-foreground">{fr.demo.description}</p> : null}
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" className={TOUCH_TARGET} />}>{fr.help.close}</DialogClose>
+          <DialogClose render={<Button variant="outline" className={cn(FLUID_BUTTON, TOUCH_TARGET)} />}>{fr.help.close}</DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
