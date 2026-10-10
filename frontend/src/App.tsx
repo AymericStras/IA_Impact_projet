@@ -5,10 +5,12 @@ import Header from "./components/Header";
 import MapView from "./components/MapView";
 import RoutePanel from "./components/RoutePanel";
 import PlacesPanel from "./components/PlacesPanel";
+import ChatPanel from "./components/ChatPanel";
 import { DiscoverySheet } from "./components/Discovery";
 import type { Discovery } from "./data/discoveries";
 
-type Tab = "route" | "places";
+type Tab = "route" | "places" | "chat";
+const TAB_LABEL = { route: "tabRoute", places: "tabPlaces", chat: "tabChat" } as const;
 
 export default function App() {
   const { t } = useI18n();
@@ -70,9 +72,9 @@ export default function App() {
       <main className="layout">
         <aside className="sidebar">
           <div className="tabs" role="tablist">
-            {(["route", "places"] as Tab[]).map((k) => (
+            {(["route", "places", "chat"] as Tab[]).map((k) => (
               <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "tab active" : "tab"} onClick={() => setTab(k)}>
-                {k === "route" ? t.tabRoute : t.tabPlaces}
+                {t[TAB_LABEL[k]]}
               </button>
             ))}
           </div>
@@ -89,8 +91,10 @@ export default function App() {
               route={route}
               error={routeError}
             />
-          ) : (
+          ) : tab === "places" ? (
             <PlacesPanel places={places} byId={byId} selected={selected} onSelect={setSelected} onPick={pick} onOpenDiscovery={setDiscovery} />
+          ) : (
+            <ChatPanel />
           )}
           <p className="data-note">{t.dataNote}</p>
         </aside>

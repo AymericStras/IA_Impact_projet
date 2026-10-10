@@ -104,6 +104,22 @@ const line = (coords: [number, number][], properties: Record<string, unknown>): 
 });
 const lonLat = (p: Place): [number, number] => [p.lon, p.lat];
 
+// Zone à 20 min à pied autour de chaque gare : 1,5 km à 75 m/min, la vitesse de marche du backend
+const WALK_RADIUS_M = 20 * 75;
+const WALK_DLAT = WALK_RADIUS_M / 111_320;
+function walkZone(p: Place, properties: Record<string, unknown>): GeoJSON.Feature<GeoJSON.Polygon> {
+  const n = 72, dLon = WALK_DLAT / Math.cos((p.lat * Math.PI) / 180);
+  const ring = Array.from({ length: n + 1 }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI;
+    return [p.lon + dLon * Math.cos(a), p.lat + WALK_DLAT * Math.sin(a)];
+  });
+  return { type: "Feature", properties, geometry: { type: "Polygon", coordinates: [ring] } };
+}
+// Point le plus au nord du cercle, où s'écrit « 20 min à pied »
+const walkLabel = (p: Place, properties: Record<string, unknown>): GeoJSON.Feature<GeoJSON.Point> => ({
+  type: "Feature", properties, geometry: { type: "Point", coordinates: [p.lon, p.lat + WALK_DLAT] },
+});
+
 const BASE = `${location.origin}${import.meta.env.BASE_URL}basemap`;
 const STATION_LAYERS = ["lio-stops", ...TIERS.map((t) => `st-${t}`), "st-route", "st-important"];
 
@@ -127,7 +143,7 @@ function buildStyle(): maplibregl.StyleSpecification {
 function addOverlays(map: MlMap) {
   for (const [name, colors] of Object.entries(BADGES)) map.addImage(`badge-${name}`, ...Object.values(badgeImage(colors)) as [ImageData, { pixelRatio: number }]);
   const empty = fc([]);
-  for (const id of ["network", "route", "stations", "stops"]) map.addSource(id, { type: "geojson", data: empty });
+  for (const id of ["walk-zones", "walk-labels", "network", "route", "stations", "stops"]) map.addSource(id, { type: "geojson", data: empty });
   map.addSource("mask", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: OUTSIDE_MASK } } });
 
   // Hors région : grisé, frontière en pointillés
@@ -135,6 +151,27 @@ function addOverlays(map: MlMap) {
   map.addLayer({
     id: "border", type: "line", source: { type: "geojson", data: line(OCCITANIE, {}) },
     paint: { "line-color": NAVY, "line-width": 1.5, "line-opacity": 0.5, "line-dasharray": [4, 3.3] },
+  });
+
+  // Zones à 20 min à pied : un voile à peine teinté et un fin pointillé, sous le réseau. Elles n'apparaissent
+  // qu'en zoomant (inutiles et illisibles sur la vue de la région) ; celle de la gare choisie ressort davantage.
+  const fadeIn = (from: number, to: number, value: number | maplibregl.ExpressionSpecification) =>
+    ["interpolate", ["linear"], ["zoom"], from, 0, to, value] as unknown as maplibregl.ExpressionSpecification;
+  const zoneLevel = (focus: number, normal: number, dimmed: number) =>
+    ["case", ["get", "focus"], focus, ["get", "dim"], dimmed, normal] as maplibregl.ExpressionSpecification;
+  map.addLayer({ id: "walk-fill", type: "fill", source: "walk-zones", paint: { "fill-color": NAVY, "fill-opacity": fadeIn(8.5, 11, zoneLevel(0.06, 0.018, 0.008)) } });
+  map.addLayer({
+    id: "walk-edge", type: "line", source: "walk-zones",
+    paint: {
+      "line-color": NAVY, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 0.8, 14, 1.4],
+      "line-dasharray": [3, 3], "line-opacity": fadeIn(8.5, 11, zoneLevel(0.6, 0.3, 0.12)),
+    },
+  });
+  // « 20 min à pied » posé sur le haut du cercle, quand on est assez près pour le lire ; masqué s'il gêne un autre nom
+  map.addLayer({
+    id: "walk-label", type: "symbol", source: "walk-labels", minzoom: 12,
+    layout: { "text-field": "", "text-font": ["Noto Sans Medium"], "text-size": 11, "text-letter-spacing": 0.04, "text-padding": 4 },
+    paint: { "text-color": NAVY, "text-halo-color": WHITE, "text-halo-width": 1.4, "text-opacity": zoneLevel(0.85, 0.55, 0.3) },
   });
 
   // Voies : un trait gris bordé de blanc, comme les lignes ferroviaires de Google Maps. Les cars dessous, les trains par-dessus
@@ -221,7 +258,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MlMap | null>(null);
   const [card, setCard] = useState<Place | null>(null);
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const popup = useRef<maplibregl.Popup | null>(null);
   const popupBody = useMemo(() => document.createElement("div"), []);
   // Les gestionnaires d'événements de la carte sont posés une fois : ils lisent les données via des refs
@@ -306,6 +343,10 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
     return () => markers.forEach((mk) => mk.remove());
   }, [map, locale]);
 
+  useEffect(() => {
+    map?.setLayoutProperty("walk-label", "text-field", t.walkZone);
+  }, [map, t]);
+
   // Épingles en retrait quand un itinéraire est affiché
   useEffect(() => {
     box.current?.classList.toggle("pins-dimmed", route !== null);
@@ -335,6 +376,8 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
     const endId = route?.legs[route.legs.length - 1]?.to_id;
     const stations: GeoJSON.Feature<GeoJSON.Point>[] = [];
     const stops: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    const zones: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+    const zoneLabels: GeoJSON.Feature<GeoJSON.Point>[] = [];
     for (const p of places) {
       const geometry: GeoJSON.Point = { type: "Point", coordinates: lonLat(p) };
       if (p.network === "lio") {
@@ -347,6 +390,9 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
           : p.id === selected ? "is-selected" : onRoute.has(p.id) ? "is-on-route" : route ? "is-dimmed" : "";
       const important = state !== "" && state !== "is-dimmed";
       const big = important && state !== "is-on-route";
+      const zone = { focus: big, dim: state === "is-dimmed" };
+      zones.push(walkZone(p, zone));
+      zoneLabels.push(walkLabel(p, zone));
       stations.push({
         type: "Feature",
         geometry,
@@ -359,6 +405,8 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
     }
     (map.getSource("stations") as GeoJSONSource).setData(fc(stations));
     (map.getSource("stops") as GeoJSONSource).setData(fc(stops));
+    (map.getSource("walk-zones") as GeoJSONSource).setData(fc(zones));
+    (map.getSource("walk-labels") as GeoJSONSource).setData(fc(zoneLabels));
   }, [map, places, byId, route, selected]);
 
   // Recadre la carte sur l'itinéraire, ou vole vers le lieu sélectionné
