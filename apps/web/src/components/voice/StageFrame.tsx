@@ -114,6 +114,10 @@ export function StageFrame({
                 <Link href="/" aria-label={frVoice.chrome.classicLinkLabel} className={cn(NAV_BUTTON, TOUCH_TARGET)} data-testid="classic-link">
                   <MessagesSquareIcon className="size-4" aria-hidden="true" />
                   <span className="@max-2xl/voice:sr-only">{frVoice.chrome.classicLink}</span>
+                  {/* A visible short label on phones: the icon alone was not recognised as a switch. */}
+                  <span aria-hidden="true" className="@max-[22.5rem]/voice:hidden @2xl/voice:hidden">
+                    {frVoice.chrome.classicLinkShort}
+                  </span>
                 </Link>
                 <button
                   type="button"

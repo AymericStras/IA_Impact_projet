@@ -15,6 +15,7 @@ export const frVoice = {
   chrome: {
     brand: "liO",
     classicLink: "Discussion classique",
+    classicLinkShort: "Classique",
     classicLinkLabel: "Passer à la discussion classique",
     restart: "Recommencer",
     restartLabel: "Recommencer avec une nouvelle sortie",

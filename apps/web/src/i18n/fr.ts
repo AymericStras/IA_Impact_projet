@@ -16,10 +16,12 @@ export const fr = {
     skipToComposer: "Aller à la zone de saisie",
     newConversation: "Nouvelle conversation",
     voiceLink: "Version vocale",
+    voiceLinkShort: "Vocal",
     voiceLinkLabel: "Passer à la version vocale",
   },
   demo: {
     badge: "Mode démo",
+    badgeShort: "Démo",
     tooltip: "Réponses simulées, sans modèle d'IA",
     description:
       "Mode démo : les réponses sont simulées par un script, sans modèle d'IA ni serveur.",

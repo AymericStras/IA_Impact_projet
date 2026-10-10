@@ -22,7 +22,9 @@ export function DemoBadge() {
       >
         <span className={cn(badgeVariants({ variant: "outline" }), "h-6 border-transparent bg-highlight px-2.5 font-bold text-highlight-foreground")}>
           <SparklesIcon aria-hidden="true" />
-          {fr.demo.badge}
+          {/* The short form leaves room for the labelled voice link on single-column shells. */}
+          <span className="single:hidden">{fr.demo.badge}</span>
+          <span className="wide:hidden">{fr.demo.badgeShort}</span>
         </span>
       </TooltipTrigger>
       <TooltipContent>{fr.demo.tooltip}</TooltipContent>

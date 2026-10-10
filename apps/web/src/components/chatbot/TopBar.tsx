@@ -56,18 +56,22 @@ export function TopBar({ onRestart, disabled = false }: TopBarProps) {
         </div>
         <div className="ml-auto flex items-center gap-1 single:tall:order-2 wide:tall:gap-2">
           {isDemoMode ? <DemoBadge /> : null}
-          {/* Same conversation, other experience: the staged voice flow. Hidden on narrow shells
-              (320 px phones, very large text), where the Help dialog carries the same link. */}
+          {/* Same conversation, other experience: the staged voice flow. An outlined pill with a
+              visible label (short below `roomy`): an icon alone was not recognised as a switch on
+              phones. Hidden on narrow shells (320 px phones, very large text), where the Help
+              dialog carries the same link. */}
           <Link
             href="/vocal"
             aria-label={fr.app.voiceLinkLabel}
             title={fr.app.voiceLink}
+            data-testid="voice-link"
             className={cn(
-              "inline-flex h-8 min-w-8 items-center justify-center gap-2 rounded-full border-2 border-transparent text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/15 narrow:hidden roomy:tall:h-10 roomy:tall:border-primary-foreground roomy:tall:px-4",
+              "inline-flex h-8 min-w-8 items-center justify-center gap-2 rounded-full border-2 border-primary-foreground px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/15 narrow:hidden roomy:tall:h-10 roomy:tall:px-4",
               TOUCH_TARGET,
             )}
           >
             <AudioLinesIcon className="size-4" aria-hidden="true" />
+            <span className="roomy:tall:hidden">{fr.app.voiceLinkShort}</span>
             <span className="hidden roomy:tall:inline">{fr.app.voiceLink}</span>
           </Link>
           <Tooltip>
