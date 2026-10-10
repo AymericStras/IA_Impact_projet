@@ -42,9 +42,9 @@ interface VoiceFlowProps {
 }
 
 const DOCK_BUTTON =
-  "inline-flex min-h-11 max-w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-center text-sm font-medium [overflow-wrap:anywhere] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
-const DOCK_SECONDARY = "border-input bg-card text-foreground hover:bg-muted";
-const DOCK_PRIMARY = "border-transparent bg-primary text-primary-foreground hover:bg-primary/85";
+  "inline-flex min-h-11 max-w-full items-center justify-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-center text-sm font-semibold [overflow-wrap:anywhere] disabled:pointer-events-none disabled:border-input disabled:bg-muted disabled:text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0";
+const DOCK_SECONDARY = "border-primary bg-card text-primary hover:bg-muted";
+const DOCK_PRIMARY = "border-transparent bg-action font-bold text-action-foreground hover:bg-action-hover";
 /** On the accent surface: same contrast pair as the surface text (7.7:1). */
 const DOCK_ON_ACCENT = "border-primary-foreground/70 bg-transparent text-primary-foreground hover:bg-primary-foreground/10";
 

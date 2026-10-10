@@ -51,14 +51,10 @@
   color: var(--primary-foreground);
 }
 
-/* The global focus ring is the accent colour: on the accent surface it must invert. */
-.shell[data-tone="accent"] :focus-visible {
-  outline-color: var(--primary-foreground);
-}
-
 /* Stage headings take focus by script only (stage entry): no ring around a title. */
 .shell .stageHeading:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 
 .safeX {
@@ -170,7 +166,13 @@
 
 .talk:disabled {
   cursor: default;
-  opacity: 0.5;
+  color: var(--muted-foreground);
+}
+
+.talk:disabled .talkCircle {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border: 1px solid var(--input);
 }
 
 .talkCircle {
@@ -181,8 +183,8 @@
   height: var(--talk-size);
   flex-shrink: 0;
   border-radius: 9999px;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--action);
+  color: var(--action-foreground);
   transition:
     background-color var(--voice-press) ease,
     color var(--voice-surface) ease;
@@ -195,7 +197,7 @@
 /* Press feedback inside the disc: the disc itself never shrinks below its touch size and
    never moves under the finger. */
 .talk[data-pressed="true"] .talkCircle {
-  background-color: color-mix(in srgb, var(--primary), var(--foreground) 28%);
+  background-color: var(--action-hover);
 }
 
 .talk[data-pressed="true"] .talkCircle svg {
@@ -209,6 +211,12 @@
 
 .shell[data-tone="accent"] .talk[data-pressed="true"] .talkCircle {
   background-color: color-mix(in srgb, var(--primary-foreground), var(--primary) 16%);
+}
+
+/* Once confirmation is available, it becomes the single red action. */
+.shell[data-stage="sheet"]:has([data-testid="sheet-confirm"]:not(:disabled)) .talkCircle {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .talkLabel {
@@ -323,7 +331,7 @@
 }
 
 .timelineItem[data-kind="leg"]::before {
-  background-color: var(--primary);
+  background-color: var(--highlight);
 }
 
 .timelineItem:not(:last-child)::after {

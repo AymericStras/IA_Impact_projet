@@ -6,7 +6,8 @@ import { MessagesSquareIcon, RotateCcwIcon, SparklesIcon, TrainFrontIcon } from 
 import { useKeyboardInset } from "@/hooks/useViewportTracking";
 import type { StageId } from "@/hooks/useVoiceFlow";
 import { frVoice } from "@/i18n/fr.voice";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { Trame } from "@/components/chatbot/Trame";
+import { DISPLAY, TOUCH_TARGET } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import styles from "./voice.module.css";
 
@@ -26,7 +27,7 @@ export function StageHeading({ children, focusOnEnter, className }: StageHeading
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <h1 ref={ref} tabIndex={-1} className={cn(styles.stageHeading, "[overflow-wrap:anywhere]", className)} data-testid="stage-heading">
+    <h1 ref={ref} tabIndex={-1} className={cn(styles.stageHeading, "[overflow-wrap:anywhere]", className, DISPLAY)} data-testid="stage-heading">
       {children}
     </h1>
   );
@@ -51,7 +52,7 @@ interface StageFrameProps {
 }
 
 const NAV_BUTTON =
-  "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-medium text-primary hover:bg-muted disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/15 disabled:pointer-events-none disabled:opacity-60";
 
 /**
  * Shared chrome of every stage: a viewport-high shell (dynamic viewport, safe areas, above
@@ -75,30 +76,31 @@ export function StageFrame({
   useKeyboardInset(shellRef);
 
   return (
-    <div ref={shellRef} className={styles.shell} data-testid="voice-shell" data-stage={stage} data-tone={tone}>
-      <header className={cn(styles.header, tone === "plain" && "border-b")}>
+    <div ref={shellRef} className={cn(styles.shell, tone === "accent" && "on-navy")} data-testid="voice-shell" data-stage={stage} data-tone={tone}>
+      <header className={cn(styles.header, "on-navy bg-primary text-primary-foreground")}>
         <div className={cn(styles.safeX, "flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-1 @max-sm/voice:gap-x-2")}>
           <div className="flex items-center gap-2">
             <span
               aria-hidden="true"
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-lg",
-                tone === "accent" ? "bg-primary-foreground text-primary" : "bg-primary text-primary-foreground",
+                "bg-primary-foreground text-primary",
               )}
             >
               <TrainFrontIcon className="size-4" />
             </span>
             {/* The logo alone on the narrowest screens; the name stays for assistive technology. */}
-            <span className={cn("text-base font-semibold tracking-tight @max-[22.5rem]/voice:sr-only", tone === "plain" && "text-primary")}>
+            <span className={cn(DISPLAY, "text-lg @max-[22.5rem]/voice:sr-only")}>
               {frVoice.chrome.brand}
             </span>
           </div>
+          <Trame className="w-20 @max-2xl/voice:hidden" />
           {progress}
           <div className="ml-auto flex items-center gap-1">
             {demo ? (
               // Invariant: scripted replies are labelled on every screen of the demo.
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-current/40 px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                className="inline-flex items-center gap-1 rounded-full bg-highlight px-2 py-0.5 text-xs font-bold whitespace-nowrap text-highlight-foreground"
                 title={frVoice.chrome.demoDescription}
                 data-testid="demo-badge"
               >

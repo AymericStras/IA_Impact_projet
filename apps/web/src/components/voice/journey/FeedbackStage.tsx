@@ -53,7 +53,7 @@ export function FeedbackStage({ journey, focusHeading, busy, sending, onSend, on
               <label
                 key={value}
                 className={cn(
-                  "relative flex min-h-16 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-2 py-2 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring",
+                  "relative flex min-h-16 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-full border-2 px-2 py-2 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring",
                   checked ? "border-primary bg-primary text-primary-foreground" : "border-input bg-card text-foreground hover:bg-muted",
                   busy && "pointer-events-none opacity-60",
                 )}
@@ -94,7 +94,7 @@ export function FeedbackStage({ journey, focusHeading, busy, sending, onSend, on
           rows={3}
           disabled={busy}
           placeholder={copy.commentPlaceholder}
-          className="w-full min-w-0 rounded-xl border border-input bg-card px-3 py-2 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-60"
+          className="w-full min-w-0 rounded-xl border-2 border-input bg-card px-3 py-2 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-60"
           data-testid="feedback-comment"
         />
       </div>

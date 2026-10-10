@@ -31,7 +31,7 @@ export function ProgressDots({ missingFields, className }: ProgressDotsProps) {
           <span
             key={field}
             data-filled={filled}
-            className={cn("size-2.5 rounded-full border-2", filled ? "border-primary bg-primary" : "border-input bg-transparent")}
+            className={cn("size-2.5 rounded-full border-2", filled ? "border-highlight bg-highlight" : "border-primary-foreground bg-transparent")}
           />
         );
       })}

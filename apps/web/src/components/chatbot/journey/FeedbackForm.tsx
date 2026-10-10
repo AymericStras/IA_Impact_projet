@@ -9,7 +9,7 @@ import { fr } from "@/i18n/fr";
 import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { Feedback } from "@/types/journey";
-import { CHOICE_FOCUS, CHOICE_INPUT, JOURNEY_CARD, JOURNEY_SUBHEADING } from "./journeyStyles";
+import { CHOICE_FOCUS, CHOICE_INPUT, JOURNEY_CARD, JOURNEY_CARD_TITLE, JOURNEY_SUBHEADING } from "./journeyStyles";
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
 /** Same limit as the server; the server remains the authority. */
@@ -38,20 +38,20 @@ export function FeedbackForm({ onSubmit, pending = false, disabled = false }: Fe
   };
 
   return (
-    <form onSubmit={submit} aria-labelledby={`${id}-title`} className={cn("grid gap-3", JOURNEY_CARD)} data-testid="feedback-form">
-      <h3 id={`${id}-title`} className={cn("text-sm font-semibold", WRAP_ANYWHERE)}>
+    <form onSubmit={submit} aria-labelledby={`${id}-title`} className={cn("grid gap-4 short:gap-3", JOURNEY_CARD)} data-testid="feedback-form">
+      <h3 id={`${id}-title`} className={cn(JOURNEY_CARD_TITLE, WRAP_ANYWHERE)}>
         {fr.journey.feedback.title}
       </h3>
       <fieldset className="min-w-0" disabled={disabled || pending}>
         <legend className={JOURNEY_SUBHEADING}>{fr.journey.feedback.ratingLegend}</legend>
-        <div className="mt-1.5 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2.5">
           {RATINGS.map((value) => (
             <label
               key={value}
               className={cn(
-                "relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-input px-3 py-1.5 text-sm font-medium",
+                "relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-primary px-3 py-1.5 font-heading text-lg leading-none font-extrabold transition-colors",
                 CHOICE_FOCUS,
-                rating === value && "border-primary bg-primary text-primary-foreground",
+                rating === value ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
               )}
             >
               <input
@@ -62,7 +62,7 @@ export function FeedbackForm({ onSubmit, pending = false, disabled = false }: Fe
                 onChange={() => setRating(value)}
                 aria-label={fr.journey.feedback.rating(value)}
                 // Stretched over the cell's border too, so the hit area is the full 44 px cell.
-                className={cn(CHOICE_INPUT, "-inset-px h-[calc(100%+2px)] w-[calc(100%+2px)]")}
+                className={cn(CHOICE_INPUT, "-inset-0.5 h-[calc(100%+4px)] w-[calc(100%+4px)]")}
                 data-focus-inside=""
               />
               <span aria-hidden="true">{value}</span>
@@ -71,7 +71,7 @@ export function FeedbackForm({ onSubmit, pending = false, disabled = false }: Fe
         </div>
       </fieldset>
       <div className="grid min-w-0 gap-1.5">
-        <Label htmlFor={`${id}-comment`}>{fr.journey.feedback.commentLabel}</Label>
+        <Label className="px-1 text-[0.8125rem] font-semibold" htmlFor={`${id}-comment`}>{fr.journey.feedback.commentLabel}</Label>
         <Textarea
           id={`${id}-comment`}
           value={comment}

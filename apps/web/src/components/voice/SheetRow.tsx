@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckIcon, CircleDashedIcon, MessageCircleQuestionIcon, PencilIcon, TriangleAlertIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { frVoice } from "@/i18n/fr.voice";
-import { TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { DISPLAY, EYEBROW, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { ConversationResponse } from "@/types/contracts";
 import { FieldEditor, type EditHandler } from "./FieldEditor";
@@ -65,7 +65,7 @@ export function SheetRow({ field, conversation, question = null, disabled = fals
     <li
       ref={itemRef}
       className={cn(
-        "@container/row rounded-2xl border bg-card p-4 text-card-foreground transition-colors",
+        "@container/row rounded-2xl border bg-card p-4 text-card-foreground shadow-card transition-colors",
         asked && "border-primary bg-accent/40",
         status === "clarify" && !asked && "border-warning/60",
         editing && "border-ring",
@@ -80,7 +80,7 @@ export function SheetRow({ field, conversation, question = null, disabled = fals
         </span>
         <div className={cn("flex-1", WRAP_ANYWHERE)}>
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
+            <h2 className={EYEBROW}>{label}</h2>
             <span
               className={cn("text-xs font-medium", status === "known" ? "text-success" : status === "clarify" ? "text-foreground" : "text-muted-foreground")}
               data-testid={`sheet-row-${field}-status`}
@@ -92,7 +92,7 @@ export function SheetRow({ field, conversation, question = null, disabled = fals
             <>
               {/* Server text and teacher text: plain text nodes only. */}
               <p
-                className={cn("mt-0.5 text-lg leading-snug", value ? "font-semibold text-foreground" : "italic text-muted-foreground")}
+                className={cn(DISPLAY, "mt-0.5 text-xl leading-snug text-foreground", !value && "rounded-xl bg-highlight px-3 py-2 text-highlight-foreground")}
                 data-testid={`sheet-row-${field}-value`}
               >
                 {value ?? frVoice.sheet.missing}

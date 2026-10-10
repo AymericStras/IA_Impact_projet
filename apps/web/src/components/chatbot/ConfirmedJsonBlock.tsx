@@ -35,7 +35,7 @@ export function ConfirmedJsonBlock({ payload, defaultOpen = true }: ConfirmedJso
   };
 
   return (
-    <div className="min-w-0 rounded-xl border bg-muted/40" data-testid="confirmed-json">
+    <div className="min-w-0 rounded-xl bg-card text-foreground" data-testid="confirmed-json">
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
         <Button
           type="button"
@@ -44,7 +44,7 @@ export function ConfirmedJsonBlock({ payload, defaultOpen = true }: ConfirmedJso
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="confirmed-json-content"
-          className={cn("-ml-2", FLUID_BUTTON_SM, TOUCH_TARGET)}
+          className={cn("-ml-1.5", FLUID_BUTTON_SM, TOUCH_TARGET)}
         >
           {open ? <ChevronUpIcon aria-hidden="true" /> : <ChevronDownIcon aria-hidden="true" />}
           {fr.confirmation.jsonTitle}
@@ -55,24 +55,24 @@ export function ConfirmedJsonBlock({ payload, defaultOpen = true }: ConfirmedJso
         </Button>
       </div>
       {open ? (
-        <div id="confirmed-json-content" className="border-t px-3 py-2">
+        <div id="confirmed-json-content" className="border-t border-border px-3 pt-2.5 pb-3">
           <p className="mb-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{fr.confirmation.jsonHint}</p>
           <pre
             // The only intentionally horizontally scrollable region; focusable for keyboard scrolling.
             tabIndex={0}
             data-scroll-x=""
             aria-label={fr.confirmation.jsonTitle}
-            className="thin-scrollbar overflow-x-auto rounded-lg bg-card p-3 font-mono text-xs leading-relaxed ring-1 ring-foreground/10">
+            className="thin-scrollbar overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs leading-relaxed">
             {json.split("\n").map((line, index) => (
               <span
                 key={index}
-                className={cn("block", line.includes('"constraint"') && "rounded bg-accent px-1 -mx-1 text-accent-foreground")}
+                className={cn("block", line.includes('"constraint"') && "-mx-1 w-fit rounded bg-highlight px-1 font-semibold text-highlight-foreground")}
               >
                 {line}
               </span>
             ))}
           </pre>
-          {copyState === "failed" ? <p className="mt-2 text-xs text-destructive">{fr.errors.copyFailed}</p> : null}
+          {copyState === "failed" ? <p className="mt-2 text-xs font-semibold text-destructive">{fr.errors.copyFailed}</p> : null}
         </div>
       ) : null}
     </div>

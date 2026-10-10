@@ -36,7 +36,7 @@ export function AskStage({
 }: AskStageProps) {
   return (
     <div className={cn(styles.stage, styles.safeX, "max-w-3xl items-center justify-center gap-3 py-4 text-center @md/voice:gap-4 @md/voice:py-6")} data-testid="stage-ask">
-      <p className="text-sm font-medium text-primary">{frVoice.ask.eyebrow}</p>
+      <p className="rounded-full bg-highlight px-3 py-1 text-sm font-semibold text-highlight-foreground">{frVoice.ask.eyebrow}</p>
       <StageHeading
         focusOnEnter={focusHeading}
         className="text-balance whitespace-pre-wrap text-[clamp(1.375rem,min(5.2cqi,7.5cqb),2.5rem)] font-semibold leading-tight tracking-tight text-foreground"

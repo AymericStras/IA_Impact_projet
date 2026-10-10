@@ -2,35 +2,18 @@
 
 **Read this first.** Update it at the end of every work session (what changed, what is verified, what is next). Keep it short; history lives in Git.
 
-## Status — 2026-10-10
+## Current task — 2026-10-10 — V3 restyle recovery
 
-Phase **P0 (framework package) — done**. No application code yet.
-
-Exists and verified:
-- `AGENTS.md` / `CLAUDE.md` rules; docs (`PRODUCT`, `ARCHITECTURE`, `API`, `DECISIONS`, `DEVELOPMENT`, `DEMO`).
-- Contracts: `packages/contracts/*.schema.json` + examples; `scripts/validate_contracts.py` passes.
-- Prompts: `services/api/app/prompts/extract_requirements.md`, `dialogue_policy.md`.
-- Skills (`.agents/skills/*`, symlinked in `.claude/skills/`), role agents (`.claude/agents/*`).
-- Scripts (`bootstrap/dev/test/check/demo`) — they detect missing `apps/web` / `services/api` and skip with a notice.
-- `evals/french_cases.jsonl` (seed cases) + `evals/evaluate.py` (runs once extraction exists; `--list` works now).
-- CI workflow, `docker-compose.yml` (Postgres on 5433).
-- Credentials: `./tools/gpt check` OK; `gpt-transcribe` and `gpt-5.4-mini` available.
-
-## Next — P1: FastAPI + text extraction
-
-1. `services/api`: `uv init`, deps (fastapi, uvicorn, pydantic, sqlalchemy, aiosqlite, alembic, openai, pytest, httpx, ruff, mypy).
-2. `app/schemas/`: `PartialRequirements`, `RequirementPatch`, `ConversationResponse`, `ConfirmedRequirements` — mirror `packages/contracts`; add `scripts/export_schemas.py` + diff check in `check.sh`.
-3. `app/domain/`: `patch_merger`, `validators`, `date_resolver` (Europe/Paris), `state_machine`, `dialogue` — pure, with tests from `evals/french_cases.jsonl` expectations.
-4. `app/services/`: provider protocol + `OpenAIProvider` (Responses API, strict structured outputs) + `FakeProvider`.
-5. Routes per `docs/API.md`; SQLite persistence; idempotency.
-6. Run `python evals/evaluate.py` and record results in this file.
-
-Then P2 (multi-turn + questions), P3 (frontend; design pass with Stitch using the prompt in `docs/DEMO.md`), P4 (audio), P5 (confirm/edit), P6 (tests/integration), P7 (polish).
-
-## Open questions for the team
-
-- Handoff transport to the planner module: pull via `GET /export`, or push (webhook)? Default: pull.
-- Return date inference when only a time is given (see PRODUCT.md) — confirm rule with teammates.
+- Base: `a2d62ef`, both interfaces and their simulated journey are implemented. GitHub CI run 38029514774 passed on that base; these results do not validate the restyle.
+- Recovered the interrupted classic V3 changes from `sncf_chatbot--restyle-v3-classic` into a new isolated `feature/restyle-v3-complete` worktree. The original worktree and other sessions are untouched.
+- Implemented the matching voice palette, header, condensed titles, pill actions, missing-value emphasis, simulation notices and focus treatment. Business logic, recording gestures and API/contracts are unchanged.
+- First hosted candidate failed strict TypeScript checks in the new contrast test (array indices under `noUncheckedIndexedAccess`); corrected without weakening checks. All 52 inherited classic PNGs were visually reviewed as four-viewport contact sheets.
+- Hosted candidate `44253e7`: contracts/secrets/skills, API (94 passed, 1 skipped), frontend types/lint/unit/build passed. Chromium found five classic layout failures: narrow recording/transcript height, landscape confirmation discovery, and fractional scroll-edge clipping. Compact header/recording/confirmation and scroll spacing corrections are under verification. Visual comparisons produced the expected restyle diffs and are being reviewed.
+- Candidate `543844d` on hosted runners (run 38033849480): contracts/secrets/skills, API, frontend types/lint/unit (411)/build and the classic functional + responsive suites passed (71 passed, 3 skipped): the five classic layout failures are fixed. One voice test failed for a reason of its own: after a pointer tap, a scripted `focus()` does not match `:focus-visible`; the test now returns to the control with the keyboard.
+- Baselines: the 152 candidates of dispatch run 38033857645 (`update_visual_baselines=true`) were reviewed as 38 four-viewport contact sheets and committed. Found on review and fixed: the voice itinerary title (`ItineraryView`) lacked the V3 heading face; the 11 screenshots showing it (`voice-15`, `voice-16`, `voice-25`; landscape `voice-25` does not show the title) were regenerated locally and looked at. `mobile/voice-06-think-error` in the candidates was 4 px shorter than both the PR run's rendering and the local one (captured before the failure card settled): replaced by the local rendering. `--update-snapshots` can capture a frame early; compare a regenerated image with a normal run before trusting it.
+- Local verification on the owner's Mac (demo mode, after these changes): `pnpm tsc --noEmit` ✓ · `pnpm lint` ✓ · `pnpm test -- --run` ✓ 37 files / 411 tests · classic `pnpm test:e2e` functional + responsive 74 passed, 3 skipped · classic `visual.spec.ts` 20 passed against the new baselines (one tablet run timed out waiting for a message and passed on rerun) · voice functional + responsive 81 passed · `voice-visual.spec.ts` 20 passed. The hosted run of this final commit is the remaining confirmation.
+- Simulation stays explicit: planner/booking/travel-file data are simulated; hosted browser tests use the demo services and synthetic microphone. No new live model calls, real microphone/device tests or public deployment are claimed.
+- Next: confirm the hosted run of the final commit, mark PR #1 ready and merge. Deployment remains subject to the host's current guardrails; do not use the obsolete remote build or owner-bypass path in the base deployment scripts. The separate `fix/deploy-guardrails` worktree belongs to another task.
 
 ## Frontend notes — 2026-10-10 (journey after confirmation in the classic chat; responsiveness round; fifth field) — design frozen
 

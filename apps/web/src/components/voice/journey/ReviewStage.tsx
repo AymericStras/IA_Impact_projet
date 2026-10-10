@@ -51,7 +51,7 @@ export function ReviewStage({ journey, focusHeading, message, busy, sending, onS
       )}
 
       {journey.accepted_adjustments.length > 0 ? (
-        <section className="grid gap-2 rounded-2xl border bg-card p-4" aria-labelledby="review-accepted-title" data-testid="review-accepted">
+        <section className="grid gap-2 rounded-2xl border bg-card shadow-card p-4" aria-labelledby="review-accepted-title" data-testid="review-accepted">
           <h2 id="review-accepted-title" className="text-sm font-medium text-muted-foreground">
             {copy.acceptedTitle}
           </h2>

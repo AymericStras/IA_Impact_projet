@@ -34,10 +34,10 @@ export function JourneyActions({
   disabled = false,
   children,
 }: JourneyActionsProps) {
-  const className = cn("text-primary", FLUID_BUTTON_SM, TOUCH_TARGET);
+  const className = cn("underline decoration-border decoration-2 underline-offset-4 hover:decoration-primary", FLUID_BUTTON_SM, TOUCH_TARGET);
   return (
     <div className="grid min-w-0 gap-2" data-testid="journey-actions">
-      <div className="flex flex-wrap gap-x-2 gap-y-1">
+      <div className="-mx-1.5 flex flex-wrap gap-x-1 gap-y-1">
         {onChangeDestination ? (
           <Button type="button" variant="ghost" size="sm" onClick={onChangeDestination} disabled={disabled} className={className}>
             <MapPinIcon aria-hidden="true" />

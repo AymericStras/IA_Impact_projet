@@ -106,7 +106,9 @@ export function MessageComposer({
           ref={formRef}
           // The field keeps a usable width: when it cannot (very large text), the buttons
           // wrap to their own row under it.
-          className="flex flex-wrap items-end justify-end gap-2 rounded-2xl border border-input bg-card transition-shadow focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/40 tall:p-2 short:p-1"
+          // Three pills, as on the reference site: the field (2px navy border, yellow halo on
+          // focus), the round microphone button, and the one red action.
+          className="flex flex-wrap items-end justify-end gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             submit();
@@ -126,9 +128,9 @@ export function MessageComposer({
             disabled={disabled}
             maxLength={maxLength}
             rows={1}
-            // The surrounding form carries the focus ring for this field.
+            // The field's own navy border is the inner focus layer; `focus-halo` adds the outer one.
             data-focus-inside=""
-            className="min-h-10 min-w-0 flex-[1_1_10rem] resize-none border-0 bg-transparent px-2 py-2 shadow-none placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap focus-visible:border-transparent focus-visible:ring-0 pointer-coarse:min-h-[44px] pointer-coarse:py-2.5 tall:max-h-40 short:max-h-20"
+            className="min-h-11 min-w-0 flex-[1_1_10rem] resize-none rounded-[1.5rem] border-primary px-4 py-2 leading-6 placeholder:overflow-hidden placeholder:text-ellipsis placeholder:whitespace-nowrap md:text-base pointer-coarse:min-h-[48px] pointer-coarse:py-2.5 tall:max-h-40 short:max-h-20"
           />
           <div className="flex shrink-0 items-center gap-2">
           <Tooltip>
@@ -136,17 +138,17 @@ export function MessageComposer({
               render={
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="icon-lg"
                   aria-label={fr.composer.microphone}
                   data-testid="microphone-button"
                   disabled={disabled || !micSupported}
                   onClick={() => setRecorderOpen(true)}
-                  className={TOUCH_TARGET}
+                  className={cn("pointer-coarse:size-12", TOUCH_TARGET)}
                 />
               }
             >
-              <MicIcon aria-hidden="true" />
+              <MicIcon className="size-5" aria-hidden="true" />
             </TooltipTrigger>
             <TooltipContent>{micSupported ? fr.composer.microphone : fr.composer.microphoneUnsupported}</TooltipContent>
           </Tooltip>
@@ -156,14 +158,16 @@ export function MessageComposer({
             aria-label={fr.composer.send}
             disabled={!canSend}
             data-testid="send-button"
-            className={TOUCH_TARGET}
+            // Round icon button where the row is short of room; the word from two columns up.
+            className={cn("pointer-coarse:size-12 wide:w-auto wide:px-6 wide:pointer-coarse:w-auto", TOUCH_TARGET)}
           >
-            <SendHorizontalIcon aria-hidden="true" />
+            <SendHorizontalIcon className="size-5 wide:hidden" aria-hidden="true" />
+            <span className="hidden wide:inline">{fr.composer.send}</span>
           </Button>
           </div>
         </form>
       )}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-2 text-[0.7rem] text-muted-foreground">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-4 text-[0.6875rem] font-medium text-muted-foreground">
         {/* A keyboard shortcut is only relevant with a physical keyboard, and only when there is room. */}
         <p id="composer-hint" className="hidden mouse:tall:block">
           {fr.composer.hint}

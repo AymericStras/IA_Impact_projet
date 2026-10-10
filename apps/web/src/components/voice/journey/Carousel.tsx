@@ -102,7 +102,7 @@ export function Carousel<T>({
   };
 
   const NAV_BUTTON =
-    "inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-input bg-card text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40";
+    "inline-flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-card text-primary hover:bg-muted disabled:pointer-events-none disabled:border-input disabled:bg-muted disabled:text-muted-foreground";
 
   return (
     <section aria-roledescription="carrousel" aria-label={label} className="grid min-w-0 gap-3" data-testid={testId} data-index={current}>

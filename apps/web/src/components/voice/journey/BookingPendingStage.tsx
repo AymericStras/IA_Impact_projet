@@ -60,7 +60,7 @@ export function BookingPendingStage({ journey, focusHeading, message, busy, chec
       </ol>
 
       {booking ? (
-        <section className="rounded-2xl border bg-card p-4" data-testid="pending-booking">
+        <section className="rounded-2xl border bg-card shadow-card p-4" data-testid="pending-booking">
           <p className={cn("text-xl font-semibold text-foreground tabular-nums", WRAP_ANYWHERE)} data-testid="booking-reference">
             {copy.reference(booking.reference)}
           </p>

@@ -27,7 +27,7 @@ function FileList({ title, items, ordered = false, testId }: { title: string; it
   if (items.length === 0) return null;
   const List = ordered ? "ol" : "ul";
   return (
-    <section className={cn(styles.printBlock, "grid gap-2 rounded-2xl border bg-card p-4")} aria-label={title} data-testid={testId}>
+    <section className={cn(styles.printBlock, "grid gap-2 rounded-2xl border bg-card shadow-card p-4")} aria-label={title} data-testid={testId}>
       <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
       <List className="grid gap-1.5">
         {items.map((item) => (
@@ -60,7 +60,7 @@ export function TravelFileStage({ file, notices, focusHeading, onPrint, onBack, 
       <FileList title={copy.scheduleTitle} items={file.schedule} ordered testId="file-schedule" />
 
       {file.places.length > 0 ? (
-        <section className={cn(styles.printBlock, "grid gap-2 rounded-2xl border bg-card p-4")} aria-label={copy.placesTitle} data-testid="file-places">
+        <section className={cn(styles.printBlock, "grid gap-2 rounded-2xl border bg-card shadow-card p-4")} aria-label={copy.placesTitle} data-testid="file-places">
           <h2 className="text-sm font-medium text-muted-foreground">{copy.placesTitle}</h2>
           <ul className="grid gap-2">
             {file.places.map((place) => (

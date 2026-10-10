@@ -18,12 +18,12 @@ interface BookingRefusedProps {
 /** The booking was refused: the server's message, then the alternatives as itinerary cards. */
 export function BookingRefused({ booking, alternatives, onChoose, busy = false }: BookingRefusedProps) {
   return (
-    <div className="grid min-w-0 gap-3" data-testid="booking-refused">
+    <div className="grid min-w-0 gap-4 short:gap-3" data-testid="booking-refused">
       <div className={cn(JOURNEY_CARD, WRAP_ANYWHERE)}>
-        <p className="text-sm" data-testid="booking-message">
+        <p className="text-[0.9375rem] font-medium" data-testid="booking-message">
           {booking.message}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">{fr.journey.pending.reference(booking.reference)}</p>
+        <p className="mt-1 text-[0.8125rem] text-muted-foreground">{fr.journey.pending.reference(booking.reference)}</p>
       </div>
       {alternatives.length > 0 ? (
         <>

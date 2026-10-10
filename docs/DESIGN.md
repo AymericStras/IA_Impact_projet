@@ -1,84 +1,144 @@
-# Design system — frozen (apps/web)
+# Design system — « V3 — Occitanie en train » (apps/web)
 
-This document describes the chatbot UI **as implemented** and is the reference for any future change. The design is frozen: the goal of later work is to keep it working, not to restyle it. If something here and the code disagree, the code plus the screenshot baselines (`apps/web/e2e/__screenshots__/`) are the truth — fix this file.
+This document describes the chatbot UI **as implemented** and is the reference for any future change. Since ADR-026 the classic chat (`/`) wears the identity of the teammates' site « Occitanie en train » — navy, one red, yellow, Barlow, pills, the « trame » — in place of the earlier teal design. The identity is settled: later work keeps it working and consistent, it does not restyle it. If something here and the code disagree, the code plus the screenshot baselines (`apps/web/e2e/__screenshots__/`) are the truth — fix this file.
+
+The staged voice flow (`/vocal`) uses the same V3 tokens, fonts and controls; its route-specific styling is described in §15.
 
 Before any UI change: read this file, then `apps/web/AGENTS.md`. After any UI change: `pnpm test:e2e` and look at every screenshot diff. The responsive guardrail (§13) must pass at every size of its matrix.
 
 ## 1. Principles
 
-- Calm French public-service look: light background, white surfaces, one deep blue-teal accent, thin borders, no decoration.
+- One family with the « Occitanie en train » site: a navy header and navy hero blocks, white pages, grey quiet surfaces, **one red reserved for the primary action**, yellow as the accent for what must not be missed, full pills, condensed bold titles.
 - The interface renders **server state only** (`ConversationResponse`, and `Journey` / `TravelFile` after the confirmation). It never computes missing fields, totals, readiness or validation, and never plans, sorts, filters or judges the feasibility of a trip.
-- Every state is conveyed by **icon + text**, never by colour alone.
+- Every state is conveyed by **icon or shape + text**, never by colour alone.
 - All user-facing text is French and lives in `apps/web/src/i18n/fr.ts`. Assistant messages come from the server and are displayed verbatim as plain text.
+
+### 1.1 The eight decisions
+
+They fix the weaknesses of the reference designs and override them wherever the two disagree.
+
+1. **Red is the primary action and sits on white or light surfaces only** (red on navy is 2.66:1). On a navy surface the primary control is white with navy content (`Button` variant `inverse`).
+2. **Focus ring in two layers**: navy inside, yellow outside (on navy surfaces: white inside, yellow outside). Visible on every interactive element (§10).
+3. **Boundaries of interactive controls reach 3:1**: inputs, selects, checkboxes, radios, chips and secondary buttons are outlined in navy or in `--input`, never in grey-2 (1.59:1).
+4. **Yellow is never text or a thin line on white** (1.42:1). It is a filled surface carrying navy text, a dot paired with text, or the outer focus layer.
+5. **Errors are not the primary action**: a darker red (`--destructive`) on a pale red surface (`--destructive-soft`), always with an icon and text. `no_match` stays calm (a grey block) and visibly different from an error.
+6. **A disabled primary button is clearly disabled**: grey with muted text and a hairline, not a faded red; its label stays legible (4.92:1).
+7. **Text contrast ≥ 4.5:1** everywhere (≥ 3:1 for large bold titles and non-text UI). The measured pairs are in §2.
+8. **Reduced motion honoured; no new animation that is not a state change** (§6).
 
 ## 2. Colour tokens
 
-Defined once as CSS variables in `apps/web/src/app/globals.css` (`:root`) and exposed to Tailwind through `@theme inline`. Components use the semantic Tailwind classes (`bg-primary`, `text-muted-foreground`…), never raw colour values. There is **no dark theme**.
+Defined once as CSS variables in `apps/web/src/app/globals.css` (`:root`) and exposed to Tailwind through `@theme inline`. The eight brand values are declared first (`--brand-*`); every semantic token points at one of them. Components use the semantic Tailwind classes (`bg-primary`, `bg-action`, `text-muted-foreground`…), never raw colour values and never the `--brand-*` variables. There is **no dark theme**.
 
-| Token | Value (OKLCH) | ≈ sRGB | Usage |
+| Brand value | Hex | Role |
+|---|---|---|
+| `--brand-navy` | `#0f2149` | Header and hero surfaces, user bubble, ink |
+| `--brand-navy-2` | `#1d3166` | Attention icons and borders on light surfaces |
+| `--brand-red` | `#c90c0f` | The primary action, and nothing else (plus the trame) |
+| `--brand-yellow` | `#ffd500` | Accent surface, outer focus layer |
+| `--brand-white` | `#ffffff` | Page, cards, inputs |
+| `--brand-grey` | `#eceef3` | Assistant bubble, quiet surfaces, panel column |
+| `--brand-grey-2` | `#c9cdd8` | Decorative dividers and card hairlines only |
+| `--brand-muted` | `#5d6680` | Secondary text |
+
+| Token | Value | Usage |
+|---|---|---|
+| `--background` | white | Page background |
+| `--foreground`, `--card-foreground`, `--popover-foreground` | navy | Text |
+| `--card` / `--popover` | white | Cards, panel, inputs, dialog |
+| `--primary` / `--primary-foreground` | navy / white | Navy surfaces (header, journey header, confirmed card, recorder, destination card top, travel-file top), secondary outlines, links. **Not the call to action** |
+| `--primary-soft` | navy-2 | Reserved for a lighter navy surface |
+| `--action` / `--action-foreground` / `--action-hover` | red / white / `#a80a0c` | The single primary action (`Button` default variant) |
+| `--highlight` / `--highlight-foreground` | yellow / navy | Missing field, simulation banner, demo badge, « Destination actuelle », highlighted JSON lines, key-sentence discs, recording dot (on navy), first and last timeline stops, outer focus layer |
+| `--user-bubble` / `-foreground` | navy / white | User message bubble (separate token on purpose) |
+| `--secondary`, `--muted`, `--accent` (+ `-foreground` navy) | grey | Assistant bubble, notices, editor surface, pills, skeletons, JSON block, panel column |
+| `--muted-foreground` | `#5d6680` | Secondary text, hints, timestamps, disabled labels |
+| `--success` / `-foreground` / `--success-soft` | navy / white / grey | The identity has no green: a positive state is navy with a check mark and words |
+| `--warning` | navy-2 | **Icons and borders only** on light surfaces (pending clarification) |
+| `--destructive` / `-foreground` / `--destructive-soft` | `#9c0a0c` / white / `#fdeeee` | Error title, icon and border; error surface; failed bubble ring; « Non vérifié » |
+| `--border` | grey-2 | Decorative separators and card hairlines |
+| `--input` | `#707a98` | Boundary of inputs, selects, the test-scenario box, disabled outline buttons |
+| `--ring` | navy | Kept for shadcn compatibility; the focus indicator is §10 |
+| `--elevation-card`, `--elevation-raised` (`shadow-card`, `shadow-raised`) | navy-tinted shadows | Cards; dialog and the expanded panel layer |
+| `--focus-inner`, `--focus-gap`, `--focus-outer` | navy, white, yellow | Layers of the focus indicator; `.on-navy` swaps the first two |
+
+Measured contrast (WCAG 2.x, computed from the hex values; alpha blends are composited first):
+
+| Pair | Where | Ratio | Needs |
 |---|---|---|---|
-| `--background` | `0.985 0.003 240` | `#f8fafc` | Page background |
-| `--foreground` | `0.2 0.02 245` | `#0e171f` | Body text |
-| `--card` / `--popover` | `1 0 0` | `#ffffff` | Assistant bubble, panel fields, composer, dialog |
-| `--primary` | `0.42 0.1 222` | `#005874` | Brand accent: primary buttons, user bubble, progress bar, "Modifier" links |
-| `--primary-foreground` | `0.99 0 0` | `#fcfcfc` | Text on primary |
-| `--user-bubble` / `-foreground` | same as primary | | User message bubble (separate token on purpose) |
-| `--secondary` / `-foreground` | `0.955 0.008 235` / `0.28 0.03 235` | `#ebf1f5` / `#1a2b36` | shadcn secondary variant (rare) |
-| `--muted` | `0.96 0.006 240` | `#eef2f5` | State pill, progress track, example block, skeletons |
-| `--muted-foreground` | `0.46 0.02 240` | `#4e5a62` | Secondary text, hints, timestamps, "À préciser" |
-| `--accent` / `-foreground` | `0.94 0.025 215` / `0.3 0.07 222` | `#d9f0f6` / `#003547` | Confirmation card tint, notice, help numbers, highlighted JSON lines |
-| `--success` / `-foreground` | `0.47 0.12 152` / `0.99 0 0` | `#0a6d37` | Known-field check, confirmed card icon and border |
-| `--success-soft` | `0.95 0.035 152` | `#def6e3` | Confirmed card background, "Mis à jour" tick |
-| `--warning` | `0.6 0.13 70` | `#b17000` | **Icons and borders only** (demo badge, pending clarification, journey notices, refused booking) |
-| `--destructive` / `-foreground` | `0.5 0.19 27` / `0.99 0 0` | `#b7191c` | Error title, error border, recording dot |
-| `--border` | `0.9 0.01 240` | `#d8dfe4` | Decorative separators and card outlines |
-| `--input` | `0.62 0.015 240` | `#7e888e` | Boundary of editable fields (inputs, select, composer) |
-| `--ring` | `0.45 0.1 222` | `#00607d` | Focus indicator |
+| navy on white / white on navy | body text, titles, header, navy blocks, user bubble, tooltip | 15.74 | 4.5 |
+| navy on grey | assistant bubble, notices, pills, JSON block, neutral journey header, editor | 13.56 | 4.5 |
+| navy on yellow | missing field, simulation banner, demo badge, highlighted JSON line | 11.07 | 4.5 |
+| yellow on navy | check icon of the confirmed card, recording dot, focus halo on navy | 11.07 | 3 |
+| white on red / on red hover | primary button label | 5.93 / 7.74 | 4.5 |
+| red on white / on grey | primary button shape | 5.93 / 5.11 | 3 |
+| muted on white / on grey | hints, timestamps, placeholder / disabled primary label | 5.71 / 4.92 | 4.5 |
+| white at 85 % / 80 % on navy | secondary lines inside navy blocks | 11.65 / 10.46 | 4.5 |
+| white on navy at 70 % over white | user bubble while « Envoi en cours… » | 5.96 | 4.5 |
+| destructive on destructive-soft / on white | error title and icon / « Non vérifié », copy failure | 7.57 / 8.53 | 4.5 |
+| navy on destructive-soft | error detail text | 13.97 | 4.5 |
+| `--input` on white / on grey | input, select and scenario-box boundary | 4.26 / 3.67 | 3 |
+| navy on white / on grey | outline buttons, composer field, checkbox, rating cell, selected card | 15.74 / 13.56 | 3 |
+| navy-2 on white | pending-clarification icon | 12.47 | 3 |
+| navy at 60 % on grey | typing dots | 4.09 | 3 |
+| navy ring on white · white ring on navy | inner focus layer | 15.74 | 3 |
+| red on navy | **trame only** (decorative, `aria-hidden`) | 2.66 | — |
+| yellow on white | **never text or line**; progress dot paired with the count, outer focus halo next to the navy ring | 1.42 | — |
+| grey-2 on white | **decorative** dividers and card hairlines | 1.59 | — |
+| grey on white | assistant bubble edge (the bubble is carried by its text) | 1.16 | — |
+| muted on yellow | **not used** | 4.02 | — |
 
-Measured contrast (WCAG 2.x, computed from the token values):
-
-| Pair | Ratio |
-|---|---|
-| foreground on background / card | 17.3 / 18.1 |
-| muted-foreground on background / card / muted | 6.8 / 7.1 / 6.3 |
-| primary-foreground on primary (buttons, user bubble) | 7.7 |
-| primary on background / card (link-style buttons) | 7.6 / 8.0 |
-| accent-foreground on accent | 11.1 |
-| destructive on background (error title) | 6.4 |
-| success on card / success-soft | 6.5 / 5.6 |
-| foreground on tinted surfaces (accent/40, success-soft/60, destructive/5, warning/10) | ≥ 16 |
-| ring on background / card (focus indicator, needs ≥ 3) | 6.8 / 7.0 |
-| warning on card (icon only, needs ≥ 3) | 4.1 |
-| input on card / background (field boundary, needs ≥ 3) | 3.6 / 3.5 |
-
-Rules: text must reach 4.5:1. `--warning` is **not** a text colour (4.1:1). `--border` is decorative only; anything the user must perceive as a control boundary uses `--input`.
+Rules: text must reach 4.5:1. `--border` is decorative only; anything the user must perceive as a control boundary uses navy or `--input`. Red never sits on navy, yellow never carries text on white, and muted text never sits on yellow.
 
 ## 3. Typography
 
-- Font: **Geist** (sans) and **Geist Mono**, self-hosted by `next/font/google` in `src/app/layout.tsx`. No other font.
+- **Barlow** (400, 500, 600, 700) for text and **Barlow Semi Condensed 800** for titles and big values, self-hosted by `next/font/google` in `src/app/layout.tsx` (`display: swap`, CSS variables `--font-barlow` and `--font-barlow-semi-condensed`, mapped to `font-sans` and `font-heading`). **Geist Mono** for the JSON block. No `<link>` to Google, no other font.
 - `<html lang="fr">`, antialiased.
+- Shared class constants (`src/lib/ui.ts`): `DISPLAY` (condensed 800), `EYEBROW` (11 px, bold, uppercase, 0.09em tracking, navy), `SELECT_PILL`.
 
 | Role | Classes | Size |
 |---|---|---|
-| Brand "liO" | `text-base font-semibold tracking-tight text-primary` | 16 px |
-| Page title (`h1`, shown from the `titled` tier, 40rem) | `text-sm roomy:text-base font-medium` | 14 / 16 px |
-| Message bubble | `text-[0.95rem] leading-relaxed` | 15.2 px |
-| Panel/card/section titles (`h2`, `h3`) | `text-sm font-semibold` / `font-medium` | 14 px |
-| Field value, body of cards, buttons | `text-sm` | 14 px |
-| Hints, descriptions, progress text | `text-xs text-muted-foreground` | 12 px |
-| Timestamps, composer hint, counter, state pill | `text-[0.7rem]` | 11.2 px |
-| "Mis à jour" tick | `text-[0.65rem] font-medium` | 10.4 px |
+| Wordmark « liO » | `DISPLAY`, white | 28 px (phones) · 28–32 px (two columns) · 20 px (compact) |
+| Page title (`h1`) « Préparer une sortie scolaire » | `DISPLAY`, white | 26 px (phones) · 28 px (tablet) · 32 px (from `roomy`) · 18 px (compact; visually hidden below `titled` in compact mode) |
+| Card and stage titles (`h2`, `h3`) | `DISPLAY` `text-2xl` / `text-xl` | 24 / 20 px |
+| Field value in « Votre projet » | `DISPLAY` `text-xl` | 20 px (18 px in the yellow block) |
+| Field labels, section headings inside cards | `EYEBROW` | 11 px |
+| Message bubble | `text-base leading-normal` | 16 px |
+| Body of cards | `text-[0.9375rem]` | 15 px |
+| Primary button | `text-sm font-bold uppercase tracking-[0.07em]` | 14 px (13 px in `sm`) |
+| Other buttons | `text-sm font-semibold` | 14 px (13 px in `sm`) |
+| Hints, descriptions | `text-[0.8125rem]` or `text-xs`, `text-muted-foreground` | 13 / 12 px |
+| Timestamps, composer hint, counter, state pill, « Mis à jour » | `text-[0.6875rem]` | 11 px |
 | JSON block | `font-mono text-xs leading-relaxed` | 12 px |
-| Inputs | `text-base` below `md`, `text-sm` from `md`; never under 16 px on coarse pointers (`font-size: max(1rem, 16px)` in `globals.css`, prevents the iOS focus zoom) | 16 / 14 px |
+| Inputs | `text-base` below `md`, 15 px from `md`; never under 16 px on coarse pointers (`font-size: max(1rem, 16px)` in `globals.css`, prevents the iOS focus zoom). The composer is always 16 px | 16 / 15 px |
 
 Times are written « 8 h 00 » with non-breaking spaces in the panel; dates with `Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' })` (year added only when it is not the current one). Helpers: `src/lib/format.ts`.
 
-## 4. Shape, spacing, elevation
+## 4. Shape, spacing, elevation, trame
 
-- Radius token `--radius: 0.75rem`. In use: `rounded-lg` (buttons, inputs), `rounded-xl` (field cards, notices, errors, recorder, dialog), `rounded-2xl` (bubbles, panel, composer, confirmation cards), `rounded-full` (pills, status dots, "Revenir en bas"). Bubbles have one tightened corner: `rounded-bl-md` (assistant) / `rounded-br-md` (user).
-- Spacing follows the Tailwind 4 px scale. Page gutter `px-safe` (1rem, or the left/right safe-area inset when larger); content width `max-w-7xl` (80rem = 1280 px, centred on wider screens); column gap `gap-4` (`gap-6` from the `roomy` tier); thread `gap-3` between bubbles and `gap-4` around the footer; cards `p-3` / `p-4`; top bar `min-h-14` (`min-h-11` in compact mode).
-- **No shadows.** Elevation is expressed with a 1 px border or `ring-1 ring-foreground/10`. No gradients, no illustrations, no background images.
+- **Full pills** (`rounded-full`) for buttons, inputs, selects, chips, badges and rating cells. The composer field is a pill while it holds one line (`rounded-[1.5rem]`); multi-line fields use `rounded-[1.25rem]`.
+- **Cards 16–22 px**: radius token `--radius: 0.75rem`; `rounded-xl` (16.8 px: inner blocks, yellow field block, activity chips), `rounded-2xl` (21.6 px: cards, panel, navy blocks, notices, errors), `rounded-3xl` (dialog). Bubbles are `rounded-[1.375rem]` with one tightened corner: `rounded-bl-md` (assistant) / `rounded-br-md` (user).
+- **Buttons** (`src/components/ui/button.tsx`): `default` = the red primary action, uppercase, bold, letter-spaced; `outline` = secondary, 2 px navy boundary on white; `ghost` = tertiary; `link` = navy underlined (« Modifier »); `inverse` = white with navy content, the main control **on navy**; `ghost-inverse` = white text on navy; `destructive` exists but is unused. Heights 40 px (default) and 32 px (`sm`), 44 px minimum on touch.
+- **Elevation**: soft navy-tinted shadows — `shadow-card` on cards and the panel, `shadow-raised` on the dialog and the expanded panel layer. Hairlines are `border-border`. No gradients, no illustrations, no background images.
+- Spacing follows the Tailwind 4 px scale, with generous whitespace: page gutter `px-page` (1rem, or the safe-area inset when larger, growing beyond 80rem so the content stays centred at 78rem); thread `gap-3` between bubbles and `gap-4` around the footer; cards `p-5` (`p-3.5` in compact mode).
 - Icons: `lucide-react` only, 16 px (`size-4`) by default, always `aria-hidden` next to a text label or with an `aria-label` on the control.
+- **The trame** (`src/components/chatbot/Trame.tsx`): two rows of short rounded dashes and dots, like a stylised rail line. One reusable, deterministic inline SVG (`aria-hidden`, `focusable="false"`), sized by a width class. On navy it is red, yellow and white; on a light surface (`surface="light"`) the yellow and white strokes are drawn in navy, because yellow would be a thin line at 1.42:1. **It is used once: with the page title in the header.** Do not add it to cards or stages, where it would compete with content.
+
+### 4.1 Header
+
+`TopBar` is a navy block (`.on-navy`): the wordmark « liO », the title « Préparer une sortie scolaire » (`fr.app.headerTitle`) in white condensed type, the trame, and the controls — the yellow « Mode démo » pill (demo only), the link to `/vocal`, « Nouvelle conversation », « Aide ». No red in the header.
+
+| Shell | Arrangement | Height (default text size) |
+|---|---|---|
+| tall, single column (phones) | wordmark + controls on one row; title and trame below | 118 px at 390 × 844 |
+| tall, two columns | one band: wordmark, hairline, title with the trame under it; controls on the right (the voice link becomes an outlined pill « Version vocale » from `roomy`) | 87 px |
+| short (landscape phones, very large text) | one slim row: wordmark, title (from `titled`), the trame **beside** it — there is no room under it; the trame is dropped on `narrow` + `short` shells (doubled text on a phone) | 48 px |
+
+### 4.2 Surfaces of the classic chat
+
+- **Two columns**: the conversation is on white; the panel column is a grey band (`.panel-column`) running from the header to the bottom of the screen and to its right edge, with « Votre projet » as a white card on it.
+- **Single column**: « Votre projet » is a white strip under the header (title, five dots, count, toggle) with a hairline under it; its details open as a white layer with `shadow-raised` over the conversation.
+- **Composer**: three pills on the page, no frame — the field (2 px navy border), the round microphone button (navy outline) and the red send button (a round icon button in a single column, the word « Envoyer » in two columns; grey while there is nothing to send).
 
 ## 5. Layout and breakpoints
 
@@ -240,7 +300,7 @@ The server's French `detail` is always what is displayed. The reaction is chosen
 
 - One `h1` (top bar), `h2` for panel and cards, `h3` for field labels. Landmarks: `header`, `main`, `aside`, labelled `section`.
 - Thread is `role="log"`; the latest assistant message is mirrored in a visually hidden `aria-live="polite"` region. Notices are `role="status"`, errors `role="alert"`, progress text is `aria-live="polite"`.
-- Focus indicator: 2 px solid `--ring` outline with 2 px offset on every focusable element (unlayered rule in `globals.css`); the composer shows it on its frame (`data-focus-inside`). Never remove it.
+- Focus indicator: inner 2 px navy ring, surface-colour gap and outer yellow halo; `.on-navy` uses a white inner ring. The composer shows it on its frame (`data-focus-inside`). Stage headings receive programmatic focus without a ring; every interactive control retains it.
 - Keyboard: everything reachable in visual order; skip link « Aller à la zone de saisie »; opening an editor focuses its first input, closing it returns focus to « Modifier »; « Modifier » on the confirmation card expands the panel and focuses its first edit button.
 - Every form control has a visible `<label>`; icon-only buttons have an `aria-label`.
 - Minimum 44 px targets on coarse pointers; text contrast ≥ 4.5:1; reduced motion honoured.
@@ -250,8 +310,8 @@ The server's French `detail` is always what is displayed. The reaction is chosen
 ## 11. Do not
 
 - Do not add colours, fonts, icon sets or UI libraries. Do not add a dark theme.
-- Do not add gradients, shadows, illustrations, background images or decorative animation.
-- Do not restyle shadcn primitives outside the tokens (no per-component colour overrides, no edits to `src/components/ui/*` beyond wiring).
+- Do not add gradients, illustrations, background images or decorative animation. Use only the shared `shadow-card` and `shadow-raised` elevation tokens.
+- Preserve the shared V3 shadcn primitives (pill controls and inverse variants); do not add per-page primitive overrides.
 - Do not compute field logic in the client: no missing-field detection, totals, date inference, validation or readiness. Display guards (like hiding an inconsistent breakdown line) are the only exception and must never change what is sent.
 - Do not render messages as HTML or markdown; no `dangerouslySetInnerHTML` anywhere.
 - Do not stream partial JSON or partial model output into the requirements state: the panel only changes when a complete `ConversationResponse` arrives.
@@ -348,3 +408,20 @@ Layout: the section is a container (`@container/journey`). Cards are one per row
 **Printing.** `TravelFileView` is the print area (`data-print-area`). `@media print` in `globals.css` removes everything that is neither the file, inside it, nor one of its ancestors, releases the viewport-high scrolling shell so the file flows over as many pages as needed, and hides the print button (`data-print-hidden`). Without a travel file on screen, printing keeps the browser's default behaviour.
 
 Demo mode: `src/services/mockJourneyApi.ts` is a scripted port of the backend's simulation (same catalogue, same French strings, same error codes), validated against `journey.schema.json` / `travel_file.schema.json` and against the contract examples. It is scaffolding for the demo and the e2e suite, not a planner.
+
+
+## 15. V3 in the staged voice flow
+
+The layout, gestures, stage routing and server-state rendering of `apps/web/VOICE_NOTES.md` remain the reference. The visual identity now matches the classic chat:
+
+- Persistent navy header, white navigation, yellow demo badge; hollow white / filled yellow progress dots. The decorative trame appears once in the header on wide shells.
+- Condensed 800 stage titles and destination titles, Barlow body text; pill controls. The initial eyebrow and missing field values use yellow with navy text.
+- The talk disc is red on the white ask/sheet surface and white on the navy listening surface. When the sheet can be confirmed, the talk disc becomes navy so confirmation is the single red primary action. Its dimensions and bottom anchoring do not change.
+- Journey dock primary actions are red, secondary actions have navy outlines. Disabled controls are grey with legible labels. Cards use the shared elevation; all server simulation notices use yellow with navy text, including the travel file.
+- The listening shell and header declare `.on-navy` for the shared two-layer focus ring. Programmatically focused headings have neither outline nor halo. The recording shape, reduced-motion meter and transition timing are unchanged.
+
+The intended restyle changes all 100 voice screenshots and 52 classic screenshots. Regeneration requires review of each image; the full functional and responsive suites still apply. macOS visual comparisons also run on an isolated GitHub-hosted `macos-26` runner, independently of local development and production services. Failed comparisons upload actual/expected/diff images without updating baselines automatically.
+
+For an intentional restyle, after updating this document, the manual CI dispatch input `update_visual_baselines=true` runs the visual specs with `--update-snapshots` on the macOS runner and uploads `visual-baseline-candidates-macos`. This produces candidates only: review all images locally, commit the reviewed PNGs, then require the normal PR comparison to pass. Normal push/PR runs never update snapshots. Example: `gh workflow run ci.yml --ref <branch> -f update_visual_baselines=true`.
+
+Narrow classic headers use a single-line 1.25rem title and tighter trame spacing. Short confirmation cards reduce typography and gaps while retaining every message and action. Narrow recorder actions reduce horizontal padding and letter spacing so enlarged text can share one row; touch targets stay at least 44px. Scrollable surfaces and controls reserve a 0.5rem focus margin.

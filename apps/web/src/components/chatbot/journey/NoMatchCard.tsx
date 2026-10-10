@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
  */
 export function NoMatchCard() {
   return (
-    <p className="flex items-start gap-2 rounded-xl border bg-card px-3 py-2.5 text-sm" data-testid="journey-no-match">
-      <InfoIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    <p className="flex items-start gap-2.5 rounded-2xl border border-border bg-card px-4 py-3 text-[0.9375rem] font-medium" data-testid="journey-no-match">
+      <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
       <span className={cn("flex-1", WRAP_ANYWHERE)}>{fr.journey.noMatch.hint}</span>
     </p>
   );

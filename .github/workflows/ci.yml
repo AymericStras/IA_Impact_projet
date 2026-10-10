@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      update_visual_baselines:
+        description: Generate intentional visual changes for review (never auto-commit)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -27,6 +33,7 @@ jobs:
 
   api:
     name: API (services/api)
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: guards
@@ -52,6 +59,7 @@ jobs:
 
   web:
     name: Web (apps/web)
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: guards
@@ -77,14 +85,63 @@ jobs:
           pnpm build
       # Portable end-to-end specs (functional flow + responsive matrix, no screenshots): demo mode, no backend.
       - working-directory: apps/web
-        run: |
-          pnpm exec playwright install --with-deps chromium-headless-shell
-          pnpm test:e2e:ci
-          pnpm test:e2e:voice:ci
+        run: pnpm exec playwright install --with-deps chromium-headless-shell
+      - name: Classic flows and responsive layout
+        working-directory: apps/web
+        run: pnpm test:e2e:ci
+      - name: Voice flows and responsive layout
+        working-directory: apps/web
+        run: pnpm test:e2e:voice:ci
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: web-e2e-report
+          include-hidden-files: true
           path: |
             apps/web/test-results/
+            apps/web/.next-voice-results/
             apps/web/playwright-report/
+
+  visual:
+    name: Visual regression (macOS 26)
+    runs-on: macos-26
+    timeout-minutes: 30
+    needs: guards
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Install browser dependencies
+        id: setup
+        working-directory: apps/web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install chromium-headless-shell
+      # Separate steps keep the voice diffs available even if the classic comparison fails.
+      # One worker in each config; builds and suites run sequentially in this isolated VM.
+      - name: Classic visual baselines
+        working-directory: apps/web
+        run: pnpm exec playwright test visual.spec.ts ${{ inputs.update_visual_baselines && '--update-snapshots' || '' }}
+      - name: Voice visual baselines
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        working-directory: apps/web
+        run: pnpm exec playwright test -c playwright.voice.config.ts voice-visual.spec.ts ${{ inputs.update_visual_baselines && '--update-snapshots' || '' }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        with:
+          name: visual-review-macos
+          include-hidden-files: true
+          path: |
+            apps/web/test-results/
+            apps/web/.next-voice-results/
+      - uses: actions/upload-artifact@v4
+        if: ${{ success() && inputs.update_visual_baselines }}
+        with:
+          name: visual-baseline-candidates-macos
+          path: apps/web/e2e/__screenshots__/darwin/

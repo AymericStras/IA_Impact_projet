@@ -5,14 +5,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-barlow);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-heading: var(--font-barlow-semi-condensed);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -21,6 +22,12 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-foreground: var(--action-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -38,40 +45,80 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-card: var(--elevation-card);
+  --shadow-raised: var(--elevation-raised);
 }
 
 /*
-  Calm French public-service palette. The accent is a deep blue-teal inspired by
-  the liO identity; surfaces stay light and neutral, borders restrained.
-  All foreground/background pairs below keep a contrast ratio >= 4.5:1.
+  « V3 — Occitanie en train » identity (docs/DESIGN.md §2), shared with the teammates' site:
+  navy surfaces and ink, ONE red for the primary action, yellow as an accent surface, white
+  and two greys. The eight brand values are declared once below; every semantic token
+  points at one of them, and components only use the semantic tokens.
+
+  Contrast rules the tokens encode (measured pairs in docs/DESIGN.md §2):
+  - red (`--action`) is used on white / light surfaces only (2.66:1 on navy);
+  - yellow (`--highlight`) is a filled surface carrying navy text, never text or a thin
+    line on white (1.42:1);
+  - `--border` (grey-2) is decorative; a control boundary uses `--input` or navy (>= 3:1);
+  - errors use a darker red (`--destructive`) on a pale red surface, never the action red.
 */
 :root {
-  --background: oklch(0.985 0.003 240);
-  --foreground: oklch(0.2 0.02 245);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 245);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 245);
-  --primary: oklch(0.42 0.1 222);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.955 0.008 235);
-  --secondary-foreground: oklch(0.28 0.03 235);
-  --muted: oklch(0.96 0.006 240);
-  --muted-foreground: oklch(0.46 0.02 240);
-  --accent: oklch(0.94 0.025 215);
-  --accent-foreground: oklch(0.3 0.07 222);
-  --destructive: oklch(0.5 0.19 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.47 0.12 152);
-  --success-foreground: oklch(0.99 0 0);
-  --success-soft: oklch(0.95 0.035 152);
-  --warning: oklch(0.6 0.13 70);
-  --user-bubble: oklch(0.42 0.1 222);
-  --user-bubble-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0.01 240);
-  --input: oklch(0.62 0.015 240);
-  --ring: oklch(0.45 0.1 222);
+  --brand-navy: #0f2149;
+  --brand-navy-2: #1d3166;
+  --brand-red: #c90c0f;
+  --brand-yellow: #ffd500;
+  --brand-white: #ffffff;
+  --brand-grey: #eceef3;
+  --brand-grey-2: #c9cdd8;
+  --brand-muted: #5d6680;
+
+  --background: var(--brand-white);
+  --foreground: var(--brand-navy);
+  --card: var(--brand-white);
+  --card-foreground: var(--brand-navy);
+  --popover: var(--brand-white);
+  --popover-foreground: var(--brand-navy);
+  /* Navy: header and hero surfaces, user bubble, secondary outlines, links. Not the CTA. */
+  --primary: var(--brand-navy);
+  --primary-foreground: var(--brand-white);
+  --primary-soft: var(--brand-navy-2);
+  /* The single primary action. On white or light surfaces only. */
+  --action: var(--brand-red);
+  --action-hover: #a80a0c;
+  --action-foreground: var(--brand-white);
+  /* Accent surface (missing field, simulation label, demo badge) and outer focus layer. */
+  --highlight: var(--brand-yellow);
+  --highlight-foreground: var(--brand-navy);
+  --secondary: var(--brand-grey);
+  --secondary-foreground: var(--brand-navy);
+  --muted: var(--brand-grey);
+  --muted-foreground: var(--brand-muted);
+  --accent: var(--brand-grey);
+  --accent-foreground: var(--brand-navy);
+  /* Errors: darker than the action red, on a pale red surface, with an icon and text. */
+  --destructive: #9c0a0c;
+  --destructive-foreground: var(--brand-white);
+  --destructive-soft: #fdeeee;
+  /* The identity has no green: a positive state is navy with a check mark and words. */
+  --success: var(--brand-navy);
+  --success-foreground: var(--brand-white);
+  --success-soft: var(--brand-grey);
+  /* Attention icons and borders on light surfaces (yellow would be 1.42:1 there). */
+  --warning: var(--brand-navy-2);
+  --user-bubble: var(--brand-navy);
+  --user-bubble-foreground: var(--brand-white);
+  --border: var(--brand-grey-2);
+  /* Boundary of inputs, selects and unchecked boxes: 4.26:1 on white, 3.67:1 on grey. */
+  --input: #707a98;
+  --ring: var(--brand-navy);
   --radius: 0.75rem;
+  /* Soft, navy-tinted elevation. */
+  --elevation-card: 0 1px 2px rgb(15 33 73 / 0.05), 0 10px 28px -12px rgb(15 33 73 / 0.22);
+  --elevation-raised: 0 2px 6px rgb(15 33 73 / 0.08), 0 24px 56px -16px rgb(15 33 73 / 0.38);
+  /* Two-layer focus indicator: inner ring, gap, outer halo (see below). */
+  --focus-inner: var(--brand-navy);
+  --focus-gap: var(--brand-white);
+  --focus-outer: var(--brand-yellow);
 }
 
 @layer base {
@@ -84,7 +131,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv11", "ss01";
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -101,12 +147,34 @@
 /*
   Focus indicator. Deliberately outside any cascade layer so it wins over the
   `outline-none` utilities of the shadcn primitives: every focusable control gets the same
-  2px solid ring, on any background. `data-focus-inside` opts out a field whose wrapper
-  already draws the ring (the composer textarea).
+  two-layer ring on any background — an inner navy ring (15.7:1 on white) and an outer
+  yellow halo, separated from the control by a gap in the surface colour. Yellow alone would
+  be invisible on white (1.42:1); navy alone would be invisible on navy. On a navy surface
+  (`.on-navy`) the inner ring is white; `.on-light` restores the default inside it.
+  `data-focus-inside` opts out a field whose wrapper (`.focus-proxy`) or own border already
+  draws the ring.
 */
-:focus-visible:not([data-focus-inside]) {
-  outline: 2px solid var(--ring);
+.on-navy {
+  --focus-inner: var(--brand-white);
+  --focus-gap: var(--brand-navy);
+}
+.on-light {
+  --focus-inner: var(--brand-navy);
+  --focus-gap: var(--brand-white);
+}
+:focus-visible:not([data-focus-inside]),
+.focus-proxy:has([data-focus-inside]:focus-visible) {
+  outline: 2px solid var(--focus-inner);
   outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--focus-gap),
+    0 0 0 6px var(--focus-outer);
+}
+/* A field with its own 2px navy border: the border is the inner layer, the halo the outer. */
+.focus-halo:focus-visible {
+  outline: none;
+  border-color: var(--focus-inner);
+  box-shadow: 0 0 0 4px var(--focus-outer);
 }
 
 /*
@@ -198,10 +266,46 @@
   }
 }
 
+/* Keep keyboard focus halos and controls clear of scrollport edges, including fractional
+   layout coordinates at browser zoom. */
+button, input, textarea, select, a[href] {
+  scroll-margin-block: 0.5rem;
+}
+.app-shell, .thin-scrollbar {
+  scroll-padding-block: 0.5rem;
+}
+
 /* Horizontal page gutter that also clears notches and rounded corners. */
 .px-safe {
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/*
+  Page gutter of the classic chat: the same 1rem / safe-area gutter, growing on very wide
+  shells so that the content stays 80rem wide and centred. Unlike `max-width` + auto
+  margins, the element keeps the full width of the shell, so a surface inside it can bleed
+  to the edge of the screen (`bleed-x`, `.panel-column`) by the exact width of the gutter.
+*/
+.px-page {
+  --gutter-l: max(1rem, env(safe-area-inset-left), calc((100cqw - 78rem) / 2));
+  --gutter-r: max(1rem, env(safe-area-inset-right), calc((100cqw - 78rem) / 2));
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+
+/* Two-column layouts: the panel column is a quiet grey band running to the screen edge. */
+@container app (min-width: 48rem) {
+  .panel-column::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: calc(-1 * var(--gutter-r));
+    z-index: -1;
+    background: var(--muted);
+  }
 }
 
 /* iOS zooms the page when a focused field is under 16px: never go below it on touch. */
@@ -211,6 +315,14 @@
   select {
     font-size: max(1rem, 16px);
   }
+}
+
+/* Stretches a surface over the page gutter (see `.px-page`), keeping its content aligned. */
+@utility bleed-x {
+  margin-left: calc(-1 * var(--gutter-l));
+  margin-right: calc(-1 * var(--gutter-r));
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
 }
 
 @layer utilities {
@@ -251,5 +363,13 @@
   [data-print-area] {
     border: 0 !important;
     padding: 0 !important;
+    box-shadow: none !important;
+  }
+  /* Browsers drop backgrounds by default: a navy block must not print white on white. */
+  [data-print-area] [data-print-plain] {
+    background: none !important;
+    color: #000 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }

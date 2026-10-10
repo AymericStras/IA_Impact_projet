@@ -4,6 +4,14 @@
   "updated": "2026-10-10",
   "tasks": [
     {
+      "id": "RESTYLE-V3",
+      "status": "ready",
+      "priority": 1,
+      "title": "Complete and verify the shared V3 identity in classic and voice interfaces",
+      "acceptance": "Functional and responsive tests green; all intended screenshots reviewed; shared rules and handoff updated; candidate pushed",
+      "evidence": "2026-10-10 local (demo mode): tsc, eslint, vitest 411, classic e2e 74 passed / 3 skipped + visual 20 passed, voice e2e 81 passed + visual 20 passed; 152 baselines reviewed as contact sheets. Hosted run 38033849480 passed everything except one voice test (fixed) and the then-stale baselines. Hosted run of the final commit pending. Not verified on real devices."
+    },
+    {
       "id": "P0-FRAMEWORK",
       "status": "done",
       "title": "AI-native repository: AGENTS/CLAUDE, skills, role agents, contracts, scripts, CI",
@@ -66,17 +74,24 @@
     },
     {
       "id": "DEPLOY-002",
-      "status": "ready",
+      "status": "blocked",
       "priority": 3,
-      "title": "Redeploy once the five-field frontend and the journey UI are committed; exercise a rollback; prune old images",
-      "acceptance": "Public site shows five rows and the simulated journey; rollback to the previous release verified; only current and previous images kept"
+      "title": "Publish the verified V3 interface through admitted deployment tooling",
+      "acceptance": "Reviewed V3 interfaces serve publicly; target and neighbouring health verified; only unused task-authorized artifacts cleaned, with data preserved",
+      "requires": [
+        "Verified host-guard admission and accounting for Docker import, runtime replacement and gateway transaction"
+      ],
+      "evidence": "2026-10-10 read-only inspection: live API/web a2d62efa4418; host preflight allowed offline_readonly_sandbox only. No deployment attempted."
     },
     {
       "id": "QA-REAL-VOICE",
       "status": "blocked",
       "priority": 3,
       "title": "Real teacher recordings and real devices",
-      "requires": ["authorised French recordings (accents, noise, numbers, dates)", "a phone and a laptop over HTTPS"],
+      "requires": [
+        "authorised French recordings (accents, noise, numbers, dates)",
+        "a phone and a laptop over HTTPS"
+      ],
       "acceptance": "Recorded results for permission denied, interruption, noisy room, long message; error rate on numbers/dates/times"
     },
     {
@@ -84,7 +99,9 @@
       "status": "blocked",
       "priority": 4,
       "title": "Hand the confirmed JSON to the teammates' planning module",
-      "requires": ["their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"],
+      "requires": [
+        "their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"
+      ],
       "acceptance": "Their module consumes packages/contracts/examples/confirmed_requirements.json and one live export"
     },
     {
@@ -106,7 +123,9 @@
       "status": "blocked",
       "priority": 7,
       "title": "Items of docs/PRODUCTION.md (identity, retention, Postgres path, device and assistive-technology passes)",
-      "requires": ["deployment and privacy requirements from the owner"],
+      "requires": [
+        "deployment and privacy requirements from the owner"
+      ],
       "acceptance": "Each item implemented and tested; none ticked from code inspection"
     }
   ]

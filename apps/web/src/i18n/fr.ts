@@ -7,6 +7,8 @@ export const fr = {
   app: {
     brand: "liO",
     title: "Assistant de voyage pédagogique",
+    /** Title shown in the navy header (« V3 — Occitanie en train » identity). */
+    headerTitle: "Préparer une sortie scolaire",
     pageTitle: "liO — Assistant de voyage pédagogique",
     pageDescription:
       "Décrivez votre sortie scolaire par écrit ou à la voix : l'assistant recueille les cinq informations nécessaires à la préparation de l'itinéraire.",

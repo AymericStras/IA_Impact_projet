@@ -22,7 +22,7 @@ export function SimulationNotice({ notices }: SimulationNoticeProps) {
   return (
     <aside
       aria-label={frVoice.journey.noticesLabel}
-      className="flex items-start gap-2 rounded-xl border border-dashed border-foreground/40 bg-muted/60 px-3 py-2 text-xs leading-snug text-foreground"
+      className="flex items-start gap-2 rounded-xl bg-highlight px-3 py-2 text-xs leading-snug text-highlight-foreground"
       data-testid="journey-notices"
     >
       <FlaskConicalIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />

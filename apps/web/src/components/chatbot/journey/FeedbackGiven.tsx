@@ -8,8 +8,8 @@ import { JOURNEY_CARD } from "./journeyStyles";
 export function FeedbackGiven({ feedback }: { feedback: Feedback }) {
   return (
     <div className={cn(JOURNEY_CARD, WRAP_ANYWHERE)} data-testid="feedback-given">
-      <p className="text-sm font-medium">{fr.journey.feedback.given(feedback.rating)}</p>
-      {feedback.comment ? <p className="mt-1 text-sm whitespace-pre-wrap">{feedback.comment}</p> : null}
+      <p className="font-heading text-xl leading-tight font-extrabold">{fr.journey.feedback.given(feedback.rating)}</p>
+      {feedback.comment ? <p className="mt-1.5 text-[0.9375rem] whitespace-pre-wrap">{feedback.comment}</p> : null}
     </div>
   );
 }

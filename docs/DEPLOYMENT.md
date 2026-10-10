@@ -4,6 +4,10 @@ Target: `zhao-zenbook` (home server), published through the existing `zhaoyang.f
 `https://zhaoyang.fr/sncf-chatbot/`. Development, tests and image builds happen on the developer
 machine; the server only runs two small containers.
 
+## Current release gate — 2026-10-10
+
+The V3 restyle is being verified on hosted development runners; it is not deployed. A read-only inspection found the live API and web containers using `a2d62efa4418`. The host's 768 MiB preflight returned `allowed=true` for `offline_readonly_sandbox` only: this is not admission for Docker image import, container replacement or gateway mutation. Those operations still need the verified shared deployment transaction described by host-guard. Do not run the historical server-build or `--owner-approved` paths below. Deployment hardening is tracked separately on `fix/deploy-guardrails`; this UI task does not modify or activate it.
+
 ## Layout on the server (host conventions)
 
 | What | Where |
@@ -25,7 +29,7 @@ machine; the server only runs two small containers.
 
 Images: API 288 MB (Alpine + ffmpeg). Root filesystem on the host is tight (about 26 GiB free on 2026-10-10; the host rule wants 25 GiB): prune old `sncf-chatbot-*` images after a successful release.
 
-## Commands
+## Historical commands (superseded; do not execute)
 
 ```sh
 deploy/deploy.sh preflight                 # read-only admission check
@@ -59,7 +63,7 @@ The preflight always blocks on resources: memory PSI `full` at or above 1 %, les
 
 The URL is public and, at the owner's request, there is no rate limiting and no cap on model calls (`RATE_LIMIT_PER_MINUTE=0`). Anyone who finds the URL can spend the API key's quota: set a monthly budget on the key in the provider's dashboard. Conversations are protected only by their unguessable id. See `docs/PRODUCTION.md`.
 
-## Status — 2026-10-10
+## Historical release evidence — 2026-10-10
 
 **Live at https://zhaoyang.fr/sncf-chatbot/** (release `fb06e85d40b5`, built on the server).
 

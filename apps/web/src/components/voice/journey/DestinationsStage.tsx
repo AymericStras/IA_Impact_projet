@@ -42,9 +42,9 @@ function DestinationCard({
 }) {
   const descriptionPrefix = useId();
   return (
-    <article className="grid gap-4 rounded-2xl border bg-card p-4 @2xl/voice:p-6" data-testid={`destination-${destination.id}`}>
+    <article className="grid gap-4 rounded-2xl border bg-card shadow-card p-4 @2xl/voice:p-6" data-testid={`destination-${destination.id}`}>
       <div className="grid gap-2">
-        <h2 className={cn("text-[clamp(1.5rem,6cqi,2.25rem)] font-semibold leading-tight tracking-tight text-foreground", WRAP_ANYWHERE)}>
+        <h2 className={cn("text-[clamp(1.5rem,6cqi,2.25rem)] font-heading font-extrabold leading-tight tracking-tight text-foreground", WRAP_ANYWHERE)}>
           {destination.title}
         </h2>
         <p className={cn("text-lg leading-relaxed text-foreground", WRAP_ANYWHERE)} data-testid="destination-why">
