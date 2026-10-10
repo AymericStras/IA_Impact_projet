@@ -1,10 +1,34 @@
 # Integration guide — read this before merging
 
 This module turns one JSON document (`TripReportRequest`) into one PDF: the
-post-trip report a teacher sends to parents. It stores nothing, sends nothing,
-and reads no other module's database. You call it; it answers with a PDF.
+post-trip report a teacher sends to parents. It reads no other module's
+database. You call it; it answers with the PDF (`/api/v1/render`) or emails
+the PDF to the address in the request (`/api/v1/reports`), through the same
+Mailato / Resend pipeline as `sncf_bilan`.
 
-## The one thing to remember
+## ⚠️ The email address: your form must ask for it
+
+**No existing module holds the address the report is sent to.** The chatbot
+does not collect it, the planner's travel file has none, and this module does
+not invent one. The owner's decision (2026-10-10): **when the teacher submits
+their post-trip feedback, the form also asks for the email address**, and the
+merged product passes it as `recipient.email` (optional `recipient.name` for
+the greeting). The same applies to `sncf_bilan`'s `recipient.email`.
+
+- Without `recipient.email`, `/render` and `/check` still work, `/check` lists
+  `recipient.email` as a **major** gap, and `/reports` answers
+  `422 {"code": "NO_RECIPIENT"}`. Nothing is queued.
+- One address per report. Whose address it is (the teacher, who forwards to
+  parents; a class mailing list; a parent representative) is a product
+  decision the form must make explicit to the teacher.
+- The example teacher file `contracts/examples/inputs/teacher.carcassonne.json`
+  shows the field in place; `scripts/assemble.py` passes it through.
+
+If you are merging with a coding agent, tell it so in the prompt: *"the
+teacher feedback form must collect an email address and send it as
+`recipient.email`"*. An agent that only maps existing data will miss it.
+
+## The one thing to remember about the other fields
 
 **Every field of the request is optional.** The service never refuses a request
 because something is missing. It renders what it has and prints
@@ -66,6 +90,8 @@ Gaps found while computing (also in the list):
 
 | Request field | Source in the current modules | Status |
 |---|---|---|
+| `recipient.email`, `recipient.name` | — | **new data, required to send**: the teacher's post-trip form must ask for it (see the top of this page) |
+| `idempotency_key` | your booking or feedback id | optional; without it the key is derived from the content |
 | `trip.*`, `education.subject/theme/places/activities` | sncf_chatbot `GET /conversations/{id}/journey/travel-file` (`TravelFile`) | available; `src/sncf_rapport/assemble.py::from_travel_file` does the mapping |
 | `trip.*.train_number` | — | the planner's simulation has only a `line` label |
 | `education.places[i].latitude/longitude/official_url/license/attribution` | sncf_events `/api/detail?id=` (`latitude`, `longitude`, `canonical_url`, `license`, `attribution`) | available there, but the chatbot's places carry no id that links to it — you must map them |
@@ -107,6 +133,54 @@ for gap in build_report_view(request).gaps:
         logger.warning("rapport: %s missing — %s", gap.field, gap.effect)
 pdf_bytes = render_pdf(request)
 ```
+
+## Sending the report by email
+
+`POST /api/v1/reports` takes the same body as `/render`, renders the PDF,
+records a job and emails the PDF to `recipient.email` in the background. Call
+it from your server only: the key must stay secret.
+
+| Answer | Meaning |
+|---|---|
+| `202` | accepted and queued; the body is the job (`id`, `status: queued`, …) |
+| `200` | this content was already accepted; the existing job is returned, **nothing is sent again** |
+| `409 IDEMPOTENCY_KEY_REUSED` | the `idempotency_key` you sent was used with different content |
+| `422 NO_RECIPIENT` | no `recipient.email`: collect it, nothing was queued |
+| `422` (Pydantic list) | a value is invalid (wrong type, unknown enum value) |
+| `429 LIMIT_REACHED` | daily limit (80 per day, 5 per recipient by default) |
+| `401` | missing or wrong `X-Rapport-Key` |
+
+Then `GET /api/v1/reports/{id}` gives `queued`, `sent` (with the provider's
+message id) or `failed` (with the error text, e.g. a refused recipient domain
+or an attachment too large for the provider). Offer `POST
+/api/v1/reports/{id}/retry` on `failed`; it reuses the same PDF and the same
+provider idempotency key, so a retry can never send twice.
+`GET /api/v1/reports/{id}/document.pdf` returns what was attached.
+
+**Idempotency.** Send `idempotency_key` (8–128 characters, `A–Z a–z 0–9 . _ : -`),
+stable per feedback submission, for example `"<booking id>-rapport"`. Without
+it the key is derived from the content: an identical request repeated (double
+click, client retry) sends once, and a request whose content changed is a new
+report and a new email. Fine for a prototype; for a product send your own key
+so that an edit does not quietly send a second report.
+
+**Missing fields** are reported on `/reports` exactly as on `/render`
+(`X-Rapport-Missing-*` headers and a WARNING log line). Recommended rule:
+block the "send to parents" button, or at least warn the teacher, while
+`major > 0`.
+
+**Modes.** `RAPPORT_MAIL_MODE=dry-run` (default) writes each message to
+`var/outbox/<id>.eml` and reports `provider: dry-run`; `live` sends through
+Resend and needs `RESEND_API_KEY` and `RAPPORT_API_KEY`. The email comes from
+`Sorties scolaires liO – démo <sorties@zhaoyang.fr>`, with the PDF attached
+and the logo inline; tests must stay in dry-run or call `/render`.
+
+**What the email says** comes from the same view as the PDF (`view.py`,
+`build_mail_view`): the cover facts, the cover numbers, the validation line,
+the AI attribution when the texts were generated, the simulation notice.
+Preview it with `uv run python scripts/preview.py request.json` (writes the
+`.eml`, `.email.html`, `.email.txt` next to the PDF) and send one to yourself
+with `scripts/send_example.py --to you@example.com --yes`.
 
 ## Generated texts on the educational value (optional, needs a model key)
 
@@ -180,6 +254,9 @@ What you should know:
   "estimation". See `docs/adr/0002-emission-factors.md`.
 - Auth: header `X-Rapport-Key`, compared with `RAPPORT_API_KEY` (or the file
   named by `RAPPORT_API_KEY_FILE`). With no key configured the API is open and
-  says so in the log: fine on a laptop, not on a server.
+  says so in the log: fine on a laptop, not on a server, and refused outright
+  in `live` mail mode (an open sender is a spam relay).
+- `recipient.email` must be a syntactically valid address (`422` otherwise);
+  the domain is lower-cased. An empty string counts as absent.
 - The SNCF Voyageurs logo is a trademark; see `assets/brand/PROVENANCE.md`
   before publishing the module anywhere new.

@@ -161,4 +161,22 @@ sncf_rapport/
 2. **CO₂ 基准：autocar + voiture 两个都给。**
 3. **Logo：SNCF Voyageurs**（与 sncf_bilan 相同文件和 PROVENANCE 条款；真实文件不进公共仓库）。
 4. 字体：直接复用 sncf_bilan 的 Source Sans 3（省去下载）。
-5. sncf_resultat：只预留 `sources[]`，不调 API。邮件：v1 不发。
+5. sncf_resultat：只预留 `sources[]`，不调 API。邮件：v1 不发 → **已改**，见第 8 节（2026-10-10 同日决定）。
+
+## 8. 邮件发送（2026-10-10，用户决定）
+
+- 报告和 `sncf_bilan` 一样通过邮件发送：同一条管线（Mailato 0.4.0 → Resend，
+  发件人 `sorties@zhaoyang.fr`），默认 `dry-run`（写到 `var/outbox/*.eml`），
+  真实发送前先问用户。
+- 收件地址由**教师在提交反馈时一并填写**，请求里是 `recipient.email`
+  （可选 `recipient.name`）。现有模块（chatbot、events、resultat）都没有这个
+  地址，不能从别处推导。
+- 所有字段仍然可选：没有地址时 `/render`、`/check` 照常工作（`/check` 把
+  `recipient.email` 列为 major 缺失），`/reports` 返回 422 `NO_RECIPIENT`。
+- 合并到团队仓库时要提醒开发者（我们都是 vibe coding，agent 只会映射已有数据）：
+  `docs/INTEGRATION.md` 开头、`README.md` 的提示框、`sncf_bilan/README.md`
+  都写了这条。
+- 新增：`src/sncf_rapport/mail/`、`service.py`、`store.py`，路由
+  `POST /api/v1/reports`、`GET /api/v1/reports/{id}`、`…/document.pdf`、
+  `…/retry`；脚本 `scripts/send_example.py`；`credentials.env.example`。
+  详见 `docs/adr/0004-email-sending-mirrors-bilan.md`。

@@ -1,0 +1,38 @@
+Bonjour{% if mail.recipient_name %} {{ mail.recipient_name }}{% endif %},
+
+Vous trouverez en pièce jointe le rapport de voyage scolaire de la classe ({{ mail.attachment_name }}) : « Notre voyage, nos apprentissages ».
+
+{% if mail.trip_title %}
+{{ mail.trip_title }}
+
+{% endif %}
+{% for fact in mail.facts %}
+  {{ "%-17s"|format(fact.label) }}: {{ fact.value or "non communiqué" }}
+{% endfor %}
+
+{% if mail.figures %}
+En quelques chiffres :
+{% for figure in mail.figures %}
+  - {{ figure.prefix ~ " " if figure.prefix else "" }}{{ figure.value or "non communiqué" }}{{ " " ~ figure.unit if figure.unit else "" }} {{ figure.label }}{% if figure.note %} ({{ figure.note }}){% endif %}
+
+{% endfor %}
+
+{% endif %}
+{{ mail.validation }}.
+{% if mail.ai_notice %}
+{{ mail.ai_notice }}
+{% endif %}
+{% if mail.simulated %}
+Les données de ce voyage sont simulées : ce service est un prototype de démonstration.
+{% endif %}
+
+Bonne lecture,
+{{ sender_name }}
+
+--
+Message envoyé automatiquement par un prototype de démonstration, sans lien contractuel avec SNCF Voyageurs. Les distances et les émissions de CO₂ du rapport sont des estimations, leur méthode est indiquée dans le document.
+{% if reply_to %}
+Une question ? Répondez à ce message ou écrivez à {{ reply_to }}.
+{% else %}
+Merci de ne pas répondre à ce message.
+{% endif %}

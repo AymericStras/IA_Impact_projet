@@ -1,7 +1,7 @@
 [project]
 name = "sncf-rapport"
 version = "0.1.0"
-description = "Post-trip pedagogical report for parents: renders a PDF from trip data plus the teacher's confirmation."
+description = "Post-trip pedagogical report for parents: renders a PDF from trip data plus the teacher's confirmation, and emails it through Mailato."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -11,6 +11,8 @@ dependencies = [
   "jinja2>=3.1",
   "weasyprint>=63",
   "httpx>=0.27",
+  "email-validator>=2.2",
+  "mailato",
 ]
 
 [dependency-groups]
@@ -19,6 +21,9 @@ dev = [
   "pypdf>=5",
   "ruff>=0.8",
 ]
+
+[tool.uv.sources]
+mailato = { git = "https://github.com/ze2phyrzhenyin/Mailato", tag = "v0.4.0" }
 
 [build-system]
 requires = ["hatchling"]

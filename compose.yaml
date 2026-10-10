@@ -1,0 +1,22 @@
+# Local run without installing Python or Pango:
+#   docker compose up --build
+# Reads credentials.env (see credentials.env.example). Service on http://127.0.0.1:8771.
+name: sncf-rapport-local
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    env_file: credentials.env
+    environment:
+      RAPPORT_DATA_DIR: /data
+      RAPPORT_CACHE_DIR: /data/cache
+    ports:
+      - "127.0.0.1:8771:8000"
+    volumes:
+      - ./var/docker:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,uid=1000,gid=1000
+    mem_limit: 512m

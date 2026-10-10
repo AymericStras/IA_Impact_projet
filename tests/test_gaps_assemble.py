@@ -28,6 +28,7 @@ def test_full_example_has_no_major_gap():
 def test_empty_request_lists_every_major_block():
     fields = _fields(TripReportRequest(), "major")
     assert {
+        "recipient.email",
         "school.name",
         "school.class_name",
         "trip.date",
@@ -37,7 +38,7 @@ def test_empty_request_lists_every_major_block():
         "education.activities",
         "teacher_feedback",
     } <= fields
-    assert summarize(input_gaps(TripReportRequest())).startswith("8 major")
+    assert summarize(input_gaps(TripReportRequest())).startswith("9 major")
 
 
 def test_planned_head_count_fallback_is_reported():

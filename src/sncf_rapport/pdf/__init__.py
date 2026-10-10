@@ -8,6 +8,6 @@ Public interface (frozen; `api.py` and the scripts depend on it):
 
 from __future__ import annotations
 
-from .render import render_html, render_pdf
+from .render import render_html, render_pdf, render_view_html, render_view_pdf
 
-__all__ = ["render_html", "render_pdf"]
+__all__ = ["render_html", "render_pdf", "render_view_html", "render_view_pdf"]

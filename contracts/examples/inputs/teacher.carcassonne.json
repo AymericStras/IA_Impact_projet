@@ -1,4 +1,8 @@
 {
+  "recipient": {
+    "email": "destinataire@example.fr",
+    "name": "Mme Martin"
+  },
   "school": {
     "name": "École élémentaire des Tilleuls (exemple)",
     "class_name": "CM2 B",
@@ -14,9 +18,15 @@
   },
   "teacher_feedback": {
     "trip_completed": "completed",
-    "actual_participants": { "students": 26, "accompanying": 3 },
+    "actual_participants": {
+      "students": 26,
+      "accompanying": 3
+    },
     "activities_completed": "all",
-    "completed_activity_ids": ["act-1", "act-2"],
+    "completed_activity_ids": [
+      "act-1",
+      "act-2"
+    ],
     "changes": "Un élève absent le jour du départ. Le pique-nique a été pris à l'abri à cause de la pluie.",
     "competencies": {
       "savoir": {
@@ -35,12 +45,19 @@
         "status": "partiel",
         "comment": "Le trajet à pied a été suivi sur le plan avec l'aide des adultes."
       },
-      "savoir_etre": { "status": "non_evalue" }
+      "savoir_etre": {
+        "status": "non_evalue"
+      }
     },
     "observations": "Une journée très riche. La classe a été attentive pendant la visite guidée et a posé beaucoup de questions à la médiatrice. Le voyage en train a été un moment d'apprentissage à part entière : les élèves ont repéré les gares traversées et calculé la durée du trajet.",
     "validated_at": "2026-11-16T17:45:00+01:00"
   },
-  "environment": { "baselines": ["autocar", "voiture"] },
+  "environment": {
+    "baselines": [
+      "autocar",
+      "voiture"
+    ]
+  },
   "sources": [
     {
       "label": "Cité de Carcassonne — Centre des monuments nationaux",

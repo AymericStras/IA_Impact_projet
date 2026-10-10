@@ -53,3 +53,32 @@ def test_schema_file_is_current():
     )
     assert stored == schema
     assert "required" not in stored
+
+
+def test_recipient_is_optional_but_a_bad_address_is_refused():
+    assert TripReportRequest.model_validate({}).recipient is None
+    assert TripReportRequest.model_validate({"recipient": {"email": ""}}).recipient.email is None
+    request = TripReportRequest.model_validate(
+        {"recipient": {"email": " Prof@Ecole.fr ", "name": "Mme Martin"}}
+    )
+    assert request.recipient.email == "Prof@ecole.fr"  # the domain is normalised
+    with pytest.raises(ValidationError):
+        TripReportRequest.model_validate({"recipient": {"email": "not an address"}})
+
+
+def test_idempotency_key_is_derived_from_the_content_when_absent():
+    one = TripReportRequest.model_validate({"school": {"name": "A"}})
+    same = TripReportRequest.model_validate({"school": {"name": "A"}, "unknown": 1})
+    other = TripReportRequest.model_validate({"school": {"name": "B"}})
+    assert one.resolved_idempotency_key() == same.resolved_idempotency_key()
+    assert one.resolved_idempotency_key() != other.resolved_idempotency_key()
+    assert one.resolved_idempotency_key().startswith("content-")
+    given = TripReportRequest.model_validate(
+        {"school": {"name": "A"}, "idempotency_key": "trip-8841"}
+    )
+    assert given.resolved_idempotency_key() == "trip-8841"
+    assert given.fingerprint() == one.fingerprint()  # the key itself is not content
+    with pytest.raises(ValidationError):
+        TripReportRequest.model_validate({"idempotency_key": "short"})
+    with pytest.raises(ValidationError):
+        TripReportRequest.model_validate({"idempotency_key": "has space in it"})

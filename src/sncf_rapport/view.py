@@ -247,6 +247,23 @@ class FooterView:
 
 
 @dataclass(frozen=True)
+class MailView:
+    """What the email says. Derived from the `ReportView`, so PDF and email cannot disagree."""
+
+    recipient_email: str | None  # None: nothing to send to
+    recipient_name: str | None
+    subject: str
+    attachment_name: str
+    trip_title: str | None
+    facts: tuple[Fact, ...]  # École, Classe, Date, Matière et thème (cover facts)
+    figures: tuple[KeyFigure, ...]  # the cover numbers that have a value
+    validation: str  # "Validé par … le …" or "Rapport non encore validé par l'enseignant·e"
+    validated: bool
+    ai_notice: str | None
+    simulated: bool
+
+
+@dataclass(frozen=True)
 class ReportView:
     language: str
     document_title: str  # PDF metadata title
@@ -1189,6 +1206,50 @@ def _build(request: TripReportRequest, config: Config, issued_at: datetime | Non
         sources=sources,
         footer=footer,
         gaps=tuple(gaps),
+    )
+
+
+def attachment_filename(request: TripReportRequest) -> str:
+    """`rapport-<reference>.pdf`, or `rapport-<date>.pdf`, or `rapport.pdf`."""
+    trip = request.trip
+    tag = (trip.reference if trip else None) or (
+        trip.date.isoformat() if trip and trip.date else ""
+    )
+    safe = "".join(ch for ch in tag if ch.isalnum() or ch in "-_")[:40]
+    return f"rapport-{safe}.pdf" if safe else "rapport.pdf"
+
+
+def build_mail_view(
+    request: TripReportRequest,
+    *,
+    config: Config | None = None,
+    issued_at: datetime | None = None,
+    report: ReportView | None = None,
+) -> MailView:
+    """Never raises for a valid request, like `build_report_view`."""
+    view = report or build_report_view(request, config=config, issued_at=issued_at)
+    recipient = request.recipient
+    date_fact = next((f.value for f in view.cover.facts if f.label == "Date"), None)
+    class_fact = next((f.value for f in view.cover.facts if f.label == "Classe"), None)
+    subject = _join(
+        [
+            "Rapport de voyage scolaire",
+            view.cover.trip_title or _join([class_fact, date_fact], ", "),
+        ],
+        f"{NBSP}: ",
+    )
+    return MailView(
+        recipient_email=_text(recipient.email if recipient else None),
+        recipient_name=_text(recipient.name if recipient else None),
+        subject=" ".join((subject or DOCUMENT_KIND).split()),
+        attachment_name=attachment_filename(request),
+        trip_title=view.cover.trip_title,
+        facts=view.cover.facts,
+        figures=tuple(figure for figure in view.cover.figures if figure.value),
+        validation=view.sources.validation,
+        validated=view.sources.validated,
+        ai_notice=view.sources.ai_notice,
+        simulated=view.simulated,
     )
 
 

@@ -40,6 +40,15 @@ def input_gaps(request: TripReportRequest) -> list[Gap]:
         if _blank(value):
             gaps.append(Gap(field, severity, effect))
 
+    recipient = request.recipient
+    need(
+        recipient and recipient.email,
+        "recipient.email",
+        "major",
+        "The report can be rendered but not emailed: /reports refuses it. The teacher's "
+        "feedback form must ask for the address.",
+    )
+
     school = request.school
     need(school and school.name, "school.name", "major", "Cover shows no school name.")
     need(school and school.class_name, "school.class_name", "major", "Cover shows no class.")

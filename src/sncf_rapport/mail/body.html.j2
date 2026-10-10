@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#eceef3;">
+<div style="display:none;max-height:0;overflow:hidden;color:#eceef3;font-size:1px;line-height:1px;">Le rapport de voyage scolaire de la classe est en pièce jointe.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceef3;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:8px;">
+  {% if logo_cid %}
+  <tr>
+    <td style="padding:24px 32px 20px 32px;border-bottom:2px solid #0f2149;">
+      <img src="cid:{{ logo_cid }}" height="56" alt="SNCF Voyageurs" style="display:block;height:56px;width:auto;border:0;">
+    </td>
+  </tr>
+  {% else %}
+  <tr><td style="padding:0 32px;border-bottom:2px solid #0f2149;"></td></tr>
+  {% endif %}
+  <tr>
+    <td style="padding:28px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#0f2149;">
+      <p style="margin:0 0 16px 0;">Bonjour{% if mail.recipient_name %} {{ mail.recipient_name }}{% endif %},</p>
+      <p style="margin:0;">Vous trouverez en pièce jointe le rapport de voyage scolaire de la classe : <strong>« Notre voyage, nos apprentissages »</strong>.</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:20px 32px 8px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceef3;border-radius:6px;">
+        <tr>
+          <td style="padding:20px 20px 6px 20px;font-family:Arial,Helvetica,sans-serif;color:#0f2149;">
+            <p style="margin:0 0 6px 0;font-size:13px;line-height:18px;color:#5d6680;">Rapport de voyage scolaire</p>
+            {% if mail.trip_title %}<p style="margin:0;font-size:20px;line-height:26px;font-weight:bold;">{{ mail.trip_title }}</p>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 20px 18px 20px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#0f2149;">
+              {% for fact in mail.facts %}
+              <tr>
+                <td width="130" valign="top" style="width:130px;padding:5px 12px 5px 0;color:#5d6680;font-size:14px;">{{ fact.label }}</td>
+                <td valign="top" style="padding:5px 0;{% if fact.value %}font-weight:bold;{% else %}color:#5d6680;font-style:italic;{% endif %}">{{ fact.value or "non communiqué" }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% if mail.figures %}
+  <tr>
+    <td style="padding:12px 32px 4px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;color:#0f2149;">
+        <tr>
+          {% for figure in mail.figures %}
+          <td valign="top" width="{{ (100 // mail.figures|length) }}%" style="padding:8px 8px 8px 0;">
+            <p style="margin:0;font-size:12px;line-height:16px;color:#5d6680;">{% if figure.prefix %}{{ figure.prefix }}{% else %}&nbsp;{% endif %}</p>
+            <p style="margin:0;font-size:{% if figure.long %}20{% else %}26{% endif %}px;line-height:30px;font-weight:bold;{% if not figure.value %}color:#5d6680;font-style:italic;font-size:14px;{% endif %}">{{ figure.value or "non communiqué" }}{% if figure.unit %} <span style="font-size:14px;font-weight:normal;">{{ figure.unit }}</span>{% endif %}</p>
+            <p style="margin:2px 0 0 0;font-size:13px;line-height:18px;">{{ figure.label }}</p>
+            {% if figure.note %}<p style="margin:2px 0 0 0;font-size:12px;line-height:16px;color:#5d6680;">{{ figure.note }}</p>{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td style="padding:16px 32px 4px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#0f2149;">
+      <p style="margin:0 0 8px 0;">Pièce jointe : <strong>{{ mail.attachment_name }}</strong> (PDF), avec le trajet, les activités, les compétences travaillées et les sources.</p>
+      <p style="margin:0;{% if not mail.validated %}color:#c90c0f;{% endif %}">{{ mail.validation }}.</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 32px 24px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#0f2149;">
+      <p style="margin:0;">Bonne lecture,<br>{{ sender_name }}</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:18px 32px 24px 32px;border-top:1px solid #c9cdd8;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#5d6680;">
+      {% if mail.ai_notice %}<p style="margin:0 0 8px 0;">{{ mail.ai_notice }}</p>{% endif %}
+      {% if mail.simulated %}<p style="margin:0 0 8px 0;">Les données de ce voyage sont simulées : ce service est un prototype de démonstration.</p>{% endif %}
+      <p style="margin:0 0 8px 0;">Les distances et les émissions de CO₂ du rapport sont des estimations ; leur méthode est indiquée dans le document.</p>
+      <p style="margin:0;">Message envoyé automatiquement par un prototype de démonstration, sans lien contractuel avec SNCF Voyageurs. {% if reply_to %}Une question ? Répondez à ce message.{% else %}Merci de ne pas répondre à ce message.{% endif %}</p>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>

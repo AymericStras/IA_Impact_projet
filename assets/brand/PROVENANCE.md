@@ -3,7 +3,7 @@
 | File | Used by | Content |
 |---|---|---|
 | `logo.svg` | PDF header | SNCF Voyageurs logotype (2020), unmodified — **or a placeholder** |
-| `logo.png` | reserved (no email in v1) | the same logo on white, 224 px high — **or a placeholder** |
+| `logo.png` | email (inline picture, `cid:logo`) | the same logo on white, 224 px high — **or a placeholder** |
 | `placeholder/logo.svg`, `placeholder/logo.png` | public copies of this project | dashed box "LOGO", drawn for this repository |
 
 Public copies of this project (the team repository) ship the placeholders as

@@ -8,12 +8,14 @@ request is never refused for a missing value; the report shows
 
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import date as Date  # noqa: N812 - `date` is also a field name
 from datetime import datetime
 from typing import Literal
 
 from annotated_types import MaxLen
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 CompetencyStatus = Literal["acquis", "partiel", "non_evalue"]
 TripCompletion = Literal["completed", "partial", "cancelled"]
@@ -101,6 +103,17 @@ class _Model(BaseModel):
                     ]
                 result[key] = items
         return result
+
+
+class Recipient(_Model):
+    """Who receives the report by email: the address the teacher gives with their feedback.
+
+    Without `email` the report can still be rendered (`/render`, `/check`) but not sent:
+    `/reports` answers 422 and says so. The teacher step of the merged product must ask for it.
+    """
+
+    email: EmailStr | None = None
+    name: str | None = Field(default=None, max_length=120)
 
 
 class School(_Model):
@@ -255,6 +268,13 @@ class Source(_Model):
 class TripReportRequest(_Model):
     schema_version: Literal["1.0"] = "1.0"
     locale: Literal["fr"] = "fr"
+    # Sending only. Two requests with the same key are one report: the second call is answered
+    # with the first job and nothing is sent again. When absent, the key is derived from the
+    # content, so an identical request repeated (double click, retry) still sends once.
+    idempotency_key: str | None = Field(
+        default=None, min_length=8, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$"
+    )
+    recipient: Recipient | None = None
     school: School | None = None
     trip: Trip | None = None
     education: Education | None = None
@@ -262,3 +282,16 @@ class TripReportRequest(_Model):
     environment: Environment | None = None
     media: Media | None = None
     sources: list[Source] = Field(default_factory=list)
+
+    def fingerprint(self) -> str:
+        """Digest of the content (without the key itself); identical requests share it."""
+        canonical = json.dumps(
+            self.model_dump(mode="json", by_alias=True, exclude={"idempotency_key"}),
+            sort_keys=True,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def resolved_idempotency_key(self) -> str:
+        return self.idempotency_key or f"content-{self.fingerprint()}"

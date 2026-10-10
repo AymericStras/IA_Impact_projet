@@ -1,0 +1,13 @@
+.git
+.venv
+var
+tests
+docs
+evals
+scripts
+deploy
+**/__pycache__
+.ruff_cache
+.pytest_cache
+credentials.env
+*.private.zip

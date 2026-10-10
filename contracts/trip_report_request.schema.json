@@ -650,6 +650,39 @@
       "title": "Place",
       "type": "object"
     },
+    "Recipient": {
+      "description": "Who receives the report by email: the address the teacher gives with their feedback.\n\nWithout `email` the report can still be rendered (`/render`, `/check`) but not sent:\n`/reports` answers 422 and says so. The teacher step of the merged product must ask for it.",
+      "properties": {
+        "email": {
+          "anyOf": [
+            {
+              "format": "email",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "Recipient",
+      "type": "object"
+    },
     "School": {
       "properties": {
         "name": {
@@ -1093,6 +1126,32 @@
       "default": "fr",
       "title": "Locale",
       "type": "string"
+    },
+    "idempotency_key": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 8,
+          "pattern": "^[A-Za-z0-9._:-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Idempotency Key"
+    },
+    "recipient": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Recipient"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "school": {
       "anyOf": [
