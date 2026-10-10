@@ -2,16 +2,17 @@
 
 ## Users and goal
 
-Teachers (primary/secondary) in France preparing a one-day school trip with the liO regional trains in Occitanie. They describe the trip in natural French, by voice or keyboard. The assistant extracts, clarifies and confirms **four pieces of information**, then hands them over to the planning module.
+Teachers (primary/secondary) in France preparing a one-day school trip with the liO regional trains in Occitanie. They describe the trip in natural French, by voice or keyboard. The assistant extracts, clarifies and confirms **five pieces of information**, then hands them over to the planning module.
 
-## The four pieces of information
+## The five pieces of information
 
 | # | Field | Complete when | Typical phrasings |
 |---|---|---|---|
 | 1 | `participants_count` | A total is known: stated total, or students + accompanying adults known | « Nous sommes 30 », « 27 élèves et 3 accompagnateurs », « deux classes de 25 et 4 adultes » |
-| 2 | `departure` | date + time + constraint | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (if resolvable) |
-| 3 | `return` | date + time + constraint | « retour avant 17 h », « rentrés vers seize heures » |
-| 4 | `teaching_type` | subject **or** theme | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
+| 2 | `departure_station` | a station or a city is named | « au départ de Toulouse », « depuis la gare de Montpellier Saint-Roch ». Kept as said, never completed; a city means any station of that city |
+| 3 | `departure` | date + time + constraint | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (if resolvable) |
+| 4 | `return` | date + time + constraint | « retour avant 17 h », « rentrés vers seize heures » |
+| 5 | `teaching_type` | subject **or** theme | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
 
 Ambiguity → we ask, we never guess:
 
@@ -25,7 +26,7 @@ Time constraints are preserved: `exact` (à), `approximate` (vers), `earliest` (
 
 ## Not collected
 
-Budget, departure station, students' age, grade level, school, contact details, names. If the teacher mentions them, they are ignored (never stored in the requirements) and never asked for.
+Budget, destination, students' age, grade level, school, contact details, names. If the teacher mentions them, they are ignored (never stored in the requirements) and never asked for.
 
 ## Conversation flow
 

@@ -53,6 +53,13 @@
           ],
           "default": null
         },
+        "departure_station": {
+          "description": "Departure station OR city, as the teacher said it. A city means any station of that city: the planner expands it.",
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Departure Station",
+          "type": "string"
+        },
         "departure": {
           "$ref": "#/$defs/DateTimeRequirement"
         },
@@ -65,6 +72,7 @@
       },
       "required": [
         "participants_count",
+        "departure_station",
         "departure",
         "return",
         "teaching_type"

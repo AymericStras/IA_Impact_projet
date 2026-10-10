@@ -63,8 +63,8 @@ def describe_patch(patch: RequirementPatch) -> str:
     operations = []
     for op in patch.operations:
         value = op.value
-        if value is None or isinstance(value, int):
-            shape = "int" if isinstance(value, int) else "null"
+        if value is None or isinstance(value, int | str):
+            shape = "null" if value is None else type(value).__name__
         else:
             shape = "+".join(name for name, part in value.model_dump().items() if part is not None) or "empty"
         operations.append(f"{op.field}:{op.operation}:{shape}")

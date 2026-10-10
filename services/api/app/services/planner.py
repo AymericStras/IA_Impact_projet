@@ -22,8 +22,9 @@ from app.domain.clock import combine_paris
 from app.schemas.planning import Activity, PlanScenario, Proposal, TrainLeg
 from app.schemas.requirements import ConfirmedRequirements, DateTimeRequirement, TimeConstraint
 
-ORIGIN_STATION = "Toulouse Matabiau"
-ORIGIN_ASSUMPTION = f"Gare de départ supposée pour la démonstration : {ORIGIN_STATION} (cette information n'est pas collectée)."
+TRAVEL_TIME_ASSUMPTION = (
+    "Durées de trajet illustratives : elles ne dépendent pas de la gare de départ indiquée."
+)
 SIMULATION_NOTICE = (
     "Propositions simulées : horaires, lieux et activités illustratifs, sans disponibilité réelle."
 )
@@ -162,6 +163,7 @@ class SimulatedPlanner:
         if scenario == "no_match":
             return []
         requirements = confirmed.requirements
+        origin = requirements.departure_station
         leave = _anchor(requirements.departure, outbound=True)
         back = _anchor(requirements.return_, outbound=False)
         proposals: list[Proposal] = []
@@ -183,16 +185,16 @@ class SimulatedPlanner:
                     destination=destination.city,
                     theme_match=destination.match,
                     outbound=TrainLeg(
-                        line=f"liO {ORIGIN_STATION} – {destination.city} (horaire simulé)",
-                        from_station=ORIGIN_STATION,
+                        line=f"liO {origin} – {destination.city} (horaire simulé)",
+                        from_station=origin,
                         to_station=destination.station,
                         departure=_iso(leave),
                         arrival=_iso(arrive_there),
                     ),
                     return_=TrainLeg(
-                        line=f"liO {destination.city} – {ORIGIN_STATION} (horaire simulé)",
+                        line=f"liO {destination.city} – {origin} (horaire simulé)",
                         from_station=destination.station,
-                        to_station=ORIGIN_STATION,
+                        to_station=origin,
                         departure=_iso(leave_there),
                         arrival=_iso(back),
                     ),

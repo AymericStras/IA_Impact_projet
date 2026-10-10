@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 TIME_PATTERN = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
 _LOOSE_TIME = re.compile(r"^\s*(\d{1,2})\s*[:hH]\s*(\d{2})?\s*$")
 
-SCHEMA_VERSION: Final = "1.0"
+SCHEMA_VERSION: Final = "1.1"
 TIMEZONE: Final = "Europe/Paris"
 
 
@@ -94,6 +94,11 @@ class PartialRequirements(ContractModel):
 
     participants_count: int | None = Field(default=None, ge=1, description="Students + accompanying adults")
     participants_breakdown: ParticipantsBreakdown | None = None
+    departure_station: str | None = Field(
+        default=None,
+        max_length=80,
+        description="Departure station OR city, as the teacher said it. A city means any station of that city.",
+    )
     departure: PartialDateTime | None = None
     return_: PartialDateTime | None = Field(default=None, alias="return")
     teaching_type: TeachingType | None = None
@@ -119,6 +124,11 @@ class CompleteTeachingType(ContractModel):
 class CompleteRequirements(ContractModel):
     participants_count: int = Field(ge=1)
     participants_breakdown: ParticipantsBreakdown | None = None
+    departure_station: str = Field(
+        min_length=1,
+        max_length=80,
+        description="Departure station OR city, as the teacher said it. A city means any station of that city: the planner expands it.",
+    )
     departure: DateTimeRequirement
     return_: DateTimeRequirement = Field(alias="return")
     teaching_type: CompleteTeachingType
@@ -127,7 +137,7 @@ class CompleteRequirements(ContractModel):
 class ConfirmedRequirements(ContractModel):
     """Payload handed to the planning module after explicit confirmation."""
 
-    schema_version: Literal["1.0"] = SCHEMA_VERSION
+    schema_version: Literal["1.1"] = SCHEMA_VERSION
     conversation_id: str = Field(min_length=1)
     status: Literal["confirmed"] = "confirmed"
     timezone: Literal["Europe/Paris"] = TIMEZONE

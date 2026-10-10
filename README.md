@@ -1,6 +1,6 @@
 # SNCF liO — Teacher trip assistant
 
-French-language AI chatbot (voice + text) that helps teachers describe a school trip and extracts four confirmed pieces of information from it — participants, departure, return, subject/theme — as a versioned JSON contract intended for the route-planning module developed by other members of the team.
+French-language AI chatbot (voice + text) that helps teachers describe a school trip and extracts five confirmed pieces of information from it — participants, departure station, departure, return, subject/theme — as a versioned JSON contract intended for the route-planning module developed by other members of the team.
 
 Hackathon project, designed as an **"AI-native" repository**: OpenAI Codex and Claude Code can pick up development at any time from `AGENTS.md` / `CLAUDE.md` and `docs/HANDOFF.md`.
 
@@ -34,4 +34,4 @@ See `docs/HANDOFF.md`.
 
 ## For the team integrating the planner
 
-Consume only the output of `GET /api/v1/conversations/{id}/export` (or the `confirmed_requirements` field of the `POST …/confirm` response), which conforms to `packages/contracts/requirements.schema.json` (`schema_version` `1.0`). Example: `packages/contracts/examples/confirmed_requirements.json`. OpenAPI served at `http://localhost:8000/docs` when the API is running.
+Consume only the output of `GET /api/v1/conversations/{id}/export` (or the `confirmed_requirements` field of the `POST …/confirm` response), which conforms to `packages/contracts/requirements.schema.json` (`schema_version` `1.1`). Example: `packages/contracts/examples/confirmed_requirements.json`. OpenAPI served at `http://localhost:8000/docs` when the API is running.

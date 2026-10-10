@@ -19,7 +19,7 @@ from app.services.providers.base import ProviderError
 from app.services.providers.fake_provider import FakeProvider
 from tests.conftest import COMPLETE_PATCH, dt, mk_patch, op, tt
 
-FULL = "27 élèves et 3 accompagnateurs, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
+FULL = "27 élèves et 3 accompagnateurs, au départ de Toulouse Matabiau, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
 CONTRACTS = Path(__file__).resolve().parents[3] / "packages" / "contracts"
 
 
@@ -60,6 +60,7 @@ def test_missing_return_then_follow_up(client: TestClient, provider: FakeProvide
     conv = _create(client)
     provider.queue(
         mk_patch(
+            op("departure_station", "Montpellier"),
             op("departure", dt("2026-11-15", "09:00", "exact")),
             op("teaching_type", tt("SVT")),
             total=25,
@@ -97,7 +98,7 @@ def test_students_only_asks_for_accompanying(client: TestClient, provider: FakeP
     body = _send(client, conv["conversation_id"], "Trois accompagnateurs.", cid="m2")
     assert body["requirements"]["participants_count"] == 28
     assert body["state"] == "COLLECTING"
-    assert body["missing_fields"] == ["departure", "return", "teaching_type"]
+    assert body["missing_fields"] == ["departure_station", "departure", "return", "teaching_type"]
 
 
 def test_correction_replaces_and_never_re_asks(client: TestClient, provider: FakeProvider) -> None:
@@ -190,7 +191,7 @@ def test_confirm_edit_reconfirm_export(client: TestClient, provider: FakeProvide
     assert confirmed.status_code == 200
     payload = confirmed.json()
     assert payload["state"] == "CONFIRMED"
-    assert payload["confirmed_requirements"]["schema_version"] == "1.0"
+    assert payload["confirmed_requirements"]["schema_version"] == "1.1"
     assert payload["confirmed_requirements"]["requirements"]["participants_count"] == 30
     assert payload["confirmed_requirements"]["confirmed_at"].endswith("+02:00")
 
@@ -540,7 +541,7 @@ def test_overwriting_a_known_value_is_always_announced(client: TestClient, provi
     assert body["assistant_message"].startswith(
         "C'est noté, j'ai mis à jour le nombre de participants : 28 participants (au lieu de 30 participants). "
     )
-    assert body["assistant_message"].endswith("Quel jour et à quelle heure souhaitez-vous partir ?")
+    assert body["assistant_message"].endswith("De quelle gare souhaitez-vous partir ?")
 
 
 def test_api_key_can_come_from_a_mounted_file(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -568,3 +569,38 @@ def test_no_rate_limiting_by_default(client: TestClient, provider: FakeProvider)
             ).status_code
             == 200
         )
+
+
+def test_departure_station_is_collected_asked_and_exported(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    cid = _create(client)["conversation_id"]
+    provider.queue(mk_patch(total=30))
+    asked = _send(client, cid, "Nous sommes 30.")
+    assert asked["missing_fields"][0] == "departure_station"
+    assert asked["assistant_message"] == "De quelle gare souhaitez-vous partir ?"
+
+    provider.queue(mk_patch(op("departure_station", "la gare de Toulouse Matabiau")))
+    answered = _send(client, cid, "De la gare de Toulouse Matabiau.", cid="s2")
+    assert (
+        answered["requirements"]["departure_station"] == "Toulouse Matabiau"
+    )  # « gare de » stripped, name kept as said
+
+    # A different station without a correction word is a conflict, never a silent overwrite.
+    provider.queue(mk_patch(op("departure_station", "Narbonne")))
+    conflict = _send(client, cid, "On part de Narbonne.", cid="s3")
+    assert (
+        conflict["state"] == "ASKING_USER"
+        and conflict["requirements"]["departure_station"] == "Toulouse Matabiau"
+    )
+
+    edited = client.patch(
+        f"/api/v1/conversations/{cid}/requirements",
+        json={"field": "departure_station", "value": "Narbonne", "expected_version": conflict["version"]},
+    ).json()
+    assert edited["requirements"]["departure_station"] == "Narbonne"
+    blank = client.patch(
+        f"/api/v1/conversations/{cid}/requirements",
+        json={"field": "departure_station", "value": "   ", "expected_version": edited["version"]},
+    ).json()
+    assert blank["requirements"]["departure_station"] == "Narbonne"  # an empty name changes nothing

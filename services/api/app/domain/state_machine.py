@@ -43,7 +43,13 @@ class Decision:
     action: Action
 
 
-MISSING_ORDER: tuple[FieldName, ...] = ("participants_count", "departure", "return", "teaching_type")
+MISSING_ORDER: tuple[FieldName, ...] = (
+    "participants_count",
+    "departure_station",
+    "departure",
+    "return",
+    "teaching_type",
+)
 
 
 def _first_missing(missing: list[FieldName]) -> FieldName:

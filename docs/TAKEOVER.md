@@ -11,7 +11,7 @@ directory you will touch (services/api/AGENTS.md, apps/web/AGENTS.md). Inspect t
 changes and the latest reports/. Tell me what is really implemented, what is simulated, and what has not
 been verified.
 
-Keep exactly four business fields: participants, departure, return, teaching subject/theme. The LLM
+Keep exactly five business fields: participants, departure station, departure, return, teaching subject/theme. The LLM
 proposes typed patches; code owns state, validation, totals and the next question. Only an explicit user
 action confirms. Do not add recommendation, itinerary, budget or booking logic.
 

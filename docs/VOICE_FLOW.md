@@ -6,7 +6,7 @@ Status: **plan, not implemented**. Owner request of 2026-10-10: a second fronten
 
 A teacher opens the page, sees one question, holds a button and talks. The screen comes alive while they speak. On release, the whole screen becomes the trip sheet: four fields, filled with what was understood, the missing ones asking to be completed — by touch, keyboard or by holding and talking again. One explicit confirmation ends the flow.
 
-Same product scope, same backend, same contract: four fields, code owns state, only an explicit action confirms. Nothing about trains, destinations or booking.
+Same product scope, same backend, same contract: five fields, code owns state, only an explicit action confirms. Nothing about trains, destinations or booking.
 
 ## 2. Stages
 
@@ -17,20 +17,20 @@ Each stage is a full-screen view with one primary action. Transitions are the on
 | 1 | `ask` — Question | Shows one question in large type, plus one line of example | Hold the talk button (or tap to toggle, or Space) | `listen`; or `sheet` via « Écrire à la place » |
 | 2 | `listen` — Écoute | Records; the screen reacts to the voice | Release (or tap again) to finish; slide away / Échap to cancel | `think`; back to `ask` on cancel |
 | 3 | `think` — Analyse | Shows that the recording is being transcribed then understood (two labelled steps) | none (cancellable only by error) | `sheet`; back to `ask` on error with the reason |
-| 4 | `sheet` — Fiche | The four fields as one form: understood values filled, missing/unclear ones highlighted with the server's question | Complete or correct a field by typing, or hold the talk button to say it; then « Confirmer » | `listen` (scoped), `think`, `done` |
+| 4 | `sheet` — Fiche | The five fields as one form: understood values filled, missing/unclear ones highlighted with the server's question | Complete or correct a field by typing, or hold the talk button to say it; then « Confirmer » | `listen` (scoped), `think`, `done` |
 | 5 | `done` — Confirmé | Confirms the hand-over; shows the summary and the JSON on demand | « Modifier » (back to `sheet`), « Nouvelle sortie » | `sheet`, `ask` |
 
 ### Stage details
 
-**`ask`.** Question from the server state, not hard-coded: the welcome question when nothing is known; otherwise the server's current `assistant_message` (e.g. « À quelle heure souhaitez-vous être de retour le jeudi 12 novembre ? »). A returning visitor with a stored conversation lands directly on `sheet`. Progress is shown as four small dots (filled = known), no numbers to read. A discreet link switches to the classic chat.
+**`ask`.** Question from the server state, not hard-coded: the welcome question when nothing is known; otherwise the server's current `assistant_message` (e.g. « À quelle heure souhaitez-vous être de retour le jeudi 12 novembre ? »). A returning visitor with a stored conversation lands directly on `sheet`. Progress is shown as five small dots (filled = known), no numbers to read. A discreet link switches to the classic chat.
 
 **`listen`.** Full-bleed accent surface. A voice-reactive shape (canvas, driven by a Web Audio `AnalyserNode` on the same `MediaStream` that feeds `MediaRecorder`) breathes with the input level; a timer; the hint « Relâchez pour terminer ». Light haptic tick on start/stop where `navigator.vibrate` exists. Auto-stop at the server's `max_audio_seconds` with a visible countdown for the last 10 s. Recordings shorter than ~0.6 s are discarded with « Maintenez le bouton pendant que vous parlez ».
 
 **`think`.** Two-step progress with real state: « Transcription… » (audio upload → transcript) then « Compréhension… » (transcript → extraction). The transcript appears as soon as it exists (« Vous avez dit : … ») so the teacher sees what was heard before the sheet arrives. Typical total 4–6 s.
 
-**`sheet`.** Four large rows — Participants, Départ, Retour, Matière ou thème. Each row: state (known / à préciser / à clarifier), the value in words (« jeudi 12 novembre, vers 8 h 00 »), and tap-to-edit with the same typed editors as the classic panel. The row the server is asking about is expanded and carries the server's question. A collapsible « Vous avez dit » shows the last transcript with « Corriger le texte » (edits the transcript and re-sends it as text — the escape hatch for recognition errors). A persistent talk button at the bottom: holding it here means "complete or correct" (« Dites ce qui manque ou ce qu'il faut corriger »). « Confirmer » is enabled only when the server says `ready_for_confirmation`; otherwise it states what is missing.
+**`sheet`.** Five large rows — Participants, Gare de départ, Départ, Retour, Matière ou thème. Each row: state (known / à préciser / à clarifier), the value in words (« jeudi 12 novembre, vers 8 h 00 »), and tap-to-edit with the same typed editors as the classic panel. The row the server is asking about is expanded and carries the server's question. A collapsible « Vous avez dit » shows the last transcript with « Corriger le texte » (edits the transcript and re-sends it as text — the escape hatch for recognition errors). A persistent talk button at the bottom: holding it here means "complete or correct" (« Dites ce qui manque ou ce qu'il faut corriger »). « Confirmer » is enabled only when the server says `ready_for_confirmation`; otherwise it states what is missing.
 
-**`done`.** Success state, the four values, « Voir le JSON transmis » (collapsed), « Modifier » and « Nouvelle sortie ».
+**`done`.** Success state, the five values, « Voir le JSON transmis » (collapsed), « Modifier » and « Nouvelle sortie ».
 
 ## 3. Interaction rules
 

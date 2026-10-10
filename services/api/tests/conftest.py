@@ -65,6 +65,7 @@ def mk_patch(
 
 
 COMPLETE_PATCH = mk_patch(
+    op("departure_station", "Toulouse Matabiau"),
     op("departure", dt("2026-11-12", "08:00", "approximate")),
     op("return", dt("2026-11-12", "17:00", "latest")),
     op("teaching_type", tt("Histoire", "Moyen Âge")),

@@ -15,6 +15,7 @@ from tests.conftest import TODAY
 def _complete() -> PartialRequirements:
     return PartialRequirements(
         participants_count=30,
+        departure_station="Toulouse Matabiau",
         departure=PartialDateTime(
             date=date(2026, 11, 12), time="08:00", constraint=TimeConstraint.APPROXIMATE
         ),
@@ -25,7 +26,13 @@ def _complete() -> PartialRequirements:
 
 def test_missing_fields_order_and_partial_datetime() -> None:
     reqs = PartialRequirements(departure=PartialDateTime(date=date(2026, 11, 12)))
-    assert missing_fields(reqs) == ["participants_count", "departure", "return", "teaching_type"]
+    assert missing_fields(reqs) == [
+        "participants_count",
+        "departure_station",
+        "departure",
+        "return",
+        "teaching_type",
+    ]
     assert missing_fields(_complete()) == []
 
 
@@ -58,6 +65,7 @@ def test_french_formatting() -> None:
 def test_summary_mentions_all_four_fields() -> None:
     text = dialogue.summary(_complete())
     assert "30 participants" in text
+    assert "au départ de Toulouse Matabiau" in text
     assert "jeudi 12 novembre 2026 vers 8 h 00" in text
     assert "au plus tard à 17 h 00" in text
     assert "Histoire (Moyen Âge)" in text

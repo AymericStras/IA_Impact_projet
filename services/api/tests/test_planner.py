@@ -17,12 +17,13 @@ from app.services.providers.fake_provider import FakeProvider
 from tests.conftest import COMPLETE_PATCH, mk_patch, op, tt
 
 CONTRACTS = Path(__file__).resolve().parents[3] / "packages" / "contracts"
-FULL = "27 élèves et 3 accompagnateurs, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
+FULL = "27 élèves et 3 accompagnateurs, au départ de Toulouse Matabiau, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
 
 
 def confirmed(**overrides: object) -> ConfirmedRequirements:
     requirements = {
         "participants_count": 30,
+        "departure_station": "Toulouse Matabiau",
         "departure": {"date": "2026-11-12", "time": "08:00", "constraint": "approximate"},
         "return": {"date": "2026-11-12", "time": "17:00", "constraint": "latest"},
         "teaching_type": {"subject": "Histoire", "theme": "Moyen Âge"},
@@ -112,7 +113,7 @@ def test_http_planner_never_turns_a_failure_into_no_match() -> None:
         confirmed(), None
     )
     assert proposals[0].destination == "Carcassonne"
-    assert seen[0]["schema_version"] == "1.0" and seen[0]["requirements"]["return"]["constraint"] == "latest"
+    assert seen[0]["schema_version"] == "1.1" and seen[0]["requirements"]["return"]["constraint"] == "latest"
 
 
 def _confirmed_conversation(client: TestClient, provider: FakeProvider) -> str:
@@ -150,7 +151,7 @@ def test_full_flow_plan_select_handoff(client: TestClient, provider: FakeProvide
         and result["simulated"] is True
         and result["planner_mode"] == "simulated"
     )
-    assert any("Toulouse Matabiau" in note for note in result["assumptions"])
+    assert result["proposals"][0]["outbound"]["from_station"] == "Toulouse Matabiau"
     Draft202012Validator(
         json.loads((CONTRACTS / "plan_result.schema.json").read_text()), format_checker=FormatChecker()
     ).validate(result)

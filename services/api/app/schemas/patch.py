@@ -13,8 +13,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.requirements import TimeConstraint, normalize_time
 
-FieldName = Literal["participants_count", "departure", "return", "teaching_type"]
-FIELD_NAMES: tuple[FieldName, ...] = ("participants_count", "departure", "return", "teaching_type")
+FieldName = Literal["participants_count", "departure_station", "departure", "return", "teaching_type"]
+FIELD_NAMES: tuple[FieldName, ...] = (
+    "participants_count",
+    "departure_station",
+    "departure",
+    "return",
+    "teaching_type",
+)
 
 
 class UserIntent(StrEnum):
@@ -61,8 +67,8 @@ class Operation(PatchModel):
     operation: Literal["set", "replace", "clear"] = Field(
         description="set = field was unknown; replace = explicit correction of a known value; clear = teacher withdraws a value"
     )
-    value: int | PartialDateTimePatch | TeachingTypePatch | None = Field(
-        description="integer for participants_count; date/time object for departure or return; subject/theme object for teaching_type; null for clear"
+    value: int | str | PartialDateTimePatch | TeachingTypePatch | None = Field(
+        description="integer for participants_count; string (station or city name as said) for departure_station; date/time object for departure or return; subject/theme object for teaching_type; null for clear"
     )
     evidence: str = Field(
         description="Verbatim French fragment from the teacher's message supporting this operation"

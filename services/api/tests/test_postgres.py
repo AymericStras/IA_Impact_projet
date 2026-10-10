@@ -24,7 +24,7 @@ from tests.conftest import COMPLETE_PATCH, TODAY, mk_patch, op
 POSTGRES_URL = os.environ.get("TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="TEST_POSTGRES_URL not set")
 
-FULL = "27 élèves et 3 accompagnateurs, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
+FULL = "27 élèves et 3 accompagnateurs, au départ de Toulouse Matabiau, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
 
 
 @pytest.fixture

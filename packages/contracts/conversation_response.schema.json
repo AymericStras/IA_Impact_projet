@@ -22,6 +22,13 @@
           ],
           "default": null
         },
+        "departure_station": {
+          "description": "Departure station OR city, as the teacher said it. A city means any station of that city: the planner expands it.",
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Departure Station",
+          "type": "string"
+        },
         "departure": {
           "$ref": "#/$defs/DateTimeRequirement"
         },
@@ -34,6 +41,7 @@
       },
       "required": [
         "participants_count",
+        "departure_station",
         "departure",
         "return",
         "teaching_type"
@@ -79,8 +87,8 @@
       "description": "Payload handed to the planning module after explicit confirmation.",
       "properties": {
         "schema_version": {
-          "const": "1.0",
-          "default": "1.0",
+          "const": "1.1",
+          "default": "1.1",
           "title": "Schema Version",
           "type": "string"
         },
@@ -283,6 +291,20 @@
           ],
           "default": null
         },
+        "departure_station": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Departure station OR city, as the teacher said it. A city means any station of that city.",
+          "title": "Departure Station"
+        },
         "departure": {
           "anyOf": [
             {
@@ -359,6 +381,7 @@
         "field": {
           "enum": [
             "participants_count",
+            "departure_station",
             "departure",
             "return",
             "teaching_type"
@@ -457,6 +480,7 @@
       "items": {
         "enum": [
           "participants_count",
+          "departure_station",
           "departure",
           "return",
           "teaching_type"

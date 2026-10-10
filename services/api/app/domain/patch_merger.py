@@ -126,6 +126,19 @@ def _merge_datetime(
     )
 
 
+_STATION_PREFIX = re.compile(r"^(?:(?:la|le)\s+)?gare\s+(?:de|d['’]|du|des)\s*", re.IGNORECASE)
+
+
+def _station(value: str) -> str | None:
+    """« la gare de Toulouse Matabiau » → « Toulouse Matabiau ». The name itself is kept as said."""
+    cleaned = _STATION_PREFIX.sub("", " ".join(value.split()), count=1).strip(" .,;")
+    return cleaned[:80] or None
+
+
+def _same_station(left: str, right: str) -> bool:
+    return left.casefold() == right.casefold()
+
+
 _LEADING_ARTICLE = re.compile(r"^(?:l['’]\s*|(?:le|la|les|un|une|des|du|de la|de l['’])\s+)", re.IGNORECASE)
 
 
@@ -263,6 +276,15 @@ def _apply_patch(current: PartialRequirements, patch: RequirementPatch) -> Merge
                 continue
             if before is None or correction or before == op.value:
                 _set(reqs, op.field, op.value)
+            else:
+                result.conflicts.append(op.field)
+                continue
+        elif op.field == "departure_station":
+            station = _station(op.value) if isinstance(op.value, str) else None
+            if station is None:
+                continue
+            if before is None or correction or _same_station(str(before), station):
+                _set(reqs, op.field, station)
             else:
                 result.conflicts.append(op.field)
                 continue

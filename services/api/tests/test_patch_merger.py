@@ -21,7 +21,14 @@ def test_complete_message_computes_total_from_breakdown() -> None:
     )
     assert reqs.return_ is not None and reqs.return_.constraint == TimeConstraint.LATEST
     assert reqs.teaching_type == TeachingType(subject="Histoire", theme="Moyen Âge")
-    assert set(result.changed_fields) == {"participants_count", "departure", "return", "teaching_type"}
+    assert set(result.changed_fields) == {
+        "participants_count",
+        "departure_station",
+        "departure",
+        "return",
+        "teaching_type",
+    }
+    assert reqs.departure_station == "Toulouse Matabiau"
     assert result.conflicts == []
 
 

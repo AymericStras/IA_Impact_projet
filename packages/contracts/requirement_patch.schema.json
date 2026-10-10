@@ -9,6 +9,7 @@
         "field": {
           "enum": [
             "participants_count",
+            "departure_station",
             "departure",
             "return",
             "teaching_type"
@@ -52,6 +53,7 @@
         "field": {
           "enum": [
             "participants_count",
+            "departure_station",
             "departure",
             "return",
             "teaching_type"
@@ -78,6 +80,7 @@
         "field": {
           "enum": [
             "participants_count",
+            "departure_station",
             "departure",
             "return",
             "teaching_type"
@@ -101,6 +104,9 @@
               "type": "integer"
             },
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/PartialDateTimePatch"
             },
             {
@@ -110,7 +116,7 @@
               "type": "null"
             }
           ],
-          "description": "integer for participants_count; date/time object for departure or return; subject/theme object for teaching_type; null for clear",
+          "description": "integer for participants_count; string (station or city name as said) for departure_station; date/time object for departure or return; subject/theme object for teaching_type; null for clear",
           "title": "Value"
         },
         "evidence": {

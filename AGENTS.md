@@ -4,18 +4,19 @@ This file is the single source of project rules for every coding agent (OpenAI C
 
 ## 1. What we are building
 
-A professional French-language chatbot that lets teachers describe a school trip (Occitanie, liO regional trains) **by voice or keyboard**, and that extracts, clarifies and confirms **exactly four pieces of information**:
+A professional French-language chatbot that lets teachers describe a school trip (Occitanie, liO regional trains) **by voice or keyboard**, and that extracts, clarifies and confirms **exactly five pieces of information**:
 
 | Field | Label | Meaning |
 |---|---|---|
 | `participants_count` | Nombre de participants | Students + accompanying adults, total |
+| `departure_station` | Gare de départ | Station **or city** as the teacher said it; a city means any station of that city (the planner expands it) |
 | `departure` | Date et heure de départ | Date, time and nature of the time constraint |
 | `return` | Date et heure de retour | Date, time and nature of the time constraint |
 | `teaching_type` | Type / thème pédagogique | Subject **or** theme: either one is enough |
 
 After the teacher's explicit confirmation, the backend emits a versioned JSON payload (`packages/contracts/requirements.schema.json`) intended for another team's route-planning module.
 
-**Out of scope (do not implement):** destination/activity search, liO timetables, route planning, budget, booking, collection of age/school/station/budget or any other personal data.
+**Out of scope (do not implement):** destination/activity search, liO timetables, route planning, budget, booking, collection of destination, budget, age, school or any other personal data.
 
 Read `docs/PRODUCT.md` (product definition) and `docs/ARCHITECTURE.md` (design) before touching the code.
 

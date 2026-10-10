@@ -41,7 +41,7 @@ from app.schemas.requirements import (
     PartialRequirements,
 )
 from app.services.extraction import ExtractionService
-from app.services.planner import ORIGIN_ASSUMPTION, SIMULATION_NOTICE, PlannerClient
+from app.services.planner import SIMULATION_NOTICE, TRAVEL_TIME_ASSUMPTION, PlannerClient
 from app.services.providers.base import ProviderError, TranscriptionProvider
 
 
@@ -285,7 +285,7 @@ class ConversationService:
         conversation_id: str,
         *,
         field: FieldName,
-        value: int | PartialDateTimePatch | TeachingTypePatch | None,
+        value: int | str | PartialDateTimePatch | TeachingTypePatch | None,
         expected_version: int,
     ) -> ConversationResponse:
         row = self._load(conversation_id)
@@ -379,7 +379,7 @@ class ConversationService:
             proposals=proposals,
             planner_mode="simulated" if simulated else "http",
             simulated=simulated,
-            assumptions=[SIMULATION_NOTICE, ORIGIN_ASSUMPTION] if simulated else [],
+            assumptions=[SIMULATION_NOTICE, TRAVEL_TIME_ASSUMPTION] if simulated else [],
         )
         row.plan = result.model_dump(mode="json", by_alias=True)
         row.updated_at = self._clock.now()

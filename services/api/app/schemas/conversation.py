@@ -65,7 +65,7 @@ class SendMessageRequest(ContractModel):
 
 class EditRequirementRequest(ContractModel):
     field: FieldName
-    value: int | PartialDateTimePatch | TeachingTypePatch | None
+    value: int | str | PartialDateTimePatch | TeachingTypePatch | None
     expected_version: int = Field(ge=0)
 
 

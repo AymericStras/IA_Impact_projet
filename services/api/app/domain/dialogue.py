@@ -23,6 +23,7 @@ TRANSCRIPTION_ERROR = (
 
 FIELD_LABELS: dict[FieldName, str] = {
     "participants_count": "le nombre de participants",
+    "departure_station": "la gare de départ",
     "departure": "le départ",
     "return": "le retour",
     "teaching_type": "le thème pédagogique",
@@ -43,6 +44,8 @@ def describe_datetime(value: PartialDateTime | None, with_year: bool = False) ->
 def describe_field(reqs: PartialRequirements, name: FieldName) -> str:
     if name == "participants_count":
         return f"{reqs.participants_count} participants" if reqs.participants_count else "à préciser"
+    if name == "departure_station":
+        return reqs.departure_station or "à préciser"
     if name == "departure":
         return describe_datetime(reqs.departure)
     if name == "return":
@@ -63,6 +66,8 @@ def _ask_missing(reqs: PartialRequirements, name: FieldName) -> str:
                 f"Combien d'accompagnateurs participeront à la sortie avec les {breakdown.students} élèves ?"
             )
         return "Combien de personnes participeront à la sortie, élèves et accompagnateurs compris ?"
+    if name == "departure_station":
+        return "De quelle gare souhaitez-vous partir ?"
     if name == "departure":
         dep = reqs.departure
         if dep is not None and dep.date is not None and dep.time is None:
@@ -133,6 +138,7 @@ def acknowledge_replacements(
 def summary(reqs: PartialRequirements) -> str:
     return (
         f"J'ai bien compris votre projet : {describe_field(reqs, 'participants_count')}, "
+        f"au départ de {describe_field(reqs, 'departure_station')}, "
         f"départ le {describe_datetime(reqs.departure, with_year=True)}, retour le {describe_datetime(reqs.return_, with_year=True)}, "
         f"thème : {describe_field(reqs, 'teaching_type')}. "
         "Pouvez-vous vérifier ces informations avant de continuer ?"

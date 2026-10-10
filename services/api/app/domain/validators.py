@@ -36,6 +36,8 @@ class ValidationResult:
 def is_field_complete(reqs: PartialRequirements, name: FieldName) -> bool:
     if name == "participants_count":
         return reqs.participants_count is not None and reqs.participants_count >= 1
+    if name == "departure_station":
+        return bool(reqs.departure_station and reqs.departure_station.strip())
     if name == "departure":
         return reqs.departure is not None and reqs.departure.is_complete
     if name == "return":

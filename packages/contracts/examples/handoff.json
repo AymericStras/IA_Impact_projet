@@ -5,6 +5,7 @@
   "requirements": {
     "participants_count": 30,
     "participants_breakdown": null,
+    "departure_station": "Toulouse",
     "departure": {
       "date": "2026-11-12",
       "time": "08:00",

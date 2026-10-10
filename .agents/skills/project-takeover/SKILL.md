@@ -20,7 +20,7 @@ The repository path and, optionally, a task id from `docs/tasks/board.json`. Nev
 
 ## Rules
 - Do not regenerate the project or swap the stack because a newer tool exists.
-- Do not expand the four-field contract.
+- Do not expand the five-field contract.
 - Model evals and live smoke tests cost money: run them when the task changes prompts/extraction, and say so in the handoff.
 - Never mark something tested from a mock, a screenshot or code inspection. "Configured" is not "verified".
 
