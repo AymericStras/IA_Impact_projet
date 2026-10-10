@@ -1,46 +1,46 @@
-# Définition produit
+# Product definition
 
-## Utilisateurs et objectif
+## Users and goal
 
-Enseignants (primaire/secondaire) en France préparant une sortie pédagogique à la journée avec les trains régionaux liO en Occitanie. Ils décrivent la sortie en français naturel, à la voix ou au clavier. L'assistant extrait, clarifie et confirme **quatre informations**, puis les transmet au module de planification.
+Teachers (primary/secondary) in France preparing a one-day school trip with the liO regional trains in Occitanie. They describe the trip in natural French, by voice or keyboard. The assistant extracts, clarifies and confirms **four pieces of information**, then hands them over to the planning module.
 
-## Les quatre informations
+## The four pieces of information
 
-| # | Champ | Complète lorsque | Formulations typiques |
+| # | Field | Complete when | Typical phrasings |
 |---|---|---|---|
-| 1 | `participants_count` | Un total est connu : total énoncé, ou élèves + accompagnateurs connus | « Nous sommes 30 », « 27 élèves et 3 accompagnateurs », « deux classes de 25 et 4 adultes » |
-| 2 | `departure` | date + heure + contrainte | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (si résoluble) |
-| 3 | `return` | date + heure + contrainte | « retour avant 17 h », « rentrés vers seize heures » |
-| 4 | `teaching_type` | matière **ou** thème | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
+| 1 | `participants_count` | A total is known: stated total, or students + accompanying adults known | « Nous sommes 30 », « 27 élèves et 3 accompagnateurs », « deux classes de 25 et 4 adultes » |
+| 2 | `departure` | date + time + constraint | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (if resolvable) |
+| 3 | `return` | date + time + constraint | « retour avant 17 h », « rentrés vers seize heures » |
+| 4 | `teaching_type` | subject **or** theme | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
 
-Ambiguïté → on demande, on ne devine jamais :
+Ambiguity → we ask, we never guess:
 
-- « J'ai 25 élèves » → demander le nombre d'accompagnateurs (élèves ≠ participants).
-- « Le mois prochain », « bientôt », « une trentaine » → demander la valeur exacte.
-- Retour avant le départ → demander une correction (la valeur incohérente n'est pas conservée).
-- Heure de retour sans date → hérite de la date de départ (sortie à la journée, ADR-011) ; l'enseignant peut corriger.
-- Nouvelle valeur contradictoire sans formule de correction (« finalement », « en fait ») → demander laquelle retenir.
+- « J'ai 25 élèves » → ask for the number of accompanying adults (students ≠ participants).
+- « Le mois prochain », « bientôt », « une trentaine » → ask for the exact value.
+- Return before departure → ask for a correction (the inconsistent value is not kept).
+- Return time without a date → inherits the departure date (one-day trip, ADR-011); the teacher can correct it.
+- New contradictory value without a correction phrase (« finalement », « en fait ») → ask which one to keep.
 
-Les contraintes horaires sont conservées : `exact` (à), `approximate` (vers), `earliest` (après / pas avant), `latest` (avant / au plus tard).
+Time constraints are preserved: `exact` (à), `approximate` (vers), `earliest` (après / pas avant), `latest` (avant / au plus tard).
 
-## Non collecté
+## Not collected
 
-Budget, gare de départ, âge des élèves, niveau, établissement, coordonnées, noms. Si l'enseignant les mentionne, elles sont ignorées (jamais stockées dans les informations) et jamais demandées.
+Budget, departure station, students' age, grade level, school, contact details, names. If the teacher mentions them, they are ignored (never stored in the requirements) and never asked for.
 
-## Déroulé de la conversation
+## Conversation flow
 
-1. Message d'accueil avec un exemple de ce qu'on peut dire.
-2. L'enseignant parle ou écrit. Audio → transcription affichée pour correction → envoyée comme texte.
-3. Extraction → fusion du patch → validation → la machine à états choisit : question ciblée (manque), clarification (ambiguïté/conflit/incohérence) ou récapitulatif + demande de confirmation (complet).
-4. L'enseignant peut modifier n'importe quel champ à tout moment, par le chat ou dans le panneau.
-5. Confirmation explicite (« Confirmer et continuer ») → `CONFIRMED` → JSON versionné exporté.
-6. Après confirmation, une correction rouvre l'édition (nouvelle confirmation requise, export invalidé entre-temps).
+1. Welcome message with an example of what can be said.
+2. The teacher speaks or types. Audio → transcript displayed for correction → sent as text.
+3. Extraction → patch merge → validation → the state machine chooses: targeted question (missing), clarification (ambiguity/conflict/inconsistency) or summary + confirmation request (complete).
+4. The teacher can edit any field at any time, through the chat or in the panel.
+5. Explicit confirmation (« Confirmer et continuer ») → `CONFIRMED` → versioned JSON exported.
+6. After confirmation, a correction reopens editing (new confirmation required, export invalidated in the meantime).
 
-Principes : ne jamais redemander un champ connu ; une question à la fois ; français concis et poli ; aucune promesse sur les trains, destinations ou disponibilités.
+Principles: never ask again for a known field; one question at a time; concise, polite French; no promise about trains, destinations or availability.
 
-## Critères de réussite (hackathon)
+## Success criteria (hackathon)
 
-- Démonstration minimale : texte → extraction → relance → correction → confirmation → JSON.
-- La voix utilise le même pipeline (pas de seconde logique de dialogue).
-- Cible ≥ 95 % d'exactitude d'extraction sur les cas non ambigus ; zéro remplissage non fondé / fausse confirmation (bloquant). Résultat actuel : voir `docs/HANDOFF.md`.
-- Fonctionne hors ligne en mode démo pour la présentation.
+- Minimal demo: text → extraction → follow-up → correction → confirmation → JSON.
+- Voice uses the same pipeline (no second dialogue logic).
+- Target ≥ 95 % extraction accuracy on unambiguous cases; zero unsupported fills / false confirmations (blocking). Current result: see `docs/HANDOFF.md`.
+- Works offline in demo mode for the presentation.

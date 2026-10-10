@@ -1,7 +1,7 @@
-"""Configuration de l'API (variables d'environnement / .env racine).
+"""API configuration (environment variables / root .env).
 
-La clé OpenAI n'est jamais lue depuis un fichier versionné : sur le Mac de développement elle est
-injectée par `tools/with-api-env`, ailleurs par l'environnement (CI, hébergeur).
+The OpenAI key is never read from a versioned file: on the development Mac it is
+injected by `tools/with-api-env`, elsewhere by the environment (CI, hosting provider).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     transcription_model: str = "gpt-transcribe"
     extraction_model: str = "gpt-5.4-mini"
-    # Effort de raisonnement envoyé uniquement aux modèles gpt-5* (ignoré sinon).
+    # Reasoning effort sent only to gpt-5* models (ignored otherwise).
     extraction_reasoning_effort: str = "low"
     app_timezone: str = "Europe/Paris"
     database_url: str = "sqlite:///./.local/dev.db"
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
 
     @property
     def resolved_database_url(self) -> str:
-        """Les chemins SQLite relatifs sont résolus depuis la racine du dépôt, quel que soit le cwd."""
+        """Relative SQLite paths are resolved from the repository root, whatever the cwd."""
         prefix = "sqlite:///./"
         if self.database_url.startswith(prefix):
             target = REPO_ROOT / self.database_url[len(prefix) :]

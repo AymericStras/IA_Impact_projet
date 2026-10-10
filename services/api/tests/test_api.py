@@ -1,4 +1,4 @@
-"""Scénarios multi-tours de bout en bout (matrice de la skill conversation-testing) avec FakeProvider."""
+"""End-to-end multi-turn scenarios (matrix of the conversation-testing skill) with FakeProvider."""
 
 from __future__ import annotations
 
@@ -131,7 +131,7 @@ def test_return_before_departure_is_rejected_and_state_kept(
     assert body["state"] == "ASKING_USER"
     assert body["requirements"]["return"] is None
     assert "antérieure au départ" in body["assistant_message"]
-    assert body["version"] == 1  # aucun instantané pour un état incohérent
+    assert body["version"] == 1  # no snapshot for an inconsistent state
 
 
 def test_vague_date_asks_exact_date(client: TestClient, provider: FakeProvider) -> None:
@@ -173,7 +173,7 @@ def test_confirm_edit_reconfirm_export(client: TestClient, provider: FakeProvide
     body = _send(client, conv["conversation_id"], "…")
     cid = conv["conversation_id"]
 
-    # Export impossible avant confirmation.
+    # Export impossible before confirmation.
     assert client.get(f"/api/v1/conversations/{cid}/export").status_code == 409
 
     confirmed = client.post(
@@ -189,7 +189,7 @@ def test_confirm_edit_reconfirm_export(client: TestClient, provider: FakeProvide
     exported = client.get(f"/api/v1/conversations/{cid}/export").json()
     assert exported == payload["confirmed_requirements"]
 
-    # Modification après confirmation → retour en attente de confirmation, export invalidé.
+    # Edit after confirmation → back to awaiting confirmation, export invalidated.
     edited = client.patch(
         f"/api/v1/conversations/{cid}/requirements",
         json={"field": "participants_count", "value": 32, "expected_version": payload["version"]},
@@ -269,7 +269,7 @@ def test_provider_failure_keeps_state_and_is_retryable(client: TestClient, provi
     provider.queue(mk_patch(total=30))
     retried = _send(
         client, cid, "Nous sommes 30.", cid="x"
-    )  # même client_message_id : accepté car jamais traité
+    )  # same client_message_id: accepted because never processed
     assert retried["requirements"]["participants_count"] == 30
 
 

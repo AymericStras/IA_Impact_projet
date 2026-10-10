@@ -1,7 +1,7 @@
-"""Génération des messages de l'assistant à partir de gabarits français (ADR-004).
+"""Generation of the assistant's messages from French templates (ADR-004).
 
-Le catalogue de référence est dans `app/prompts/dialogue_policy.md` ; toute modification ici doit y
-être reportée.
+The reference catalogue is in `app/prompts/dialogue_policy.md`; any modification here must be
+mirrored there.
 """
 
 from __future__ import annotations

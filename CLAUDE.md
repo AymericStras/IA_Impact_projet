@@ -1,19 +1,19 @@
-# Instructions du projet
+# Project instructions
 
 @AGENTS.md
 
-Suivre l'architecture, les invariants et les règles de développement définis dans AGENTS.md.
+Follow the architecture, invariants and development rules defined in AGENTS.md.
 
-Avant de modifier :
-1. Lire `docs/HANDOFF.md`, puis la documentation utile à la tâche.
-2. Inspecter les implémentations existantes et les réutiliser.
-3. Identifier les modules touchés et l'impact éventuel sur le contrat.
-4. Écrire ou mettre à jour les tests correspondants.
+Before modifying:
+1. Read `docs/HANDOFF.md`, then the documentation relevant to the task.
+2. Inspect the existing implementations and reuse them.
+3. Identify the affected modules and any impact on the contract.
+4. Write or update the corresponding tests.
 
-Après modification :
-1. Exécuter les tests pertinents (`./scripts/test.sh` ou un sous-ensemble).
-2. Exécuter lint et vérification de types (`./scripts/check.sh`).
-3. Mettre à jour `docs/HANDOFF.md`, et `docs/DECISIONS.md` / `docs/API.md` si nécessaire.
-4. Résumer tous les fichiers modifiés.
+After modifying:
+1. Run the relevant tests (`./scripts/test.sh` or a subset).
+2. Run lint and type checking (`./scripts/check.sh`).
+3. Update `docs/HANDOFF.md`, and `docs/DECISIONS.md` / `docs/API.md` if needed.
+4. Summarise all modified files.
 
-Les skills du projet sont dans `.claude/skills/` (liens vers `.agents/skills/`), les agents de rôle dans `.claude/agents/`, les hooks dans `.claude/settings.json`.
+The project skills are in `.claude/skills/` (links to `.agents/skills/`), the role agents in `.claude/agents/`, the hooks in `.claude/settings.json`.

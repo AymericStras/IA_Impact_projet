@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lance l'API (:8000, clé OpenAI injectée depuis le trousseau) et le web (:3000). Ctrl-C arrête les deux.
+# Starts the API (:8000, OpenAI key injected from the Keychain) and the web app (:3000). Ctrl-C stops both.
 . "$(dirname "$0")/_lib.sh"
 load_env
 
@@ -15,7 +15,7 @@ if has_api; then
   ) &
   PIDS+=($!)
 else
-  warn "services/api absent — API non lancée"
+  warn "services/api absent — API not started"
 fi
 
 if has_web; then
@@ -23,8 +23,8 @@ if has_web; then
   (cd "$WEB_DIR" && NEXT_PUBLIC_DEMO_MODE="${NEXT_PUBLIC_DEMO_MODE:-false}" pnpm dev) &
   PIDS+=($!)
 else
-  warn "apps/web absent — web non lancé"
+  warn "apps/web absent — web not started"
 fi
 
-[ "${#PIDS[@]}" -gt 0 ] || fail "rien à lancer ; voir docs/HANDOFF.md"
+[ "${#PIDS[@]}" -gt 0 ] || fail "nothing to start; see docs/HANDOFF.md"
 wait

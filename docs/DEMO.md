@@ -1,26 +1,26 @@
-# Démonstration
+# Demo
 
-## Deux modes
+## Two modes
 
-| Mode | Commande | Nécessite | Usage |
+| Mode | Command | Requires | Use |
 |---|---|---|---|
-| Démo simulée | `./scripts/demo.sh` → http://localhost:3000 | rien | Développement UI, secours pour la présentation. Badge « Mode démo » ; extraction scriptée, **pas** la capacité réelle du modèle |
-| IA réelle | `./scripts/dev.sh` | clé dans le trousseau (Mac) ou `OPENAI_API_KEY` | Transcription + extraction réelles |
+| Simulated demo | `./scripts/demo.sh` → http://localhost:3000 | nothing | UI development, fallback for the presentation. « Mode démo » badge; scripted extraction, **not** the model's real capability |
+| Real AI | `./scripts/dev.sh` | key in the Keychain (Mac) or `OPENAI_API_KEY` | Real transcription + extraction |
 
-## Script de présentation (mode IA réel, ~3 min)
+## Presentation script (real AI mode, ~3 min)
 
-1. Ouvrir le chatbot. Message d'accueil en français.
-2. Voix : « Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. » → transcription affichée → envoyer.
-3. Le panneau se remplit 3/4 ; l'assistant ne demande que l'heure de retour.
-4. Écrire « Avant 17 h. » → récapitulatif + « Confirmer et continuer » / « Modifier ».
-5. Cliquer sur les participants → passer à 32 → le panneau se met à jour, nouvelle confirmation demandée.
-6. Confirmer → JSON (`schema_version 1.0`) affiché, `constraint: "latest"` mis en avant comme valeur transmise au planificateur.
+1. Open the chatbot. Welcome message in French.
+2. Voice: « Bonjour, je voudrais organiser une sortie le 12 novembre. J'ai 27 élèves et 3 accompagnateurs, on partirait vers 8 h. Je suis professeur d'histoire, on travaille sur le Moyen Âge. » → transcript displayed → send.
+3. The panel fills up to 3/4; the assistant only asks for the return time.
+4. Type « Avant 17 h. » → summary + « Confirmer et continuer » / « Modifier ».
+5. Click on the participants → change to 32 → the panel updates, a new confirmation is requested.
+6. Confirm → JSON (`schema_version 1.0`) displayed, `constraint: "latest"` highlighted as the value handed to the planner.
 
-Secours : même script en mode démo (réponses scriptées).
+Fallback: same script in demo mode (scripted responses).
 
-## Prompt de design Stitch
+## Stitch design prompt
 
-À utiliser avec `./tools/stitch call <outil de génération> @args.json`. La sortie va dans `artifacts/` et est réimplémentée en composants React.
+To be used with `./tools/stitch call <generation tool> @args.json`. The output goes to `artifacts/` and is re-implemented as React components.
 
 ```text
 Design a professional French-language AI chatbot interface for teachers planning
@@ -53,7 +53,7 @@ All user-facing text must be in French. Create responsive desktop and mobile
 layouts. Prioritize interaction quality and clear communication over decoration.
 ```
 
-## Mise en page cible
+## Target layout
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -69,4 +69,4 @@ layouts. Prioritize interaction quality and clear communication over decoration.
 │  Écrivez votre message…    🎤  │                       │
 └────────────────────────────────┴───────────────────────┘
 ```
-Mobile : une colonne, panneau repliable.
+Mobile: one column, collapsible panel.

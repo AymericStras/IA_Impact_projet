@@ -1,4 +1,4 @@
-"""Construction du prompt d'extraction et appel du fournisseur."""
+"""Builds the extraction prompt and calls the provider."""
 
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ RECENT_MESSAGES = 8
 
 @lru_cache
 def load_system_prompt(name: str = "extract_requirements.md") -> str:
-    """Le prompt est la partie du fichier Markdown comprise entre les deux premiers séparateurs `---`."""
+    """The prompt is the part of the Markdown file between the first two `---` separators."""
     text = (PROMPTS_DIR / name).read_text(encoding="utf-8")
     parts = text.split("\n---\n")
     if len(parts) < 3:
-        raise ValueError(f"{name}: séparateurs '---' attendus autour du prompt système")
+        raise ValueError(f"{name}: '---' separators expected around the system prompt")
     return parts[1].strip()
 
 

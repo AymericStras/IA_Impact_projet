@@ -1,4 +1,4 @@
-"""Validation déterministe et gabarits français."""
+"""Deterministic validation and French templates."""
 
 from __future__ import annotations
 

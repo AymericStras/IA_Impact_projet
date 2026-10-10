@@ -1,24 +1,24 @@
 ---
 name: prompt-engineering
-description: Modifier, versionner et valider les prompts d'extraction et de dialogue de services/api/app/prompts, ainsi que le schéma RequirementPatch que remplit le modèle. Toujours accompagné d'un passage des évaluations françaises de evals/.
+description: Modify, version and validate the extraction and dialogue prompts in services/api/app/prompts, as well as the RequirementPatch schema the model fills. Always paired with a run of the French evals in evals/.
 ---
 
-# Ingénierie des prompts
+# Prompt engineering
 
-## Lire d'abord
-`AGENTS.md` §3 (invariants 1–6), `services/api/app/prompts/*.md`, `services/api/app/schemas/patch.py`, `evals/README.md`, dernière section « Évaluations » de `docs/HANDOFF.md`.
+## Read first
+`AGENTS.md` §3 (invariants 1–6), `services/api/app/prompts/*.md`, `services/api/app/schemas/patch.py`, `evals/README.md`, the latest "Evals" section of `docs/HANDOFF.md`.
 
-## Règles
-- Les prompts sont des fichiers versionnés avec en-tête (`vX.Y`, date). Incrémenter à chaque changement sémantique et consigner les résultats d'évaluation dans `docs/HANDOFF.md`.
-- Le prompt ne décide jamais du flux, n'écrit jamais de texte pour l'utilisateur, ne confirme jamais. Si un comportement relève du code (totaux, état, redemande), corriger le code, pas le prompt.
-- La fiabilité vient du schéma + de la validation par le code ; le prompt améliore le rappel et le signalement des ambiguïtés. Préférer ajouter un `AmbiguityKind` plutôt que demander au modèle « d'être prudent ».
-- Le prompt système reste en anglais (ADR-010) ; les exemples qu'il contient peuvent être en français.
-- Régressions bloquantes : remplissage non fondé (valeur sans `evidence`), intention `confirm` sans accord explicite, champ existant perdu.
-- Le modèle reçoit les 8 derniers messages (ADR-015) : les cas d'évaluation à un tour qui répondent à une question doivent fournir `history`.
+## Rules
+- Prompts are versioned files with a header (`vX.Y`, date). Bump on every semantic change and record the eval results in `docs/HANDOFF.md`.
+- The prompt never decides the flow, never writes text for the user, never confirms. If a behaviour belongs to the code (totals, state, re-asking), fix the code, not the prompt.
+- Reliability comes from the schema + validation by the code; the prompt improves recall and ambiguity flagging. Prefer adding an `AmbiguityKind` over asking the model to "be careful".
+- The system prompt stays in English (ADR-010); the examples it contains may be in French.
+- Blocking regressions: unsupported fill (value without `evidence`), `confirm` intent without explicit agreement, existing field lost.
+- The model receives the last 8 messages (ADR-015): single-turn eval cases that answer a question must provide `history`.
 
-## Procédure
-1. Ajouter ou ajuster des cas dans `evals/french_cases.jsonl` capturant le comportement visé **avant** d'éditer le prompt (inclure l'oral : « on serait une trentaine », « deux classes de vingt-cinq », « rentrés vers seize heures », « finalement plutôt jeudi »).
-2. Éditer le prompt ; si un nouveau type d'ambiguïté ou une forme de champ est nécessaire, modifier le modèle Pydantic du patch et régénérer le JSON Schema (procédure contrat).
-3. Lancer `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` (et éventuellement `--model` pour comparer).
-4. N'accepter que si l'exactitude est ≥ à la précédente et que les bloquants sont à 0. Un cas peut être non déterministe : relancer avec `--id` avant de conclure. Consigner le tableau dans `docs/HANDOFF.md`.
-5. Committer prompt + cas + résultats ensemble (`feat(prompt): …` / `fix(prompt): …`).
+## Procedure
+1. Add or adjust cases in `evals/french_cases.jsonl` capturing the target behaviour **before** editing the prompt (include spoken forms: « on serait une trentaine », « deux classes de vingt-cinq », « rentrés vers seize heures », « finalement plutôt jeudi »).
+2. Edit the prompt; if a new ambiguity kind or field shape is needed, modify the patch's Pydantic model and regenerate the JSON Schema (contract procedure).
+3. Run `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` (and optionally `--model` to compare).
+4. Accept only if accuracy is ≥ the previous one and the blockers are at 0. A case may be non-deterministic: re-run with `--id` before concluding. Record the table in `docs/HANDOFF.md`.
+5. Commit prompt + cases + results together (`feat(prompt): …` / `fix(prompt): …`).

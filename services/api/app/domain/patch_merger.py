@@ -1,11 +1,11 @@
-"""Fusion déterministe d'un RequirementPatch dans l'état courant.
+"""Deterministic merge of a RequirementPatch into the current state.
 
-Le modèle propose ; ce module décide. Règles principales (AGENTS.md §3) :
-- `set` sur un champ déjà connu et différent → conflit (sauf intention de correction) ;
-- `replace` ou intention `correct_information` → remplacement explicite ;
-- le total de participants est calculé par le code à partir des effectifs mentionnés ;
-- une date de retour absente est déduite de la date de départ (sortie à la journée) ;
-- aucun champ non mentionné n'est modifié.
+The model proposes; this module decides. Main rules (AGENTS.md §3):
+- `set` on an already known, different field → conflict (unless correction intent);
+- `replace` or `correct_information` intent → explicit replacement;
+- the participant total is computed by the code from the mentioned headcounts;
+- a missing return date is derived from the departure date (one-day trip);
+- no unmentioned field is modified.
 """
 
 from __future__ import annotations
@@ -54,16 +54,16 @@ def _set(reqs: PartialRequirements, name: FieldName, value: object) -> None:
 def _merge_datetime(
     current: PartialDateTime | None, incoming: PartialDateTimePatch, correction: bool
 ) -> tuple[PartialDateTime | None, bool]:
-    """Renvoie (nouvelle valeur, conflit)."""
+    """Returns (new value, conflict)."""
     new = PartialDateTime(
-        date=incoming.date,  # chaîne ISO validée par Pydantic
+        date=incoming.date,  # ISO string validated by Pydantic
         time=incoming.time,
         constraint=incoming.constraint,
     )
     if current is None:
         return new, False
     if correction:
-        # Correction : les parties fournies remplacent, les autres sont conservées.
+        # Correction: provided parts replace, the others are kept.
         return (
             PartialDateTime(
                 date=new.date if new.date is not None else current.date,
@@ -72,7 +72,7 @@ def _merge_datetime(
             ),
             False,
         )
-    # Complétion : on ne remplit que les parties encore inconnues ; une valeur différente est un conflit.
+    # Completion: only still-unknown parts are filled; a different value is a conflict.
     for part in ("date", "time", "constraint"):
         cur, inc = getattr(current, part), getattr(new, part)
         if cur is not None and inc is not None and cur != inc:
@@ -95,12 +95,12 @@ def _merge_teaching(
         if correction and current is not None:
             return TeachingType(subject=new.subject or current.subject, theme=new.theme or current.theme)
         return new
-    # Ajouter un thème à une matière (ou l'inverse) n'est pas un conflit : on complète.
+    # Adding a theme to a subject (or vice versa) is not a conflict: we complete.
     return TeachingType(subject=current.subject or new.subject, theme=current.theme or new.theme)
 
 
 def _apply_participants(reqs: PartialRequirements, patch: RequirementPatch, result: MergeResult) -> None:
-    """Calcule le total à partir des effectifs mentionnés (le modèle ne fait pas d'addition)."""
+    """Computes the total from the mentioned headcounts (the model does no addition)."""
     mentioned = patch.participants_mentioned
     explicit = any(op.field == "participants_count" for op in patch.operations)
     correction = patch.user_intent == UserIntent.CORRECT_INFORMATION
@@ -114,13 +114,13 @@ def _apply_participants(reqs: PartialRequirements, patch: RequirementPatch, resu
         reqs.participants_breakdown = breakdown
 
     if explicit:
-        return  # l'opération explicite a déjà été appliquée
+        return  # the explicit operation has already been applied
 
     total: int | None = None
     if mentioned.total_stated is not None:
         total = mentioned.total_stated
     elif breakdown.students is not None and breakdown.accompanying is not None:
-        # Effectif complet désormais connu (dans ce message ou complété par un message précédent).
+        # Full headcount now known (in this message or completed by a previous message).
         if mentioned.students is not None or mentioned.accompanying is not None:
             total = breakdown.students + breakdown.accompanying
     elif mentioned.students is not None and breakdown.accompanying is None:
@@ -143,12 +143,12 @@ def _apply_participants(reqs: PartialRequirements, patch: RequirementPatch, resu
     elif mentioned.total_stated is not None:
         result.conflicts.append("participants_count")
     else:
-        # Nouvelle décomposition qui contredit un total déjà connu sans correction explicite.
+        # New breakdown that contradicts an already known total without an explicit correction.
         result.conflicts.append("participants_count")
 
 
 def _infer_return_date(reqs: PartialRequirements, result: MergeResult) -> None:
-    """Sortie à la journée : une heure de retour sans date hérite de la date de départ (et inversement)."""
+    """One-day trip: a return time without a date inherits the departure date (and vice versa)."""
     dep, ret = reqs.departure, reqs.return_
     if (
         ret is not None
@@ -214,8 +214,8 @@ def apply_patch(current: PartialRequirements, patch: RequirementPatch) -> MergeR
     _apply_participants(reqs, patch, result)
     _infer_return_date(reqs, result)
 
-    # Dédoublonnage en conservant l'ordre.
+    # De-duplicate while preserving order.
     result.conflicts = list(dict.fromkeys(result.conflicts))
-    # Un conflit annule le changement correspondant.
+    # A conflict cancels the corresponding change.
     result.changed_fields = [f for f in result.changed_fields if f not in result.conflicts]
     return result

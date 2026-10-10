@@ -43,6 +43,8 @@ def subset(expected: Any, actual: Any) -> bool:
         return isinstance(actual, dict) and all(k in actual and subset(v, actual[k]) for k, v in expected.items())
     if isinstance(expected, list):
         return isinstance(actual, list) and sorted(map(json.dumps, expected)) == sorted(map(json.dumps, actual))
+    if isinstance(expected, str) and isinstance(actual, str):
+        return expected.casefold() == actual.casefold()
     return expected == actual
 
 
@@ -127,7 +129,12 @@ def main() -> int:
         history: list[dict[str, str]] = list(case.get("history", []))
         failures: list[str] = []
         for i, turn in enumerate(turns):
-            out = run_turn(state, turn["message"], case.get("today", "2026-10-10"), args.model, history)
+            try:
+                out = run_turn(state, turn["message"], case.get("today", "2026-10-10"), args.model, history)
+            except Exception as exc:  # noqa: BLE001 - a rejected patch or provider failure fails the case
+                failures.append(f"turn {i + 1}: pipeline error {type(exc).__name__}: {exc}")
+                totals["pipeline_errors"] = totals.get("pipeline_errors", 0) + 1
+                break
             patch, merged, missing = out["patch"], out["merged"], out["missing_fields"]
             turn_failures = check_patch(turn.get("expect", {}), patch) + check_merged(turn.get("expect", {}), merged, missing)
             failures += [f"turn {i + 1}: {f}" for f in turn_failures]
@@ -154,7 +161,13 @@ def main() -> int:
 
     RESULTS.mkdir(exist_ok=True)
     out_path = RESULTS / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-    out_path.write_text(json.dumps({"model": args.model, "totals": totals, "results": results}, ensure_ascii=False, indent=2))
+    report = {"model": args.model, "totals": totals, "results": results}
+    out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2))
+    reports = ROOT / "reports"
+    reports.mkdir(exist_ok=True)
+    latest = {"timestamp": out_path.stem, "model": args.model or "default (EXTRACTION_MODEL)", "totals": totals,
+              "failed": [r["id"] for r in results if not r["ok"]], "synthetic_text_only": True}
+    (reports / "evals-latest.json").write_text(json.dumps(latest, ensure_ascii=False, indent=2) + "\n")
     accuracy = totals["passed"] / totals["cases"] if totals["cases"] else 0.0
     print(f"\n{totals['passed']}/{totals['cases']} cases passed ({accuracy:.0%}) in {time.time() - started:.1f}s → {out_path.relative_to(ROOT)}")
     blocking = {m: totals[m] for m in BLOCKING_METRICS if totals[m]}

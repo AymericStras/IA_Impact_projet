@@ -1,4 +1,4 @@
-"""Fixtures : fabrique de patches, horloge figée, application avec fournisseur factice et SQLite temporaire."""
+"""Fixtures: patch factory, frozen clock, application with fake provider and temporary SQLite."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from app.schemas.patch import (
 )
 from app.services.providers.fake_provider import FakeProvider
 
-TODAY = date(2026, 10, 10)  # samedi
+TODAY = date(2026, 10, 10)  # Saturday
 
 
 def dt(

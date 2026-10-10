@@ -1,4 +1,4 @@
-"""Horloge injectable et formatage des dates en français (fuseau Europe/Paris)."""
+"""Injectable clock and French date formatting (Europe/Paris timezone)."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ class SystemClock:
 
 
 class FixedClock:
-    """Horloge figée pour les tests et les évaluations."""
+    """Frozen clock for tests and evals."""
 
     def __init__(self, at: datetime | date) -> None:
         if isinstance(at, datetime):

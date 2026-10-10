@@ -1,4 +1,4 @@
-"""Modèles d'entrée/sortie des endpoints de conversation."""
+"""Input/output models of the conversation endpoints."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from app.schemas.requirements import ConfirmedRequirements, ContractModel, Parti
 
 
 class ConversationState(StrEnum):
-    """États visibles par le client. EXTRACTING/VALIDATING sont internes à une requête."""
+    """States visible to the client. EXTRACTING/VALIDATING are internal to a request."""
 
     COLLECTING = "COLLECTING"
     ASKING_USER = "ASKING_USER"
@@ -36,21 +36,19 @@ class PendingClarification(ContractModel):
 
 
 class ConversationResponse(ContractModel):
-    """Réponse de tous les endpoints : le client l'affiche telle quelle, sans recalculer."""
+    """Response of all endpoints: the client renders it as is, without recomputing."""
 
     conversation_id: str
     state: ConversationState
-    version: int = Field(ge=0, description="Version monotone des informations ; +1 à chaque patch appliqué")
+    version: int = Field(ge=0, description="Monotonic version of the requirements; +1 for each applied patch")
     assistant_message: str | None
     requirements: PartialRequirements
     missing_fields: list[FieldName]
     pending_clarification: PendingClarification | None = None
     ready_for_confirmation: bool
-    transcript: str | None = Field(
-        default=None, description="Uniquement après /audio : transcription à corriger"
-    )
+    transcript: str | None = Field(default=None, description="Only after /audio: transcript to be corrected")
     confirmed_requirements: ConfirmedRequirements | None = Field(
-        default=None, description="Charge utile finale, non nulle seulement en état CONFIRMED"
+        default=None, description="Final payload, non-null only in the CONFIRMED state"
     )
     messages: list[Message]
 

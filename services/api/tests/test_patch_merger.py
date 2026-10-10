@@ -1,4 +1,4 @@
-"""Fusion des patches : totaux calculés par le code, corrections, conflits, déduction de la date de retour."""
+"""Patch merging: totals computed by the code, corrections, conflicts, return-date inference."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def test_explicit_correction_replaces_without_adding() -> None:
     assert result.requirements.participants_count == 32
     assert result.requirements.teaching_type == TeachingType(
         subject="Histoire"
-    )  # champ non mentionné préservé
+    )  # unmentioned field preserved
     assert result.conflicts == []
 
 

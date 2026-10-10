@@ -1,4 +1,4 @@
-"""Endpoints /api/v1 — fins : toute la logique est dans services/ et domain/."""
+"""/api/v1 endpoints — thin: all the logic lives in services/ and domain/."""
 
 from __future__ import annotations
 
@@ -93,9 +93,7 @@ async def transcribe_audio(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Format audio non pris en charge.")
     data = await file.read(settings.max_audio_bytes + 1)
     if len(data) > settings.max_audio_bytes:
-        raise HTTPException(
-            status.HTTP_413_CONTENT_TOO_LARGE, detail="Enregistrement trop volumineux."
-        )
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, detail="Enregistrement trop volumineux.")
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Enregistrement vide.")
     _check_rate(limiter, conversation_id)

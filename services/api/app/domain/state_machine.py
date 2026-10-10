@@ -1,7 +1,7 @@
-"""Machine à états de la conversation : fonction pure, exhaustivement testée.
+"""Conversation state machine: a pure function, exhaustively tested.
 
-Inspirée du remplissage de formulaire (« requested slot ») de Rasa Forms : le code choisit
-l'unique prochaine action ; le modèle ne pilote jamais le flux.
+Inspired by the form filling ("requested slot") of Rasa Forms: the code chooses
+the single next action; the model never drives the flow.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ class ActionKind(StrEnum):
 class Action:
     kind: ActionKind
     field: FieldName | None = None
-    detail: str | None = None  # kind d'ambiguïté ou d'incohérence
+    detail: str | None = None  # ambiguity or inconsistency kind
     params: dict[str, str] = dc_field(default_factory=dict)
 
 
@@ -91,7 +91,7 @@ def decide(
             return Decision(State.COLLECTING, Action(ActionKind.NOTHING_UNDERSTOOD, field=target))
         return Decision(State.COLLECTING, Action(ActionKind.ASK_MISSING, field=target))
 
-    # Tout est complet et valide.
+    # Everything is complete and valid.
     if was_confirmed and changed:
         return Decision(State.AWAITING_CONFIRMATION, Action(ActionKind.REOPEN_EDIT, field=changed_fields[0]))
     if previous == State.AWAITING_CONFIRMATION and not changed:
@@ -103,7 +103,7 @@ def decide(
 
 
 def decide_explicit_confirmation(previous: State, complete: bool) -> Decision | None:
-    """Bouton « Confirmer » : accepté seulement si tout est complet et qu'une confirmation est attendue."""
+    """« Confirmer » button: accepted only if everything is complete and a confirmation is expected."""
     if not complete or previous not in (State.AWAITING_CONFIRMATION, State.EDITING):
         return None
     return Decision(State.CONFIRMED, Action(ActionKind.ACKNOWLEDGE_CONFIRMATION))

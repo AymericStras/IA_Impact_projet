@@ -1,4 +1,4 @@
-"""Pont pour `evals/evaluate.py` : un tour d'extraction + fusion sans base de données."""
+"""Bridge for `evals/evaluate.py`: one extraction + merge turn without a database."""
 
 from __future__ import annotations
 

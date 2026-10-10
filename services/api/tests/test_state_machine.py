@@ -1,4 +1,4 @@
-"""Transitions de la machine à états (fonction pure)."""
+"""State machine transitions (pure function)."""
 
 from __future__ import annotations
 
@@ -70,12 +70,12 @@ def test_chat_confirmation_only_when_awaiting_and_unchanged() -> None:
         S.CONFIRMED,
         ActionKind.ACKNOWLEDGE_CONFIRMATION,
     )
-    # « oui » alors qu'il manque une information : jamais une confirmation.
+    # « oui » while a piece of information is missing: never a confirmation.
     assert _decide(S.COLLECTING, intent=UserIntent.CONFIRM, missing=["return"])[:2] == (
         S.COLLECTING,
         ActionKind.NOTHING_UNDERSTOOD,
     )
-    # « oui » accompagné d'une modification : on re-présente le récapitulatif.
+    # « oui » together with a modification: the summary is presented again.
     assert _decide(S.AWAITING_CONFIRMATION, intent=UserIntent.CONFIRM, changed_fields=["return"])[:2] == (
         S.AWAITING_CONFIRMATION,
         ActionKind.SUMMARIZE_AND_CONFIRM,

@@ -1,4 +1,4 @@
-"""Validation déterministe de l'état des informations."""
+"""Deterministic validation of the requirements state."""
 
 from __future__ import annotations
 

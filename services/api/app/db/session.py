@@ -1,4 +1,4 @@
-"""Moteur SQLAlchemy et sessions. SQLite en dev/tests, PostgreSQL en déploiement (ADR-008)."""
+"""SQLAlchemy engine and sessions. SQLite in dev/tests, PostgreSQL in deployment (ADR-008)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def make_engine(database_url: str) -> Engine:
 
 
 def init_db(engine: Engine) -> None:
-    # Hackathon : création directe des tables. Alembic sera introduit avec le chemin PostgreSQL (ADR-008).
+    # Hackathon: tables are created directly. Alembic will be introduced with the PostgreSQL path (ADR-008).
     Base.metadata.create_all(engine)
 
 

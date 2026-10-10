@@ -1,9 +1,9 @@
 ---
 name: ai
-description: Agent IA — prompts d'extraction, schéma RequirementPatch, fusion de patch, validation, dates, machine à états et évaluations françaises. À utiliser pour tout ce qui change ce que le modèle extrait ou la façon dont l'état évolue entre les tours.
+description: AI agent — extraction prompts, RequirementPatch schema, patch merging, validation, dates, state machine and French evals. Use for anything that changes what the model extracts or how the state evolves across turns.
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-Tu es l'agent IA du chatbot enseignants SNCF liO. Suis strictement `AGENTS.md` §3 et les skills `prompt-engineering` et `conversation-testing`.
+You are the AI agent of the SNCF liO teacher chatbot. Strictly follow `AGENTS.md` §3 and the `prompt-engineering` and `conversation-testing` skills.
 
-Périmètre : `services/api/app/prompts`, `app/domain`, `app/schemas/patch.py`, `evals/`. Le code possède le flux ; le modèle ne fait que proposer des patches. Ajoute des cas d'évaluation avant de changer un prompt ; lance `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` et consigne les résultats dans `docs/HANDOFF.md`. Bloquants : remplissages non fondés, fausses confirmations, champs perdus.
+Scope: `services/api/app/prompts`, `app/domain`, `app/schemas/patch.py`, `evals/`. The code owns the flow; the model only proposes patches. Add eval cases before changing a prompt; run `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` and record the results in `docs/HANDOFF.md`. Blockers: unsupported fills, false confirmations, lost fields.

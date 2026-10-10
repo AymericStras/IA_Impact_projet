@@ -1,4 +1,4 @@
-"""Dépendances FastAPI (surchargeables dans les tests)."""
+"""FastAPI dependencies (overridable in tests)."""
 
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ def get_service(
 
 
 class RateLimiter:
-    """Limite simple en mémoire par conversation (fenêtre glissante d'une minute)."""
+    """Simple in-memory per-conversation limit (one-minute sliding window)."""
 
     def __init__(self, per_minute: int) -> None:
         self.per_minute = per_minute

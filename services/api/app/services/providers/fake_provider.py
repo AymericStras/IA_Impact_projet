@@ -1,4 +1,4 @@
-"""Fournisseur factice pour les tests : patches scriptés, erreurs à la demande."""
+"""Fake provider for tests: scripted patches, errors on demand."""
 
 from __future__ import annotations
 

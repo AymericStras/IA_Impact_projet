@@ -3,58 +3,58 @@
 ```
 Web Next.js (apps/web)                 FastAPI (services/api)
 ┌──────────────────────────┐  REST    ┌─────────────────────────────────────┐
-│ ChatContainer            │ ───────▶ │ api/routes.py  (/api/v1, fines)     │
+│ ChatContainer            │ ───────▶ │ api/routes.py  (/api/v1, thin)      │
 │ VoiceRecorder            │          │ services/conversation.py  orchestr. │
 │ RequirementsPanel        │ ◀─────── │ services/extraction.py    prompt    │
 │ ConfirmationCard         │  JSON    │ services/providers/openai|fake      │
-└──────────────────────────┘          │ domain/pipeline.py  (tour pur)      │
+└──────────────────────────┘          │ domain/pipeline.py  (pure turn)     │
                                       │   patch_merger → validators →       │
                                       │   state_machine → dialogue          │
                                       └───────┬───────────────┬─────────────┘
                                               ▼               ▼
-                                        API OpenAI       PostgreSQL / SQLite
+                                        OpenAI API       PostgreSQL / SQLite
                                    (transcribe, extract) (conversations, messages,
-                                                          instantanés, idempotence)
+                                                          snapshots, idempotency)
 ```
 
-## Pipeline d'une requête (message texte)
+## Request pipeline (text message)
 
-1. `POST /conversations/{id}/messages` avec `content` + `client_message_id`. Si l'identifiant a déjà été traité → réponse stockée (idempotence), aucun appel au modèle.
-2. Chargement de la conversation, des informations courantes (`PartialRequirements`) et des 8 derniers messages.
-3. **Extraction** (`services/extraction.py`) : prompt `prompts/extract_requirements.md` + date/heure Paris + état courant + historique récent ; appel via l'adaptateur avec Structured Outputs strict sur le schéma Pydantic `RequirementPatch` (`responses.parse`). Échec du fournisseur → 502/504, état intact, message d'erreur français, rejouable avec le même `client_message_id`.
-4. **Fusion** (`domain/patch_merger.py`, pure) : application des opérations ; `participants_count` calculé par le code à partir de `participants_mentioned` (élèves + accompagnateurs, ou total énoncé) ; `replace`/intention de correction remplace ; `set` sur une valeur connue différente devient un conflit ; heure de retour sans date hérite de la date de départ.
-5. **Validation** (`domain/validators.py`, pure) : champs manquants, retour ≤ départ, départ passé, effectif invalide. Un retour antérieur au départ est annulé (valeur introduite ce tour) et une correction est demandée.
-6. **Machine à états** (`domain/state_machine.py`, pure) : (état précédent, intention, champs modifiés, conflits, incohérences, ambiguïtés, manquants) → état suivant + une seule `Action` (priorité : conflit > incohérence > ambiguïté bloquante > manquant > récapitulatif).
-7. **Dialogue** (`domain/dialogue.py`) : gabarits français par action. Reformulation LLM optionnelle (`prompts/dialogue_policy.md`), sans accès en écriture à l'état.
-8. Persistance en une transaction : message utilisateur, message assistant, instantané `version + 1` si changement, état, réponse mémorisée pour l'idempotence. Retour d'une `ConversationResponse`.
+1. `POST /conversations/{id}/messages` with `content` + `client_message_id`. If the identifier has already been processed → stored response (idempotency), no model call.
+2. Load the conversation, the current requirements (`PartialRequirements`) and the last 8 messages.
+3. **Extraction** (`services/extraction.py`): prompt `prompts/extract_requirements.md` + Paris date/time + current state + recent history; call through the adapter with strict Structured Outputs on the Pydantic schema `RequirementPatch` (`responses.parse`). Provider failure → 502/504, state intact, French error message, replayable with the same `client_message_id`.
+4. **Merge** (`domain/patch_merger.py`, pure): apply the operations; `participants_count` computed by the code from `participants_mentioned` (students + accompanying adults, or stated total); `replace`/correction intent replaces; `set` on a different known value becomes a conflict; a return time without a date inherits the departure date.
+5. **Validation** (`domain/validators.py`, pure): missing fields, return ≤ departure, departure in the past, invalid headcount. A return earlier than the departure is rolled back (value introduced this turn) and a correction is requested.
+6. **State machine** (`domain/state_machine.py`, pure): (previous state, intent, changed fields, conflicts, inconsistencies, ambiguities, missing) → next state + a single `Action` (priority: conflict > inconsistency > blocking ambiguity > missing > summary).
+7. **Dialogue** (`domain/dialogue.py`): French templates per action. Optional LLM rephrasing (`prompts/dialogue_policy.md`), with no write access to the state.
+8. Persistence in one transaction: user message, assistant message, snapshot `version + 1` if changed, state, response memoised for idempotency. Returns a `ConversationResponse`.
 
-Audio : `POST /conversations/{id}/audio` → contrôle type/taille → adaptateur de transcription → `transcript` renvoyé **sans extraction** ; le client laisse l'enseignant corriger puis envoie par `/messages` (`source: "audio"`). Les octets audio ne sont jamais conservés.
+Audio: `POST /conversations/{id}/audio` → type/size check → transcription adapter → `transcript` returned **without extraction**; the client lets the teacher correct it and then sends it through `/messages` (`source: "audio"`). Audio bytes are never kept.
 
-Modification : `PATCH /requirements` construit un patch `replace` (intention de correction) et suit le même pipeline, donc une modification dans le panneau et une correction par chat se comportent identiquement. `expected_version` → 409 en cas de décalage.
+Edit: `PATCH /requirements` builds a `replace` patch (correction intent) and follows the same pipeline, so an edit in the panel and a correction through the chat behave identically. `expected_version` → 409 on mismatch.
 
-Confirmation : `POST /confirm` n'est acceptée qu'en `AWAITING_CONFIRMATION` (ou `EDITING`) avec un état complet ; elle fige un `ConfirmedRequirements` (`schema_version 1.0`) et passe en `CONFIRMED`. Une confirmation par chat (« oui, je confirme ») n'est acceptée que si l'état précédent est `AWAITING_CONFIRMATION` et que le message ne change rien (ADR-016). Toute modification ultérieure annule l'instantané confirmé et impose une nouvelle confirmation.
+Confirmation: `POST /confirm` is only accepted in `AWAITING_CONFIRMATION` (or `EDITING`) with a complete state; it freezes a `ConfirmedRequirements` (`schema_version 1.0`) and moves to `CONFIRMED`. A confirmation through the chat (« oui, je confirme ») is only accepted if the previous state is `AWAITING_CONFIRMATION` and the message changes nothing (ADR-016). Any later modification cancels the confirmed snapshot and requires a new confirmation.
 
-## États
+## States
 
 ```
-COLLECTING ─▶ [EXTRACTING ─▶ VALIDATING] ─┬─▶ COLLECTING             (champ manquant)
-                                          ├─▶ ASKING_USER            (ambiguïté / conflit / incohérence)
+COLLECTING ─▶ [EXTRACTING ─▶ VALIDATING] ─┬─▶ COLLECTING             (missing field)
+                                          ├─▶ ASKING_USER            (ambiguity / conflict / inconsistency)
                                           └─▶ AWAITING_CONFIRMATION
 AWAITING_CONFIRMATION ─▶ CONFIRMED ─▶ (HANDOFF via /export)
-AWAITING_CONFIRMATION / CONFIRMED ─▶ (modification) ─▶ AWAITING_CONFIRMATION (REOPEN_EDIT) ou COLLECTING
+AWAITING_CONFIRMATION / CONFIRMED ─▶ (edit) ─▶ AWAITING_CONFIRMATION (REOPEN_EDIT) or COLLECTING
 ```
-`EXTRACTING`/`VALIDATING` ne sont jamais persistés. Les transitions sont une fonction pure testée exhaustivement (`tests/test_state_machine.py`).
+`EXTRACTING`/`VALIDATING` are never persisted. Transitions are a pure function, exhaustively tested (`tests/test_state_machine.py`).
 
-## Pourquoi ces choix (détails dans DECISIONS.md)
+## Why these choices (details in DECISIONS.md)
 
-- **Patch plutôt que ré-extraction complète** : état stable, changements traçables, modèle interchangeable.
-- **Le code possède le flux** : évite les redemandes, les additions accidentelles, les dates inventées, l'autoconfirmation.
-- **Gabarits d'abord** pour les messages de l'assistant : moins cher, plus rapide, déterministe.
-- **Adaptateur de fournisseur** : `OpenAIProvider` implémente `ExtractionProvider` + `TranscriptionProvider` ; `FakeProvider` alimente tests et mode démo.
-- **Frontend fin** : affiche `ConversationResponse` ; aucune logique de champs dupliquée.
-- **SQLite en dev/tests, Postgres en déploiement** via SQLAlchemy 2.
-- **Structure inspirée de projets reconnus** (ADR-012) : `full-stack-fastapi-template` (découpage `api/core/schemas`), Rasa Forms (« requested slot »), `vercel/ai-chatbot` + AI Elements (UI de chat).
+- **Patch rather than full re-extraction**: stable state, traceable changes, swappable model.
+- **The code owns the flow**: avoids re-asking, accidental additions, invented dates, self-confirmation.
+- **Templates first** for assistant messages: cheaper, faster, deterministic.
+- **Provider adapter**: `OpenAIProvider` implements `ExtractionProvider` + `TranscriptionProvider`; `FakeProvider` feeds tests and demo mode.
+- **Thin frontend**: renders `ConversationResponse`; no duplicated field logic.
+- **SQLite in dev/tests, Postgres in deployment** through SQLAlchemy 2.
+- **Structure inspired by well-known projects** (ADR-012): `full-stack-fastapi-template` (`api/core/schemas` split), Rasa Forms ("requested slot"), `vercel/ai-chatbot` + AI Elements (chat UI).
 
-## Sécurité, confidentialité, fiabilité
+## Security, privacy, reliability
 
-Clé API uniquement dans le processus backend (injection trousseau en local, environnement ailleurs). Limites audio (`MAX_AUDIO_BYTES`, `MAX_AUDIO_SECONDS` côté client), délais d'attente, limitation de débit par conversation. Audio jamais stocké ; les logs ne contiennent ni transcriptions ni données personnelles. Transaction par requête ; idempotence par `client_message_id` ; un échec du fournisseur laisse l'état intact.
+API key only in the backend process (Keychain injection locally, environment elsewhere). Audio limits (`MAX_AUDIO_BYTES`, `MAX_AUDIO_SECONDS` on the client side), timeouts, per-conversation rate limiting. Audio never stored; logs contain neither transcripts nor personal data. One transaction per request; idempotency by `client_message_id`; a provider failure leaves the state intact.

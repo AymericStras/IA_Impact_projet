@@ -1,4 +1,4 @@
-"""Application FastAPI : CORS, base de données, gestion des erreurs (RFC 9457), routes."""
+"""FastAPI application: CORS, database, error handling (RFC 9457), routes."""
 
 from __future__ import annotations
 
@@ -54,9 +54,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine.dispose()
 
     app = FastAPI(
-        title="SNCF liO — Assistant de voyage pédagogique",
+        title="SNCF liO — Teacher trip assistant",
         version="1.0.0",
-        description="Collecte et confirme quatre informations de sortie pédagogique à partir de messages en français.",
+        description="Collects and confirms four pieces of school-trip information from French messages.",
         lifespan=lifespan,
     )
     app.add_middleware(
@@ -66,8 +66,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(router)
-    # Les routes lisent la configuration via Depends(get_settings) : on injecte celle de cette instance
-    # (indispensable pour les tests qui créent l'application avec des paramètres explicites).
+    # Routes read the configuration through Depends(get_settings): we inject this instance's settings
+    # (required for the tests that create the application with explicit settings).
     app.dependency_overrides[get_settings] = lambda: settings
 
     @app.get("/health", include_in_schema=False)

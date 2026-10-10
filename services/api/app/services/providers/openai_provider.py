@@ -1,4 +1,4 @@
-"""Adaptateur OpenAI : seul module autorisé à importer le SDK (AGENTS.md §5)."""
+"""OpenAI adapter: the only module allowed to import the SDK (AGENTS.md §5)."""
 
 from __future__ import annotations
 

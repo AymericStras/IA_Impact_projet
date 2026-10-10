@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/requirement_patch.schema.json",
-  "description": "Sortie structurée du modèle d'extraction pour un message ; validée et fusionnée par le backend.",
+  "description": "Structured output of the extraction model for one message; validated and merged by the backend.",
   "$defs": {
     "Ambiguity": {
       "additionalProperties": false,
@@ -259,7 +259,7 @@
       "type": "object"
     },
     "TimeConstraint": {
-      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "description": "exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h ».",
       "enum": [
         "exact",
         "approximate",

@@ -1,4 +1,4 @@
-"""Interfaces des fournisseurs d'IA. Le reste du code ne dépend que de ces protocoles."""
+"""AI provider interfaces. The rest of the code depends only on these protocols."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from app.schemas.patch import RequirementPatch
 
 
 class ProviderError(Exception):
-    """Échec du fournisseur (réseau, quota, refus, sortie invalide). L'état n'est pas modifié."""
+    """Provider failure (network, quota, refusal, invalid output). The state is not modified."""
 
     def __init__(self, message: str, *, timeout: bool = False) -> None:
         super().__init__(message)

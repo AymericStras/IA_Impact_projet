@@ -1,4 +1,4 @@
-"""Tables : conversations, messages, instantanés d'informations, idempotence des messages."""
+"""Tables: conversations, messages, requirement snapshots, message idempotency."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ class SnapshotRow(Base):
 
 
 class ProcessedMessageRow(Base):
-    """Idempotence : même `client_message_id` → même réponse, aucun nouveau patch."""
+    """Idempotency: same `client_message_id` → same response, no new patch."""
 
     __tablename__ = "processed_messages"
     __table_args__ = (UniqueConstraint("conversation_id", "client_message_id"),)

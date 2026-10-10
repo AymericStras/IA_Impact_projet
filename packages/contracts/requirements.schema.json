@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/requirements.schema.json",
-  "description": "Charge utile transmise au module de planification après confirmation explicite.",
+  "description": "Payload handed to the planning module after explicit confirmation.",
   "$defs": {
     "CompleteRequirements": {
       "additionalProperties": false,
@@ -133,7 +133,7 @@
       "type": "object"
     },
     "TimeConstraint": {
-      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "description": "exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h ».",
       "enum": [
         "exact",
         "approximate",
@@ -170,7 +170,7 @@
       "type": "string"
     },
     "confirmed_at": {
-      "description": "Horodatage ISO 8601 avec décalage, ex. 2026-10-10T14:32:05+02:00",
+      "description": "ISO 8601 timestamp with offset, e.g. 2026-10-10T14:32:05+02:00",
       "title": "Confirmed At",
       "type": "string"
     },

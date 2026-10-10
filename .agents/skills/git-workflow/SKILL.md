@@ -1,24 +1,24 @@
 ---
 name: git-workflow
-description: Préparer, vérifier, committer et transmettre le travail dans ce dépôt — nommage des branches, Conventional Commits en français, contrôles avant commit, mise à jour de HANDOFF.md et création de PR avec gh.
+description: Prepare, verify, commit and hand off work in this repository — branch naming, Conventional Commits in English, pre-commit checks, HANDOFF.md update and PR creation with gh.
 ---
 
-# Flux Git
+# Git workflow
 
 ## Branches
-`main` est toujours démontrable. Travailler sur `feature/<sujet>` (`feature/chat-ui`, `feature/speech-to-text`, `feature/requirements-extraction`, `feature/conversation-manager`), `fix/<sujet>`, `docs/<sujet>`.
+`main` is always demoable. Work on `feature/<topic>` (`feature/chat-ui`, `feature/speech-to-text`, `feature/requirements-extraction`, `feature/conversation-manager`), `fix/<topic>`, `docs/<topic>`.
 
-## Avant de committer
-1. `git status` — ni `.env`, ni `.local/`, ni `artifacts/`, ni audio, ni fichiers de base. `git diff --cached | grep -iE "sk-[A-Za-z0-9]|api[_-]?key *="` doit être vide.
-2. `./scripts/check.sh` vert (ou le sous-ensemble pertinent, indiqué dans le corps du commit).
-3. `docs/HANDOFF.md` à jour ; `docs/DECISIONS.md` / `docs/API.md` si applicable.
-4. Stager par chemins explicites quand plusieurs agents travaillent en parallèle (pas `git add -A`).
+## Before committing
+1. `git status` — no `.env`, no `.local/`, no `artifacts/`, no audio, no database files. `git diff --cached | grep -iE "sk-[A-Za-z0-9]|api[_-]?key *="` must be empty.
+2. `./scripts/check.sh` green (or the relevant subset, stated in the commit body).
+3. `docs/HANDOFF.md` up to date; `docs/DECISIONS.md` / `docs/API.md` if applicable.
+4. Stage by explicit paths when several agents work in parallel (not `git add -A`).
 
 ## Commit
-Conventional Commits, impératif, **description en français** : `feat: ajouter l'enregistrement audio`, `fix: conserver l'effectif corrigé`, `test: ajouter les cas de champ manquant`, `docs: mettre à jour le contrat d'intégration`, `chore(ci): …`. Portée optionnelle : `feat(api): …`, `feat(web): …`, `feat(prompt): …`. Le corps explique le pourquoi ; terminer par la ligne d'attribution exigée par la session, s'il y en a une.
+Conventional Commits, imperative, **description in English**: `feat: add audio recording`, `fix: preserve corrected participant count`, `test: add missing-field conversation cases`, `docs: update integration contract`, `chore(ci): …`. Optional scope: `feat(api): …`, `feat(web): …`, `feat(prompt): …`. The body explains the why; end with the attribution line required by the session, if there is one.
 
 ## PR
-`gh pr create --fill --base main` ; description : quoi, pourquoi, comment vérifié (commandes exécutées), captures pour l'UI, impact sur le contrat (aucun / incrément de version). CI verte. Fusion par squash.
+`gh pr create --fill --base main`; description: what, why, how verified (commands run), screenshots for the UI, impact on the contract (none / version bump). CI green. Squash merge.
 
-## Transmission
-Le message final d'une session liste les fichiers modifiés, les vérifications effectuées et la prochaine étape telle qu'écrite dans `docs/HANDOFF.md`.
+## Handoff
+The final message of a session lists the modified files, the checks performed and the next step as written in `docs/HANDOFF.md`.

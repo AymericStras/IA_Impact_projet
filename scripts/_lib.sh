@@ -1,4 +1,4 @@
-# Fonctions partagées par scripts/*.sh (sourcé, non exécuté)
+# Functions shared by scripts/*.sh (sourced, not executed)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,22 +12,22 @@ fail()  { printf '\033[1;31m[%s]\033[0m %s\n' "$(basename "$0" .sh)" "$*" >&2; e
 has_api() { [ -f "$API_DIR/pyproject.toml" ]; }
 has_web() { [ -f "$WEB_DIR/package.json" ]; }
 
-need() { command -v "$1" >/dev/null 2>&1 || fail "outil manquant : $1 ($2)"; }
+need() { command -v "$1" >/dev/null 2>&1 || fail "missing tool: $1 ($2)"; }
 
-# Charge la configuration non secrète depuis .env (les secrets viennent du trousseau via tools/with-api-env).
+# Loads the non-secret configuration from .env (secrets come from the Keychain via tools/with-api-env).
 load_env() {
   if [ -f "$ROOT/.env" ]; then
     set -a; . "$ROOT/.env"; set +a
   fi
 }
 
-# Enveloppe une commande avec la clé OpenAI du trousseau macOS si disponible ; sinon l'exécute telle quelle
-# (OPENAI_API_KEY peut déjà être définie par l'environnement / la CI).
+# Wraps a command with the OpenAI key from the macOS Keychain if available; otherwise runs it as is
+# (OPENAI_API_KEY may already be set by the environment / CI).
 with_gpt() {
   if [ "$(uname -s)" = "Darwin" ] && "$ROOT/tools/gpt" status >/dev/null 2>&1; then
     exec "$ROOT/tools/with-api-env" gpt -- "$@"
   else
-    [ -n "${OPENAI_API_KEY:-}" ] || warn "OPENAI_API_KEY absente et trousseau indisponible ; les appels IA réels échoueront"
+    [ -n "${OPENAI_API_KEY:-}" ] || warn "OPENAI_API_KEY missing and Keychain unavailable; real AI calls will fail"
     exec "$@"
   fi
 }

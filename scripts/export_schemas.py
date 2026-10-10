@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Exporte les JSON Schema de `packages/contracts` depuis les modèles Pydantic (source de vérité).
+"""Exports the JSON Schemas of `packages/contracts` from the Pydantic models (source of truth).
 
-  cd services/api && uv run python ../../scripts/export_schemas.py          # écrit les fichiers
-  cd services/api && uv run python ../../scripts/export_schemas.py --check  # échoue en cas de dérive
+  cd services/api && uv run python ../../scripts/export_schemas.py          # writes the files
+  cd services/api && uv run python ../../scripts/export_schemas.py --check  # fails on drift
 """
 
 from __future__ import annotations
@@ -24,17 +24,17 @@ EXPORTS: dict[str, tuple[type, str, str]] = {
     "requirements.schema.json": (
         ConfirmedRequirements,
         "serialization",
-        "Charge utile transmise au module de planification après confirmation explicite (schema_version 1.0).",
+        "Payload handed to the planning module after explicit confirmation (schema_version 1.0).",
     ),
     "conversation_response.schema.json": (
         ConversationResponse,
         "serialization",
-        "Réponse de tous les endpoints de conversation ; le client l'affiche sans recalculer.",
+        "Response of all conversation endpoints; the client renders it without recomputing.",
     ),
     "requirement_patch.schema.json": (
         RequirementPatch,
         "validation",
-        "Sortie structurée du modèle d'extraction pour un message ; validée et fusionnée par le backend.",
+        "Structured output of the extraction model for one message; validated and merged by the backend.",
     ),
 }
 
@@ -58,13 +58,13 @@ def main() -> int:
         content = json.dumps(build(model, mode, description, filename), ensure_ascii=False, indent=2) + "\n"
         if check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:
-                print(f"DERIVE {filename}: régénérez avec scripts/export_schemas.py", file=sys.stderr)
+                print(f"DRIFT {filename}: regenerate with scripts/export_schemas.py", file=sys.stderr)
                 drift = True
             else:
                 print(f"ok  {filename}")
         else:
             path.write_text(content, encoding="utf-8")
-            print(f"écrit {path.relative_to(ROOT)}")
+            print(f"wrote {path.relative_to(ROOT)}")
     return 1 if drift else 0
 
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sncf-lio-chatbot/contracts/conversation_response.schema.json",
-  "description": "Réponse de tous les endpoints : le client l'affiche telle quelle, sans recalculer.",
+  "description": "Response of all endpoints: the client renders it as is, without recomputing.",
   "$defs": {
     "CompleteRequirements": {
       "additionalProperties": false,
@@ -76,7 +76,7 @@
     },
     "ConfirmedRequirements": {
       "additionalProperties": false,
-      "description": "Charge utile transmise au module de planification après confirmation explicite.",
+      "description": "Payload handed to the planning module after explicit confirmation.",
       "properties": {
         "schema_version": {
           "const": "1.0",
@@ -102,7 +102,7 @@
           "type": "string"
         },
         "confirmed_at": {
-          "description": "Horodatage ISO 8601 avec décalage, ex. 2026-10-10T14:32:05+02:00",
+          "description": "ISO 8601 timestamp with offset, e.g. 2026-10-10T14:32:05+02:00",
           "title": "Confirmed At",
           "type": "string"
         },
@@ -119,7 +119,7 @@
       "type": "object"
     },
     "ConversationState": {
-      "description": "États visibles par le client. EXTRACTING/VALIDATING sont internes à une requête.",
+      "description": "States visible to the client. EXTRACTING/VALIDATING are internal to a request.",
       "enum": [
         "COLLECTING",
         "ASKING_USER",
@@ -208,7 +208,7 @@
     },
     "PartialDateTime": {
       "additionalProperties": false,
-      "description": "Date/heure partiellement connue. Complète seulement si les trois champs sont renseignés.",
+      "description": "Partially known date/time. Complete only if all three fields are filled in.",
       "properties": {
         "date": {
           "anyOf": [
@@ -221,7 +221,7 @@
             }
           ],
           "default": null,
-          "description": "Date civile ISO 8601 (Europe/Paris)",
+          "description": "ISO 8601 calendar date (Europe/Paris)",
           "title": "Date"
         },
         "time": {
@@ -235,7 +235,7 @@
             }
           ],
           "default": null,
-          "description": "Heure locale HH:MM",
+          "description": "Local time HH:MM",
           "title": "Time"
         },
         "constraint": {
@@ -248,7 +248,7 @@
             }
           ],
           "default": null,
-          "description": "Nature de la contrainte horaire"
+          "description": "Nature of the time constraint"
         }
       },
       "title": "PartialDateTime",
@@ -256,7 +256,7 @@
     },
     "PartialRequirements": {
       "additionalProperties": false,
-      "description": "État courant des quatre informations, tel qu'il est renvoyé au client à chaque tour.",
+      "description": "Current state of the four requirements, as returned to the client on every turn.",
       "properties": {
         "participants_count": {
           "anyOf": [
@@ -269,7 +269,7 @@
             }
           ],
           "default": null,
-          "description": "Élèves + accompagnateurs",
+          "description": "Students + accompanying adults",
           "title": "Participants Count"
         },
         "participants_breakdown": {
@@ -380,7 +380,7 @@
     },
     "TeachingType": {
       "additionalProperties": false,
-      "description": "Matière et/ou thème pédagogique : l'un des deux suffit.",
+      "description": "Subject and/or teaching theme: either one is enough.",
       "properties": {
         "subject": {
           "anyOf": [
@@ -392,7 +392,7 @@
             }
           ],
           "default": null,
-          "description": "Matière scolaire, ex. « Histoire », « SVT »",
+          "description": "School subject, e.g. « Histoire », « SVT »",
           "title": "Subject"
         },
         "theme": {
@@ -405,7 +405,7 @@
             }
           ],
           "default": null,
-          "description": "Thème pédagogique, ex. « Moyen Âge »",
+          "description": "Teaching theme, e.g. « Moyen Âge »",
           "title": "Theme"
         }
       },
@@ -413,7 +413,7 @@
       "type": "object"
     },
     "TimeConstraint": {
-      "description": "exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h ».",
+      "description": "exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h ».",
       "enum": [
         "exact",
         "approximate",
@@ -434,7 +434,7 @@
       "$ref": "#/$defs/ConversationState"
     },
     "version": {
-      "description": "Version monotone des informations ; +1 à chaque patch appliqué",
+      "description": "Monotonic version of the requirements; +1 for each applied patch",
       "minimum": 0,
       "title": "Version",
       "type": "integer"
@@ -491,7 +491,7 @@
         }
       ],
       "default": null,
-      "description": "Uniquement après /audio : transcription à corriger",
+      "description": "Only after /audio: transcript to be corrected",
       "title": "Transcript"
     },
     "confirmed_requirements": {
@@ -504,7 +504,7 @@
         }
       ],
       "default": null,
-      "description": "Charge utile finale, non nulle seulement en état CONFIRMED"
+      "description": "Final payload, non-null only in the CONFIRMED state"
     },
     "messages": {
       "items": {

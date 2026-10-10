@@ -1,0 +1,6 @@
+#!/bin/sh
+# Opt-in: git config core.hooksPath .githooks
+# Fast offline guards only. Full checks run with ./scripts/check.sh and in CI.
+set -eu
+python3 scripts/secret_scan.py
+python3 scripts/sync_skills.py --check

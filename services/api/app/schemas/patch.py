@@ -1,7 +1,7 @@
-"""RequirementPatch : sortie structurée du modèle d'extraction pour UN message.
+"""RequirementPatch: structured output of the extraction model for ONE message.
 
-Tous les champs sont obligatoires (exigence du mode strict des Structured Outputs) ; les valeurs
-inconnues sont `null`. Les descriptions sont en anglais car elles sont lues par le modèle.
+All fields are required (a requirement of Structured Outputs strict mode); unknown
+values are `null`. The descriptions are in English because they are read by the model.
 """
 
 from __future__ import annotations

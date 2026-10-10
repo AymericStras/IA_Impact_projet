@@ -1,6 +1,6 @@
-"""Traitement d'un tour sans entrées/sorties : fusion → validation → décision → message.
+"""Processing of one turn without I/O: merge → validation → decision → message.
 
-Utilisé par le service de conversation (avec base de données) et par `evals_bridge` (sans).
+Used by the conversation service (with a database) and by `evals_bridge` (without).
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ class TurnResult:
 
 
 def _revert_inconsistent_dates(merge: MergeResult, validation: ValidationResult) -> ValidationResult:
-    """Retour avant départ : on annule la valeur introduite à ce tour plutôt que de garder un état incohérent."""
+    """Return before departure: roll back the value introduced this turn rather than keep an inconsistent state."""
     if not any(i.kind == IssueKind.RETURN_BEFORE_DEPARTURE for i in validation.issues):
         return validation
     reqs, prev = merge.requirements, merge.previous

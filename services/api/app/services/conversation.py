@@ -1,4 +1,4 @@
-"""Orchestration d'une conversation : persistance, idempotence, pipeline, confirmation."""
+"""Orchestration of a conversation: persistence, idempotency, pipeline, confirmation."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ class NotFoundError(Exception):
 
 class VersionConflictError(Exception):
     def __init__(self, expected: int, actual: int) -> None:
-        super().__init__(f"version attendue {expected}, actuelle {actual}")
+        super().__init__(f"expected version {expected}, current {actual}")
         self.expected, self.actual = expected, actual
 
 
@@ -54,7 +54,7 @@ class InvalidStateError(Exception):
 
 
 def _iso_paris(value: datetime) -> str:
-    """SQLite ne conserve pas le fuseau : une valeur naïve est l'heure murale de Paris telle qu'écrite."""
+    """SQLite does not keep the timezone: a naive value is the Paris wall-clock time as written."""
     aware = value if value.tzinfo is not None else value.replace(tzinfo=PARIS)
     return aware.astimezone(PARIS).isoformat(timespec="seconds")
 
@@ -76,7 +76,7 @@ class ConversationService:
         self._transcription = transcription
         self._clock = clock
 
-    # ----- lecture -------------------------------------------------------------------------
+    # ----- read ----------------------------------------------------------------------------
 
     def _load(self, conversation_id: str) -> ConversationRow:
         row = self._session.get(ConversationRow, conversation_id)
@@ -132,7 +132,7 @@ class ConversationService:
         last = next((m for m in reversed(row.messages) if m.role == "assistant"), None)
         return self._response(row, assistant_message=last.content if last else None)
 
-    # ----- écriture ------------------------------------------------------------------------
+    # ----- write ---------------------------------------------------------------------------
 
     def _add_message(self, row: ConversationRow, role: str, content: str, source: str | None = None) -> None:
         row.messages.append(
@@ -176,7 +176,7 @@ class ConversationService:
                 )
             )
             if row.confirmed is not None:
-                row.confirmed = None  # toute modification invalide la confirmation précédente
+                row.confirmed = None  # any modification invalidates the previous confirmation
         if result.decision.state == ConversationState.CONFIRMED and row.confirmed is None:
             row.confirmed = self._build_confirmed(row, result.requirements, now)
         row.state = result.decision.state.value
@@ -201,7 +201,7 @@ class ConversationService:
         if processed is not None:
             return ConversationResponse.model_validate(processed.response)
 
-        # L'appel au modèle a lieu AVANT toute écriture : en cas d'échec, rien n'est modifié.
+        # The model call happens BEFORE any write: on failure, nothing is modified.
         patch = self._extraction.extract(content, self._requirements(row), self._messages(row))
         result = process_turn(
             ConversationState(row.state), self._requirements(row), patch, today(self._clock)
@@ -225,7 +225,7 @@ class ConversationService:
     ) -> ConversationResponse:
         row = self._load(conversation_id)
         text = self._transcription.transcribe(audio=audio, filename=filename, content_type=content_type)
-        # L'audio n'est jamais conservé ; la transcription est renvoyée pour correction, pas extraite.
+        # Audio is never kept; the transcript is returned for correction, not extracted.
         return self._response(row, assistant_message=None, transcript=text)
 
     def edit(

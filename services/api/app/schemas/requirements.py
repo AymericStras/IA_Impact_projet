@@ -1,5 +1,5 @@
-"""Modèles Pydantic du contrat de données (source de vérité ; les JSON Schema de
-`packages/contracts` sont exportés depuis ces classes par `scripts/export_schemas.py`).
+"""Pydantic models of the data contract (source of truth; the JSON Schemas in
+`packages/contracts` are exported from these classes by `scripts/export_schemas.py`).
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ TIMEZONE: Final = "Europe/Paris"
 
 
 def normalize_time(value: str | None) -> str | None:
-    """Accepte « 8:00 », « 8h », « 08h30 » et renvoie « HH:MM »."""
+    """Accepts « 8:00 », « 8h », « 08h30 » and returns « HH:MM »."""
     if value is None:
         return None
     match = _LOOSE_TIME.match(value)
@@ -40,7 +40,7 @@ class ContractModel(BaseModel):
 
 
 class TimeConstraint(StrEnum):
-    """exact = « à 8 h » ; approximate = « vers 8 h » ; earliest = « après 8 h » ; latest = « avant 17 h »."""
+    """exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h »."""
 
     EXACT = "exact"
     APPROXIMATE = "approximate"
@@ -49,11 +49,11 @@ class TimeConstraint(StrEnum):
 
 
 class PartialDateTime(ContractModel):
-    """Date/heure partiellement connue. Complète seulement si les trois champs sont renseignés."""
+    """Partially known date/time. Complete only if all three fields are filled in."""
 
-    date: dt.date | None = Field(default=None, description="Date civile ISO 8601 (Europe/Paris)")
-    time: str | None = Field(default=None, pattern=TIME_PATTERN, description="Heure locale HH:MM")
-    constraint: TimeConstraint | None = Field(default=None, description="Nature de la contrainte horaire")
+    date: dt.date | None = Field(default=None, description="ISO 8601 calendar date (Europe/Paris)")
+    time: str | None = Field(default=None, pattern=TIME_PATTERN, description="Local time HH:MM")
+    constraint: TimeConstraint | None = Field(default=None, description="Nature of the time constraint")
 
     @field_validator("time", mode="before")
     @classmethod
@@ -66,10 +66,10 @@ class PartialDateTime(ContractModel):
 
 
 class TeachingType(ContractModel):
-    """Matière et/ou thème pédagogique : l'un des deux suffit."""
+    """Subject and/or teaching theme: either one is enough."""
 
-    subject: str | None = Field(default=None, description="Matière scolaire, ex. « Histoire », « SVT »")
-    theme: str | None = Field(default=None, description="Thème pédagogique, ex. « Moyen Âge »")
+    subject: str | None = Field(default=None, description="School subject, e.g. « Histoire », « SVT »")
+    theme: str | None = Field(default=None, description="Teaching theme, e.g. « Moyen Âge »")
 
     @field_validator("subject", "theme", mode="before")
     @classmethod
@@ -90,9 +90,9 @@ class ParticipantsBreakdown(ContractModel):
 
 
 class PartialRequirements(ContractModel):
-    """État courant des quatre informations, tel qu'il est renvoyé au client à chaque tour."""
+    """Current state of the four requirements, as returned to the client on every turn."""
 
-    participants_count: int | None = Field(default=None, ge=1, description="Élèves + accompagnateurs")
+    participants_count: int | None = Field(default=None, ge=1, description="Students + accompanying adults")
     participants_breakdown: ParticipantsBreakdown | None = None
     departure: PartialDateTime | None = None
     return_: PartialDateTime | None = Field(default=None, alias="return")
@@ -112,7 +112,7 @@ class CompleteTeachingType(ContractModel):
     @model_validator(mode="after")
     def _at_least_one(self) -> CompleteTeachingType:
         if self.subject is None and self.theme is None:
-            raise ValueError("subject ou theme doit être renseigné")
+            raise ValueError("subject or theme must be provided")
         return self
 
 
@@ -125,11 +125,11 @@ class CompleteRequirements(ContractModel):
 
 
 class ConfirmedRequirements(ContractModel):
-    """Charge utile transmise au module de planification après confirmation explicite."""
+    """Payload handed to the planning module after explicit confirmation."""
 
     schema_version: Literal["1.0"] = SCHEMA_VERSION
     conversation_id: str = Field(min_length=1)
     status: Literal["confirmed"] = "confirmed"
     timezone: Literal["Europe/Paris"] = TIMEZONE
-    confirmed_at: str = Field(description="Horodatage ISO 8601 avec décalage, ex. 2026-10-10T14:32:05+02:00")
+    confirmed_at: str = Field(description="ISO 8601 timestamp with offset, e.g. 2026-10-10T14:32:05+02:00")
     requirements: CompleteRequirements
