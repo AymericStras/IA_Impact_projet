@@ -1,0 +1,21 @@
+# Local run without installing Python or Pango:
+#   docker compose up --build
+# Reads credentials.env (see credentials.env.example). Service on http://127.0.0.1:8770.
+name: sncf-bilan-local
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    env_file: credentials.env
+    environment:
+      BILAN_DATA_DIR: /data
+    ports:
+      - "127.0.0.1:8770:8000"
+    volumes:
+      - ./var/docker:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,uid=1000,gid=1000
+    mem_limit: 384m

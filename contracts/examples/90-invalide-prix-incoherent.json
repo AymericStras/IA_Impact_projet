@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "example-90-invalide-prix-incoherent",
+  "recipient": { "email": "destinataire@example.fr", "name": "Mme Martin" },
+  "trip": {
+    "reference": "SIM-BAD00001",
+    "title": "Exemple refusé : 30 × 15,00 € ≠ 400,00 €",
+    "participants_count": 30,
+    "travel_class": "2",
+    "price": { "total_cents": 40000, "per_person_cents": 1500, "currency": "EUR" },
+    "legs": [
+      {
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T09:00+01:00",
+        "line": null,
+        "train_number": null,
+        "coach": null,
+        "seat": null
+      }
+    ],
+    "simulated": true
+  },
+  "locale": "fr"
+}

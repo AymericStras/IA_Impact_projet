@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "example-91-invalide-arrivee-avant-depart",
+  "recipient": { "email": "destinataire@example.fr", "name": null },
+  "trip": {
+    "reference": null,
+    "title": "Exemple refusé : arrivée avant le départ",
+    "participants_count": 1,
+    "travel_class": "2",
+    "price": null,
+    "legs": [
+      {
+        "from_station": "Nîmes",
+        "to_station": "Montpellier Saint-Roch",
+        "departure": "2026-10-20T10:30+02:00",
+        "arrival": "2026-10-20T10:02+02:00",
+        "line": null,
+        "train_number": null,
+        "coach": null,
+        "seat": null
+      }
+    ],
+    "simulated": false
+  },
+  "locale": "fr"
+}

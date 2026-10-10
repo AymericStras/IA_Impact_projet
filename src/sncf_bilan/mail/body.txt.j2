@@ -1,0 +1,41 @@
+Bonjour{% if recipient_name %} {{ recipient_name }}{% endif %},
+
+Vous trouverez en pièce jointe le récapitulatif de votre voyage ({{ attachment_name }}).
+
+{% if trip.title %}
+{{ trip.title }}
+
+{% endif %}
+  Trajet       : {{ trip.origin }} → {{ trip.destination }} ({{ trip.kind | lower }})
+  Date         : {{ trip.date_long }}
+  Départ       : {{ trip.departure }} de {{ trip.origin }}{% if trip.arrival %}, arrivée {{ trip.arrival }}{% endif %}
+
+{% if trip.round_trip %}
+  Retour       : {% if trip.return_date_long %}{{ trip.return_date_long }}, {% endif %}{{ trip.return_departure }} de {{ trip.return_from }}{% if trip.return_arrival %}, arrivée {{ trip.return_arrival }}{% endif %}
+
+{% endif %}
+  Voyageurs    : {{ trip.participants }}
+  Classe       : {{ trip.travel_class or "non communiquée" }}
+  Prix total   : {{ trip.price_total or "non communiqué" }}
+{% if trip.price_per_person %}
+  Par personne : {{ trip.price_per_person }}
+{% endif %}
+{% if trip.reference %}
+  Référence    : {{ trip.reference }}
+{% endif %}
+
+Ce message et le document joint sont un récapitulatif. Ils ne constituent pas un titre de transport et ne permettent pas de voyager.
+{% if trip.simulated %}
+Les données de ce voyage sont simulées : ce service est un prototype de démonstration.
+{% endif %}
+
+Bon voyage,
+{{ sender_name }}
+
+--
+Message envoyé automatiquement par un prototype de démonstration, sans lien contractuel avec SNCF Voyageurs.
+{% if reply_to %}
+Une question ? Répondez à ce message ou écrivez à {{ reply_to }}.
+{% else %}
+Merci de ne pas répondre à ce message.
+{% endif %}

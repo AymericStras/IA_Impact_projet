@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "example-01-aller-retour-complet",
+  "recipient": { "email": "destinataire@example.fr", "name": "Mme Martin" },
+  "trip": {
+    "reference": "SIM-050033B9",
+    "title": "Sortie pédagogique — Cité médiévale de Carcassonne",
+    "participants_count": 30,
+    "travel_class": "2",
+    "price": { "total_cents": 45000, "per_person_cents": 1500, "currency": "EUR" },
+    "legs": [
+      {
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T09:00+01:00",
+        "line": "liO Toulouse Matabiau – Carcassonne",
+        "train_number": null,
+        "coach": null,
+        "seat": null
+      },
+      {
+        "from_station": "Carcassonne",
+        "to_station": "Toulouse Matabiau",
+        "departure": "2026-11-12T16:25+01:00",
+        "arrival": "2026-11-12T17:20+01:00",
+        "line": "liO Carcassonne – Toulouse Matabiau",
+        "train_number": null,
+        "coach": null,
+        "seat": null
+      }
+    ],
+    "simulated": true
+  },
+  "locale": "fr"
+}

@@ -1,0 +1,58 @@
+@font-face { font-family: "Source Sans 3"; font-weight: 400; src: url("../../../assets/fonts/SourceSans3-Regular.ttf"); }
+@font-face { font-family: "Source Sans 3"; font-weight: 600; src: url("../../../assets/fonts/SourceSans3-Semibold.ttf"); }
+@font-face { font-family: "Source Sans 3"; font-weight: 700; src: url("../../../assets/fonts/SourceSans3-Bold.ttf"); }
+
+@page {
+  size: A4;
+  margin: 18mm 18mm 30mm 18mm;
+  @bottom-left { content: element(footer); vertical-align: top; padding-top: 4mm; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Source Sans 3"; color: #5d6680; vertical-align: top; padding-top: 4mm; width: 18mm; }
+}
+
+* { box-sizing: border-box; }
+html { font-family: "Source Sans 3", sans-serif; font-size: 10.5pt; line-height: 1.4; color: #0f2149; }
+body { margin: 0; }
+p { margin: 0; }
+h1, h2 { margin: 0; font-weight: 700; }
+
+.page-footer { position: running(footer); font-size: 8pt; line-height: 1.35; color: #5d6680; border-top: 0.5pt solid #c9cdd8; padding-top: 2.5mm; }
+.page-footer .legal { color: #0f2149; }
+.page-footer .trace { margin-top: 1mm; }
+
+.watermark { position: fixed; top: 105mm; left: -6mm; width: 186mm; text-align: center; font-size: 76pt; font-weight: 700; letter-spacing: 6pt; color: #0f2149; opacity: 0.06; transform: rotate(-32deg); }
+
+.masthead { display: flex; align-items: center; justify-content: space-between; padding-bottom: 6mm; border-bottom: 1.5pt solid #0f2149; }
+.masthead .logo { height: 19mm; max-width: 60mm; }
+.masthead .doc { text-align: right; }
+.masthead h1 { font-size: 17pt; line-height: 1.15; }
+.masthead .reference { margin-top: 1.5mm; color: #5d6680; }
+.masthead .reference strong { color: #0f2149; font-weight: 600; }
+
+.summary { margin-top: 9mm; }
+.summary .title { color: #5d6680; margin-bottom: 2mm; }
+.summary .route { font-size: 21pt; line-height: 1.2; font-weight: 700; }
+.summary .arrow { margin: 0 3mm; font-weight: 400; color: #5d6680; }
+.summary .when { margin-top: 2.5mm; font-size: 12pt; }
+.summary .kind { display: inline-block; margin-right: 3mm; padding: 0.6mm 2.4mm; border: 0.75pt solid #0f2149; border-radius: 1.2mm; font-size: 9pt; font-weight: 600; }
+.summary .times { margin-top: 4mm; border-collapse: collapse; }
+.summary .times th { text-align: left; font-weight: 600; padding: 0.6mm 6mm 0.6mm 0; vertical-align: top; }
+.summary .times td { padding: 0.6mm 0; }
+
+.facts { display: flex; gap: 3mm; margin-top: 8mm; }
+.fact { flex: 1 1 0; background: #eceef3; border-radius: 1.5mm; padding: 3.5mm 4mm; }
+.fact .label { font-size: 8.5pt; color: #5d6680; }
+.fact .value { margin-top: 0.8mm; font-size: 13pt; font-weight: 600; line-height: 1.2; }
+.missing { font-weight: 400; font-style: italic; color: #5d6680; }
+.fact .value.missing { font-size: 11pt; }
+
+.legs { margin-top: 10mm; }
+.legs h2 { font-size: 12pt; margin-bottom: 3mm; }
+.legs table { width: 100%; border-collapse: collapse; }
+.legs th { text-align: left; font-size: 8.5pt; font-weight: 600; color: #5d6680; padding: 0 3mm 1.5mm 0; border-bottom: 0.75pt solid #0f2149; }
+.legs td { padding: 2.5mm 3mm 2.5mm 0; vertical-align: top; border-top: 0.5pt solid #c9cdd8; }
+.legs tbody tr:first-child td { border-top: 0; }
+.legs td strong { font-weight: 600; }
+.legs .num { width: 8mm; color: #5d6680; }
+.legs tr { break-inside: avoid; }
+.legs tr.line td { border-top: 0; padding-top: 0; font-size: 9pt; color: #5d6680; }
+.legs tr.line { break-before: avoid; }

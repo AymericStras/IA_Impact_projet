@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Récapitulatif de voyage — {{ trip.origin }} – {{ trip.destination }}</title>
+<meta name="description" content="Récapitulatif de voyage. Ne constitue pas un titre de transport.">
+<link rel="stylesheet" href="{{ css_href }}">
+</head>
+<body>
+<div class="page-footer">
+  <p class="legal">Ce document est un récapitulatif. Il ne constitue pas un titre de transport et ne permet pas de voyager.{% if trip.simulated %} Les données de ce voyage sont simulées (prototype de démonstration).{% endif %}</p>
+  <p class="trace">Établi le {{ issued_on }} · Empreinte des données {{ fingerprint }}</p>
+</div>
+{% if trip.simulated %}<div class="watermark">SIMULATION</div>{% endif %}
+
+<header class="masthead">
+  <img class="logo" src="{{ logo_href }}" alt="SNCF Voyageurs">
+  <div class="doc">
+    <h1>Récapitulatif de voyage</h1>
+    {% if trip.reference %}<p class="reference">Référence <strong>{{ trip.reference }}</strong></p>{% endif %}
+  </div>
+</header>
+
+<section class="summary">
+  {% if trip.title %}<p class="title">{{ trip.title }}</p>{% endif %}
+  <p class="route"><span class="station">{{ trip.origin }}</span><span class="arrow">→</span><span class="station">{{ trip.destination }}</span></p>
+  <p class="when"><span class="kind">{{ trip.kind }}</span>{{ trip.date_long }}</p>
+  <table class="times">
+    <tr>
+      <th>Départ</th>
+      <td>{{ trip.departure }} de {{ trip.origin }}{% if trip.arrival %} — arrivée {{ trip.arrival }}{% endif %}</td>
+    </tr>
+    {% if trip.round_trip %}
+    <tr>
+      <th>Retour</th>
+      <td>{% if trip.return_date_long %}{{ trip.return_date_long }}, {% endif %}{{ trip.return_departure }} de {{ trip.return_from }}{% if trip.return_arrival %} — arrivée {{ trip.return_arrival }}{% endif %}</td>
+    </tr>
+    {% endif %}
+  </table>
+</section>
+
+<section class="facts">
+  <div class="fact">
+    <p class="label">Voyageurs</p>
+    <p class="value">{{ trip.participants }}</p>
+  </div>
+  <div class="fact">
+    <p class="label">Classe</p>
+    <p class="value{% if not trip.travel_class %} missing{% endif %}">{{ trip.travel_class or "non communiquée" }}</p>
+  </div>
+  <div class="fact">
+    <p class="label">Prix total</p>
+    <p class="value{% if not trip.price_total %} missing{% endif %}">{{ trip.price_total or "non communiqué" }}</p>
+  </div>
+  <div class="fact">
+    <p class="label">Prix par personne</p>
+    <p class="value{% if not trip.price_per_person %} missing{% endif %}">{{ trip.price_per_person or "non communiqué" }}</p>
+  </div>
+</section>
+
+<section class="legs">
+  <h2>Détail des trajets</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="num">N°</th>
+        <th>Date</th>
+        <th>Départ</th>
+        <th>Arrivée</th>
+        <th>Durée</th>
+        {% if trip.has_seating %}<th>Train</th><th>Voiture</th><th>Place</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for leg in trip.legs %}
+      <tr>
+        <td class="num">{{ loop.index }}</td>
+        <td>{{ leg.date }}</td>
+        <td><strong>{{ leg.departure }}</strong><br>{{ leg.from_station }}</td>
+        <td>{% if leg.arrival %}<strong>{{ leg.arrival }}</strong>{% else %}<span class="missing">non communiquée</span>{% endif %}<br>{{ leg.to_station }}</td>
+        <td>{{ leg.duration or "—" }}</td>
+        {% if trip.has_seating %}
+        <td>{{ leg.train_number or "—" }}</td>
+        <td>{{ leg.coach or "—" }}</td>
+        <td>{{ leg.seat or "—" }}</td>
+        {% endif %}
+      </tr>
+      {% if leg.line %}
+      <tr class="line"><td></td><td colspan="{{ 7 if trip.has_seating else 4 }}">{{ leg.line }}</td></tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+</body>
+</html>

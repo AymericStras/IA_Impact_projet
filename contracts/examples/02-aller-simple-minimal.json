@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "example-02-aller-simple-minimal",
+  "recipient": { "email": "destinataire@example.fr", "name": null },
+  "trip": {
+    "reference": null,
+    "title": null,
+    "participants_count": 1,
+    "travel_class": null,
+    "price": null,
+    "legs": [
+      {
+        "from_station": "Montpellier Saint-Roch",
+        "to_station": "Sète",
+        "departure": "2026-10-20T14:32+02:00",
+        "arrival": null,
+        "line": null,
+        "train_number": null,
+        "coach": null,
+        "seat": null
+      }
+    ],
+    "simulated": false
+  },
+  "locale": "fr"
+}

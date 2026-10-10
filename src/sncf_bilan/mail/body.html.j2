@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#eceef3;">
+<div style="display:none;max-height:0;overflow:hidden;color:#eceef3;font-size:1px;line-height:1px;">{{ trip.kind }} du {{ trip.date_long }}, départ {{ trip.departure }}. Le récapitulatif est en pièce jointe.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceef3;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:8px;">
+  <tr>
+    <td style="padding:24px 32px 20px 32px;border-bottom:2px solid #0f2149;">
+      <img src="cid:{{ logo_cid }}" height="56" alt="SNCF Voyageurs" style="display:block;height:56px;width:auto;border:0;">
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:28px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#0f2149;">
+      <p style="margin:0 0 16px 0;">Bonjour{% if recipient_name %} {{ recipient_name }}{% endif %},</p>
+      <p style="margin:0;">Vous trouverez en pièce jointe le récapitulatif de votre voyage.</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:20px 32px 8px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eceef3;border-radius:6px;">
+        <tr>
+          <td style="padding:20px 20px 6px 20px;font-family:Arial,Helvetica,sans-serif;color:#0f2149;">
+            {% if trip.title %}<p style="margin:0 0 6px 0;font-size:13px;line-height:18px;color:#5d6680;">{{ trip.title }}</p>{% endif %}
+            <p style="margin:0;font-size:22px;line-height:28px;font-weight:bold;">{{ trip.origin }} <span style="font-weight:normal;color:#5d6680;">→</span> {{ trip.destination }}</p>
+            <p style="margin:6px 0 0 0;font-size:15px;line-height:22px;">{{ trip.kind }} · {{ trip.date_long }}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 20px 18px 20px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#0f2149;">
+              {% macro row(label, value, missing=false, nowrap=false) %}
+              <tr>
+                <td width="100" valign="top" style="width:100px;padding:5px 12px 5px 0;color:#5d6680;font-size:14px;">{{ label }}</td>
+                <td valign="top" style="padding:5px 0;{% if missing %}color:#5d6680;font-style:italic;{% else %}font-weight:bold;{% endif %}{% if nowrap %}white-space:nowrap;{% endif %}">{{ value }}</td>
+              </tr>
+              {% endmacro %}
+              {{ row("Départ", trip.departure ~ " de " ~ trip.origin ~ ((", arrivée " ~ trip.arrival) if trip.arrival else "")) }}
+              {% if trip.round_trip %}
+              {{ row("Retour", ((trip.return_date_long ~ ", ") if trip.return_date_long else "") ~ trip.return_departure ~ " de " ~ trip.return_from ~ ((", arrivée " ~ trip.return_arrival) if trip.return_arrival else "")) }}
+              {% endif %}
+              {{ row("Voyageurs", trip.participants) }}
+              {{ row("Classe", trip.travel_class or "non communiquée", not trip.travel_class) }}
+              {{ row("Prix total", trip.price_total or "non communiqué", not trip.price_total) }}
+              {% if trip.price_per_person %}{{ row("Par personne", trip.price_per_person) }}{% endif %}
+              {% if trip.reference %}{{ row("Référence", trip.reference, nowrap=true) }}{% endif %}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 32px 4px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#0f2149;">
+      <p style="margin:0;">Pièce jointe : <strong>{{ attachment_name }}</strong> (PDF), avec le détail de chaque trajet.</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 32px 24px 32px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#0f2149;">
+      <p style="margin:0;">Bon voyage,<br>{{ sender_name }}</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:18px 32px 24px 32px;border-top:1px solid #c9cdd8;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#5d6680;">
+      <p style="margin:0 0 8px 0;color:#0f2149;">Ce message et le document joint sont un récapitulatif. Ils ne constituent pas un titre de transport et ne permettent pas de voyager.</p>
+      {% if trip.simulated %}<p style="margin:0 0 8px 0;">Les données de ce voyage sont simulées : ce service est un prototype de démonstration.</p>{% endif %}
+      <p style="margin:0;">Message envoyé automatiquement par un prototype de démonstration, sans lien contractuel avec SNCF Voyageurs. {% if reply_to %}Une question ? Répondez à ce message.{% else %}Merci de ne pas répondre à ce message.{% endif %}</p>
+    </td>
+  </tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
