@@ -55,4 +55,4 @@ python3 -m sncf_events.share --db var/occitanie.sqlite3 --output var/new-share
 
 The legacy public JSONL export includes only active records with affirmative, unexpired factual reuse reviews, and descriptions only when allowed. The separately requested portable catalogue includes basic facts with explicit source reuse flags and no raw response bodies. It does not turn pending permission into permission. See SHARING.md.
 
-Local scheduled collection requires the application to remain open. Server automatic refresh is not enabled. Increasing coverage or data budgets requires an explicit capacity review; do not delete source history to fit a budget.
+Local scheduled collection requires the application to remain open. Server automatic refresh is not enabled. The application storage budget is 32 MiB (raised from 16 MiB by owner decision on 2026-10-10). Increasing coverage or data budgets further requires an explicit capacity review; do not delete source history to fit a budget.

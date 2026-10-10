@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-10T04:44:59+00:00",
+  "generated_at": "2026-10-10T07:46:17+00:00",
   "languages": [
     "en",
     "fr"
   ],
   "record_counts": {
     "sources": 144,
-    "activities": 1336,
-    "occurrences": 5373,
-    "school_conditions": 1336,
+    "activities": 1708,
+    "occurrences": 6324,
+    "school_conditions": 1708,
     "stations": 260,
-    "walking_assessments": 1336
+    "walking_assessments": 1708
   },
   "kind_counts": {
     "educational_offer": 7,
-    "event": 1279,
+    "event": 1651,
     "venue": 50
   },
   "walking_limit_seconds": 1200,
@@ -85,23 +85,23 @@
   ],
   "files": {
     "catalogue.sqlite3": {
-      "sha256": "9adbdcd841626ea1c52e2f7612f6e558de999c6fa86b962be5286936dedff379",
-      "bytes": 3350528
+      "sha256": "faa36de2dd7b034509211a86a8264ad73da97504408a0169fb1b52b6c391e59e",
+      "bytes": 4513792
     },
     "csv/activities.csv": {
-      "sha256": "90d8ea53c753ff0c6848cc7d0e5d15329710e3db979456bab4c5d1263c211882",
-      "bytes": 1409904
+      "sha256": "8a413ac1edc6cec7ff3cff4d49e3e3f7c10da65d34311a46f03148cc42c2622c",
+      "bytes": 2024713
     },
     "csv/occurrences.csv": {
-      "sha256": "b31032d0ff7dcb61bd82e2ac122848759f633779be15237d15e2e85c3d29346d",
-      "bytes": 650297
+      "sha256": "54a86bcd8e60a521fee6ffd142928110de3c8c1f05dcd6a9198fc6f9c7642980",
+      "bytes": 775405
     },
     "csv/school_conditions.csv": {
-      "sha256": "725d14f7499a355cf0ce69525e6e5160350c0f4aae9abddfa6e11ddffb38f91b",
-      "bytes": 92566
+      "sha256": "0372074cee761a2572cff7f19b20237f080866bd304a4f6758810db52326a66f",
+      "bytes": 118234
     },
     "csv/sources.csv": {
-      "sha256": "af77a707b3daf8702ee009829ccd65e55cb17d0b41ade5c431350b0093e18ab8",
+      "sha256": "b02c43506ae7f3c14dff3cdb604704cbe791b0b0c8e0f3fb2aed14e7a6d961ef",
       "bytes": 68512
     },
     "csv/stations.csv": {
@@ -109,12 +109,12 @@
       "bytes": 32186
     },
     "csv/walking_assessments.csv": {
-      "sha256": "b64b6774d479211004fdb30ee4c153ca5b2b192a15070d130737a9193c66cde3",
-      "bytes": 186477
+      "sha256": "1e34202d4577b0e56c379e56e0a63445ae73b6bd167138d1b6f99af001ac3eae",
+      "bytes": 268576
     },
     "schema.json": {
-      "sha256": "ef2e81106055868354c8f3a6353cfb0deeeb9ebe9b7222437dc60ddf42944841",
-      "bytes": 2770
+      "sha256": "fc69b6c0631db635d90e8152b6798588ded87bf127c764421aa069bac2756f92",
+      "bytes": 2850
     }
   }
 }

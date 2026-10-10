@@ -23,7 +23,8 @@ Do not flatten all sessions into a single invented date. `precision=date` means 
 
 ```sql
 SELECT DISTINCT a.id, a.title, a.city, a.address,
-       w.station_name, w.walking_seconds, a.canonical_url
+       w.station_name, w.walking_seconds, a.canonical_url,
+       a.official_url, a.booking_url, a.venue_url
 FROM activities a
 JOIN occurrences o ON o.activity_id = a.id
 JOIN walking_assessments w ON w.activity_id = a.id

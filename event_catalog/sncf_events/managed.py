@@ -17,7 +17,7 @@ from .access import load_access
 from .db import connect
 from .server import App, make_server, peak_rss
 
-CGROUP = '/sncfeventsv2.slice/sncf-events-v2.service'
+CGROUP = '/sncfeventsv3.slice/sncf-events-v3.service'
 
 
 def verify_limits(io_device, *, root=Path('/'), platform=None):
@@ -66,12 +66,12 @@ def main(argv=None):
         if not os.statvfs(p).f_flag & os.ST_RDONLY:
             raise ValueError('managed_viewer_requires_readonly_mounts')
     with contextlib.closing(connect(args.db,readonly=True)) as conn:
-        if not conn.execute("SELECT 1 FROM schema_migrations WHERE version='006_rail_walk'").fetchone():
+        if not conn.execute("SELECT 1 FROM schema_migrations WHERE version='007_station_lookups'").fetchone():
             raise ValueError('managed_viewer_schema_mismatch')
     app = App(args.db,readonly=True,base_path='/sncf-events/',access=access,managed=True,public=args.public)
-    server = make_server(app,8767)
+    server = make_server(app,8768)
     previous = {s:signal.signal(s,lambda *_:app.stop.set()) for s in (signal.SIGINT,signal.SIGTERM)}
-    print(json.dumps({'ready':True,'mode':'public_readonly' if args.public else 'authenticated_readonly','port':8767}),flush=True)
+    print(json.dumps({'ready':True,'mode':'public_readonly' if args.public else 'authenticated_readonly','port':8768}),flush=True)
     try:
         while not app.stop.is_set():
             if peak_rss()>112*1024**2:

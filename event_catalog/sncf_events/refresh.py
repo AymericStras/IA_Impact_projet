@@ -9,7 +9,8 @@ from .ingest import finish_run
 from .search import PARIS, window
 
 EVENT_CONNECTORS = ('datatourisme_events','occitanie_region_events','openagenda_events')
-STORAGE_BYTES = 16*1024*1024
+# Raised from 16 MiB on 2026-10-10 by owner decision, to re-collect the catalogue with published links.
+STORAGE_BYTES = 32*1024*1024
 REQUESTS_PER_HOUR = 60
 
 

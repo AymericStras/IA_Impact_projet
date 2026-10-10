@@ -1,5 +1,24 @@
 # Contribution verification
 
+## Version 0.7.3 — refreshed snapshot with links, 2026-10-10
+
+The portable database and CSVs in `distribution/` were regenerated from a catalogue
+collected again on 2026-10-10 with the 0.7.2 link fields. They hold 1,708 activities
+(1,651 events, 7 school services, 50 venues), 6,324 sessions or date intervals, 144
+registered sources and 260 stations. `activities` gains three nullable columns:
+`official_url` (226 events, 31 venues), `booking_url` (318 events, 1 venue) and
+`venue_url` (420 events). Région Occitanie publishes no link other than its own page.
+The larger count comes from following more result pages of the same endpoints, not
+from new sources; it is still not exhaustive regional coverage. Checksums are in
+`distribution/manifest.json`.
+
+The application storage budget is 32 MiB (16 MiB before). The package passes 225
+Python tests and the interface logic checks. The public viewer at
+https://zhaoyang.fr/sncf-events/ serves this version and this catalogue; 28
+account-free HTTP checks pass there, including `/api/stations`, `/api/near` and
+returned links. The statement below that the snapshot has no link columns describes
+0.7.2 only.
+
 ## Version 0.7.2 — organiser, ticketing and venue links, 2026-10-10
 
 Collected records and the station lookup now carry `official_url` (DATAtourisme

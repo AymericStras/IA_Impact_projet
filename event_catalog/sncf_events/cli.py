@@ -17,6 +17,7 @@ from .db import ROOT, audit, backup, connect, import_registry, migrate, now, rep
 from .export import export_jsonl, records
 from .ingest import finish_run, ingest_file, retry_quarantined
 from .policy import review_source, set_source_enabled
+from .refresh import STORAGE_BYTES
 
 
 def parser():
@@ -145,7 +146,7 @@ def dispatch(conn,args):
         return import_registry(conn,args.path)
     if command=='import-stations':
         from .rail import import_stations
-        conn.execute('PRAGMA max_page_count='+str(16*1024**2//conn.execute('PRAGMA page_size').fetchone()[0]))
+        conn.execute('PRAGMA max_page_count='+str(STORAGE_BYTES//conn.execute('PRAGMA page_size').fetchone()[0]))
         return import_stations(conn,args.directory)
     if command=='setup-live':
         from .nearby import setup
@@ -172,7 +173,7 @@ def dispatch(conn,args):
         return {**nearby.lookup(conn,args.station,args.date),'throttled':throttled}
     if command=='walk-check':
         from . import rail
-        conn.execute('PRAGMA max_page_count='+str(16*1024**2//conn.execute('PRAGMA page_size').fetchone()[0]))
+        conn.execute('PRAGMA max_page_count='+str(STORAGE_BYTES//conn.execute('PRAGMA page_size').fetchone()[0]))
         if args.resume:
             item = rail.resume(conn,args.resume)
         else:
