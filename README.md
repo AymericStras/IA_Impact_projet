@@ -31,14 +31,17 @@ nothing is generated** (HTTP 422, no PDF, no email).
 for a simple round trip, more with connections. Order does not matter, they
 are sorted by departure.
 
+**Price.** The tariff is fixed and is not part of the request: every traveller
+pays **1,00 €**, and the recap shows "Prix par personne : 1,00 €" and
+"Prix total : participants × 1,00 €" (30 travellers → 30,00 €). A request that
+carries a `price` field is refused.
+
 **Optional values.** When one is absent, the recap says "non communiqué" or
 leaves the line out. Nothing is guessed or computed for you.
 
 | Field | Format | Shown as | When absent |
 |---|---|---|---|
 | `trip.travel_class` | `"1"` or `"2"` | "1re classe" / "2de classe" | "non communiquée" |
-| `trip.price.total_cents` | integer, **euro cents** | "450,00 €" | "non communiqué" |
-| `trip.price.per_person_cents` | integer, euro cents | "15,00 €" | "non communiqué" |
 | `trip.legs[].arrival` | date-time with offset | arrival time, duration | "non communiquée", no duration |
 | `trip.legs[].line` | text ≤ 120 | under the journey | line omitted |
 | `trip.legs[].train_number`, `coach`, `seat` | text ≤ 40 | columns Train / Voiture / Place | columns omitted when no leg has any |
@@ -53,12 +56,10 @@ leaves the line out. Nothing is guessed or computed for you.
 1. A date without offset (`"2026-11-12T08:05"`). Send `+01:00`, `+02:00` or
    `Z`. Times are displayed in French local time.
 2. `arrival` earlier than `departure` on the same leg.
-3. Total and per-person price both given and
-   `per_person_cents × participants_count ≠ total_cents`. Send only one of
-   them if you do not have both.
-4. Prices as decimals (`450.50`) or in euros. Send cents: `45050`.
-5. An unknown field anywhere. Field names are exact.
-6. Line breaks or control characters in a text.
+3. A `price` field: the tariff is fixed at 1,00 € per traveller and is not
+   sent.
+4. An unknown field anywhere. Field names are exact.
+5. Line breaks or control characters in a text.
 
 **How the summary is derived from the legs:** the origin is the first leg's
 departure station. If the last leg ends at the origin, the trip is an
@@ -77,7 +78,6 @@ A complete request:
     "title": "Sortie pédagogique — Cité médiévale de Carcassonne",
     "participants_count": 30,
     "travel_class": "2",
-    "price": { "total_cents": 45000, "per_person_cents": 1500, "currency": "EUR" },
     "legs": [
       { "from_station": "Toulouse Matabiau", "to_station": "Carcassonne",
         "departure": "2026-11-12T08:05+01:00", "arrival": "2026-11-12T09:00+01:00",
@@ -194,12 +194,13 @@ run time; never copy it into source, logs, commits or frontend code.
 
 Do this:
 1. Find where this project holds a confirmed trip (stations, departure and
-   arrival times, number of travellers, class, price, reference, the
-   traveller's email). List which required fields we have and which are
+   arrival times, number of travellers, class, reference, the traveller's
+   email). There is no price to send: the tariff is fixed at 1,00 € per
+   traveller and the service computes the total. List which required fields we have and which are
    missing; stop and tell me if a required one has no source.
 2. Write one server-side function that maps our trip object to the request
-   JSON. Rules: datetimes with a UTC offset; prices as integer euro cents;
-   travel_class "1" or "2"; omit any optional value we do not have instead of
+   JSON. Rules: datetimes with a UTC offset; no price field; travel_class
+   "1" or "2"; omit any optional value we do not have instead of
    inventing it; no unknown fields; idempotency_key stable and unique per
    booking (for example "<booking id>-recap") so a retry never sends twice.
 3. Send it with POST {base}/api/v1/recaps and header X-Bilan-Key, from the
@@ -213,7 +214,7 @@ Do this:
 6. Make the base URL configurable: the hosted URL by default,
    http://127.0.0.1:8770 for a local instance.
 7. Add tests for the mapping using the examples in contracts/examples/ as
-   references, including one trip without price and class. Tests must not
+   references, including one trip without class. Tests must not
    send email: call /render, or run the local service with
    BILAN_MAIL_MODE=dry-run.
 
@@ -245,10 +246,10 @@ per recap. Records and PDFs are deleted after 30 days.
 
 | File | Shows | Result |
 |---|---|---|
-| `01-aller-retour-complet.json` | round trip, 30 travellers, 2nd class, both prices, simulated | accepted |
+| `01-aller-retour-complet.json` | round trip, 30 travellers, 2nd class, simulated | accepted, 30,00 € |
 | `02-aller-simple-minimal.json` | one way, required values only | accepted, "non communiqué" |
-| `03-correspondance-premiere-classe.json` | connection, 1st class, train/coach/seat, long name, total price only | accepted |
-| `90-invalide-prix-incoherent.json` | 30 × 15,00 € ≠ 400,00 € | 422 |
+| `03-correspondance-premiere-classe.json` | connection, 1st class, train/coach/seat, long name | accepted |
+| `90-invalide-prix-transmis.json` | a `price` field although the tariff is fixed | 422 |
 | `91-invalide-arrivee-avant-depart.json` | arrival before departure | 422 |
 
 ## Credentials

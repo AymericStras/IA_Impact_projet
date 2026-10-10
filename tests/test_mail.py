@@ -38,8 +38,8 @@ def test_text_body_of_a_complete_round_trip(config):
         "Retour       : 16 h 25 de Carcassonne, arrivée 17 h 20",
         "Voyageurs    : 30",
         "Classe       : 2de classe",
-        "Prix total   : 450,00 €",
-        "Par personne : 15,00 €",
+        "Prix total   : 30,00 €",
+        "Par personne : 1,00 €",
         "Référence    : SIM-050033B9",
         "Ils ne constituent pas un titre de transport",
         "Les données de ce voyage sont simulées",
@@ -58,9 +58,10 @@ def test_text_body_with_every_optional_value_missing(config):
     )
     assert text.startswith("Bonjour,\n")
     assert "Classe       : non communiquée" in text
-    assert "Prix total   : non communiqué" in text
+    assert "Prix total   : 1,00 €" in text
+    assert "Par personne : 1,00 €" in text
     assert "Départ       : 14 h 32 de Montpellier Saint-Roch\n" in text
-    for absent in ["Retour", "Par personne", "Référence", "simulées", "None", "arrivée"]:
+    for absent in ["Retour", "Référence", "simulées", "None", "arrivée"]:
         assert absent not in text, absent
     assert "Merci de ne pas répondre à ce message." in text
     assert "\n\n\n" not in text
@@ -78,8 +79,8 @@ def test_html_body_matches_the_text_body_and_loads_nothing_remote(config):
         "8 h 05 de Toulouse Matabiau, arrivée 9 h 00",
         "16 h 25 de Carcassonne, arrivée 17 h 20",
         "2de classe",
-        "450,00 €",
-        "15,00 €",
+        "30,00 €",
+        "1,00 €",
         "SIM-050033B9",
         "recapitulatif-SIM-050033B9.pdf",
         "Ils ne constituent pas un titre de transport",
@@ -94,8 +95,9 @@ def test_html_body_matches_the_text_body_and_loads_nothing_remote(config):
 
 def test_html_body_states_missing_values(config):
     html = render_parts(example("02-aller-simple-minimal"), config)["html"]
-    assert "non communiquée" in html and "non communiqué<" in html
-    for absent in ["Retour", "Par personne", "Référence", "None"]:
+    assert "non communiquée" in html
+    assert "1,00 €" in plain(html)
+    for absent in ["Retour", "Référence", "None", "non communiqué<"]:
         assert absent not in html, absent
 
 

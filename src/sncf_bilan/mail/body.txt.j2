@@ -16,10 +16,8 @@ Vous trouverez en pièce jointe le récapitulatif de votre voyage ({{ attachment
 {% endif %}
   Voyageurs    : {{ trip.participants }}
   Classe       : {{ trip.travel_class or "non communiquée" }}
-  Prix total   : {{ trip.price_total or "non communiqué" }}
-{% if trip.price_per_person %}
+  Prix total   : {{ trip.price_total }}
   Par personne : {{ trip.price_per_person }}
-{% endif %}
 {% if trip.reference %}
   Référence    : {{ trip.reference }}
 {% endif %}

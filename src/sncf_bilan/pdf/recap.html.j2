@@ -51,11 +51,11 @@
   </div>
   <div class="fact">
     <p class="label">Prix total</p>
-    <p class="value{% if not trip.price_total %} missing{% endif %}">{{ trip.price_total or "non communiqué" }}</p>
+    <p class="value">{{ trip.price_total }}</p>
   </div>
   <div class="fact">
     <p class="label">Prix par personne</p>
-    <p class="value{% if not trip.price_per_person %} missing{% endif %}">{{ trip.price_per_person or "non communiqué" }}</p>
+    <p class="value">{{ trip.price_per_person }}</p>
   </div>
 </section>
 

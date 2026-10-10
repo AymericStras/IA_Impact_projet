@@ -7,7 +7,6 @@
     "title": "Exemple refusé : arrivée avant le départ",
     "participants_count": 1,
     "travel_class": "2",
-    "price": null,
     "legs": [
       {
         "from_station": "Nîmes",

@@ -7,7 +7,6 @@
     "title": "Sortie pédagogique — Cité médiévale de Carcassonne",
     "participants_count": 30,
     "travel_class": "2",
-    "price": { "total_cents": 45000, "per_person_cents": 1500, "currency": "EUR" },
     "legs": [
       {
         "from_station": "Toulouse Matabiau",

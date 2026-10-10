@@ -7,7 +7,6 @@
     "title": "Déplacement Perpignan – Toulouse avec correspondance à Narbonne",
     "participants_count": 2,
     "travel_class": "1",
-    "price": { "total_cents": 12350, "per_person_cents": null, "currency": "EUR" },
     "legs": [
       {
         "from_station": "Perpignan",

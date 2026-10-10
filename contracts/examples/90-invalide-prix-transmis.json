@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
-  "idempotency_key": "example-90-invalide-prix-incoherent",
+  "idempotency_key": "example-90-invalide-prix-transmis",
   "recipient": { "email": "destinataire@example.fr", "name": "Mme Martin" },
   "trip": {
     "reference": "SIM-BAD00001",
-    "title": "Exemple refusé : 30 × 15,00 € ≠ 400,00 €",
+    "title": "Exemple refusé : un prix est transmis alors que le tarif est fixe",
     "participants_count": 30,
     "travel_class": "2",
-    "price": { "total_cents": 40000, "per_person_cents": 1500, "currency": "EUR" },
+    "price": { "total_cents": 3000, "per_person_cents": 100, "currency": "EUR" },
     "legs": [
       {
         "from_station": "Toulouse Matabiau",

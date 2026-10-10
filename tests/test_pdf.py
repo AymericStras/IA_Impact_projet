@@ -43,8 +43,8 @@ def test_complete_round_trip_shows_every_field():
         "8 h 05 de Toulouse Matabiau — arrivée 9 h 00",
         "16 h 25 de Carcassonne — arrivée 17 h 20",
         "2de classe",
-        "450,00 €",
-        "15,00 €",
+        "30,00 €",
+        "1,00 €",
         "12/11/2026",
         "55 min",
         "liO Toulouse Matabiau – Carcassonne",
@@ -79,8 +79,8 @@ def test_missing_optional_values_are_stated_not_invented():
     assert "Aller simple" in text
     assert "14 h 32" in text
     assert "non communiquée" in text  # class, arrival
-    assert text.count("non communiqué") >= 4  # class, total, per person, arrival
-    assert "€" not in text
+    assert text.count("non communiqué") == 2  # class, arrival; never the price
+    assert text.count("1,00 €") == 2  # one traveller: total and per person
     assert "Référence" not in text
     assert "Retour" not in text
 
@@ -89,7 +89,7 @@ def test_seating_columns_and_long_names():
     text = text_of(pdf_of(example("03-correspondance-premiere-classe")))
     for expected in [
         "1re classe",
-        "123,50 €",
+        "2,00 €",  # two travellers at the fixed tariff
         "Train",
         "Voiture",
         "Place",

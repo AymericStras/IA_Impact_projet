@@ -124,16 +124,13 @@ def test_same_key_with_other_content_is_a_conflict(client, outbox):
     client.post("/api/v1/recaps", json=body(), headers=KEY)
     changed = body()
     changed["trip"]["participants_count"] = 2
-    changed["trip"]["price"] = None
     response = client.post("/api/v1/recaps", json=changed, headers=KEY)
     assert response.status_code == 409
     assert response.json()["code"] == "IDEMPOTENCY_KEY_REUSED"
     assert len(outbox.messages) == 1
 
 
-@pytest.mark.parametrize(
-    "name", ["90-invalide-prix-incoherent", "91-invalide-arrivee-avant-depart"]
-)
+@pytest.mark.parametrize("name", ["90-invalide-prix-transmis", "91-invalide-arrivee-avant-depart"])
 def test_invalid_examples_get_422_and_nothing_is_sent(client, outbox, name):
     response = client.post("/api/v1/recaps", json=example_data(name), headers=KEY)
     assert response.status_code == 422

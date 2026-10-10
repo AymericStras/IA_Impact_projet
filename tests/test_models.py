@@ -26,7 +26,7 @@ def test_valid_examples_are_accepted(name):
 @pytest.mark.parametrize(
     ("name", "fragment"),
     [
-        ("90-invalide-prix-incoherent", "1500 × 30 = 45000, got 40000"),
+        ("90-invalide-prix-transmis", "Extra inputs are not permitted"),
         ("91-invalide-arrivee-avant-depart", "arrival is before departure"),
     ],
 )
@@ -65,9 +65,8 @@ def mutated(path: list, value):
         (["trip", "legs", 0, "to_station"], "Carcassonne\r\nBcc: x@example.com"),
         (["trip", "legs", 0, "departure"], "2026-11-12T08:05"),
         (["trip", "legs", 0, "departure"], ...),
-        (["trip", "price", "total_cents"], -1),
-        (["trip", "price", "total_cents"], 450.5),
-        (["trip", "price", "currency"], "USD"),
+        (["trip", "price"], {"total_cents": 3000, "per_person_cents": 100}),
+        (["trip", "price"], None),
         (["trip", "unknown_field"], 1),
         (["locale"], "en"),
     ],
@@ -77,12 +76,8 @@ def test_malformed_requests_are_refused(path, value):
         RecapRequest.model_validate(mutated(path, value))
 
 
-def test_price_and_class_may_be_absent_or_partial():
-    assert example("01-aller-retour-complet", price=None, travel_class=None).trip.price is None
-    partial = example("01-aller-retour-complet", price={"total_cents": 40000})
-    assert partial.trip.price.per_person_cents is None
-    only_unit = example("01-aller-retour-complet", price={"per_person_cents": 1500})
-    assert only_unit.trip.price.total_cents is None
+def test_class_may_be_absent():
+    assert example("01-aller-retour-complet", travel_class=None).trip.travel_class is None
 
 
 def test_arrival_equal_to_departure_is_accepted():
@@ -103,7 +98,7 @@ def test_fingerprint_is_stable_and_content_sensitive():
     assert first.fingerprint() == example("01-aller-retour-complet").fingerprint()
     assert (
         first.fingerprint()
-        != example("01-aller-retour-complet", participants_count=1, price=None).fingerprint()
+        != example("01-aller-retour-complet", participants_count=1).fingerprint()
     )
 
 

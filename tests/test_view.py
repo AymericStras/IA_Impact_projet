@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from sncf_bilan.models import RecapRequest
-from sncf_bilan.view import attachment_filename, build_trip_view
+from sncf_bilan.view import PRICE_PER_PERSON_CENTS, attachment_filename, build_trip_view
 
 from .conftest import example, example_data
 
 NB = " "
+NN = " "
 
 
 def test_round_trip_summary():
@@ -23,7 +24,7 @@ def test_round_trip_summary():
         f"17{NB}h{NB}20",
     )
     assert view.return_date_long is None  # same day: the date is not repeated
-    assert (view.price_total, view.price_per_person) == (f"450,00{NB}€", f"15,00{NB}€")
+    assert (view.price_total, view.price_per_person) == (f"30,00{NB}€", f"1,00{NB}€")
     assert view.travel_class == f"2de{NB}classe"
     assert not view.has_seating
 
@@ -40,7 +41,7 @@ def test_one_way_with_connection_ends_at_the_last_station():
     assert view.return_departure is None
     assert view.has_seating
     assert [leg.duration for leg in view.legs] == [f"38{NB}min", f"1{NB}h{NB}24"]
-    assert view.price_per_person is None
+    assert (view.price_total, view.price_per_person) == (f"2,00{NB}€", f"1,00{NB}€")
 
 
 def test_round_trip_with_connections_picks_the_longest_stay_as_destination():
@@ -87,16 +88,17 @@ def test_round_trip_with_connections_picks_the_longest_stay_as_destination():
 def test_missing_values_stay_missing():
     view = build_trip_view(example("02-aller-simple-minimal").trip)
     assert view.travel_class is None
-    assert view.price_total is None and view.price_per_person is None
     assert view.arrival is None
     assert view.legs[0].arrival is None and view.legs[0].duration is None
     assert view.reference is None and view.title is None
     assert not view.has_lines
 
 
-def test_zero_price_is_shown_not_treated_as_missing():
-    trip = example("01-aller-retour-complet", price={"total_cents": 0, "per_person_cents": 0}).trip
-    assert build_trip_view(trip).price_total == f"0,00{NB}€"
+def test_price_is_the_fixed_tariff_times_the_number_of_travellers():
+    assert PRICE_PER_PERSON_CENTS == 100
+    view = build_trip_view(example("02-aller-simple-minimal", participants_count=1234).trip)
+    assert (view.price_total, view.price_per_person) == (f"1{NN}234,00{NB}€", f"1,00{NB}€")
+    assert build_trip_view(example("02-aller-simple-minimal").trip).price_total == f"1,00{NB}€"
 
 
 def test_attachment_filename_uses_only_safe_characters():

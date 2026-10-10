@@ -49,8 +49,8 @@
               {% endif %}
               {{ row("Voyageurs", trip.participants) }}
               {{ row("Classe", trip.travel_class or "non communiquée", not trip.travel_class) }}
-              {{ row("Prix total", trip.price_total or "non communiqué", not trip.price_total) }}
-              {% if trip.price_per_person %}{{ row("Par personne", trip.price_per_person) }}{% endif %}
+              {{ row("Prix total", trip.price_total) }}
+              {{ row("Par personne", trip.price_per_person) }}
               {% if trip.reference %}{{ row("Référence", trip.reference, nowrap=true) }}{% endif %}
             </table>
           </td>

@@ -98,48 +98,6 @@
       "title": "Leg",
       "type": "object"
     },
-    "Price": {
-      "additionalProperties": false,
-      "description": "Amounts in euro cents. Either amount may be missing; nothing is derived.",
-      "properties": {
-        "total_cents": {
-          "anyOf": [
-            {
-              "maximum": 100000000,
-              "minimum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Total Cents"
-        },
-        "per_person_cents": {
-          "anyOf": [
-            {
-              "maximum": 100000000,
-              "minimum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Per Person Cents"
-        },
-        "currency": {
-          "const": "EUR",
-          "default": "EUR",
-          "title": "Currency",
-          "type": "string"
-        }
-      },
-      "title": "Price",
-      "type": "object"
-    },
     "Recipient": {
       "additionalProperties": false,
       "properties": {
@@ -171,6 +129,7 @@
     },
     "Trip": {
       "additionalProperties": false,
+      "description": "The price is not part of the input: it is a fixed tariff, see view.PRICE_PER_PERSON_CENTS.",
       "properties": {
         "reference": {
           "anyOf": [
@@ -221,17 +180,6 @@
           ],
           "default": null,
           "title": "Travel Class"
-        },
-        "price": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Price"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
         },
         "legs": {
           "items": {

@@ -4,7 +4,10 @@
   traveller reads (PDF, email) is French. `docs/TECHNICAL_PLAN.zh-CN.md` is the
   owner's plan and stays in Chinese.
 - This service renders and sends. It never collects, completes or guesses trip
-  data. A missing price or class is shown as "non communiqué".
+  data. A missing class or arrival is shown as "non communiqué".
+- The price is a fixed tariff, not data: 1,00 € per traveller, total =
+  participants × 1,00 € (`PRICE_PER_PERSON_CENTS` in `view.py`). The request
+  carries no price field; one that does is refused.
 - The recap must never look like a ticket: no barcode or QR code, and the
   not-a-ticket sentence stays in the PDF footer and in both email bodies.
 - Every PDF carries the "SIMULATION" watermark, whatever the data says. It is

@@ -9,6 +9,10 @@ from dataclasses import dataclass
 from . import formatting as fmt
 from .models import Leg, Trip
 
+# Fixed tariff decided by the owner: every traveller pays 1,00 €, whatever the
+# trip. The total is participants × this amount. It is not read from the input.
+PRICE_PER_PERSON_CENTS = 100
+
 
 @dataclass(frozen=True)
 class LegView:
@@ -43,8 +47,8 @@ class TripView:
     travellers: str
     participants: int
     travel_class: str | None
-    price_total: str | None
-    price_per_person: str | None
+    price_total: str
+    price_per_person: str
     legs: list[LegView]
     has_seating: bool
     has_lines: bool
@@ -89,7 +93,6 @@ def build_trip_view(trip: Trip) -> TripView:
     turn = _turnaround(legs)
     outbound_last = legs[turn] if turn is not None else legs[-1]
     return_first = legs[turn + 1] if turn is not None else None
-    price = trip.price
     same_day_return = return_first is not None and fmt.date_short(
         return_first.departure
     ) == fmt.date_short(first.departure)
@@ -116,14 +119,8 @@ def build_trip_view(trip: Trip) -> TripView:
         travellers=fmt.travellers(trip.participants_count),
         participants=trip.participants_count,
         travel_class=fmt.travel_class(trip.travel_class),
-        price_total=(
-            fmt.euros(price.total_cents) if price and price.total_cents is not None else None
-        ),
-        price_per_person=(
-            fmt.euros(price.per_person_cents)
-            if price and price.per_person_cents is not None
-            else None
-        ),
+        price_total=fmt.euros(PRICE_PER_PERSON_CENTS * trip.participants_count),
+        price_per_person=fmt.euros(PRICE_PER_PERSON_CENTS),
         legs=[_leg_view(leg) for leg in legs],
         has_seating=any(leg.train_number or leg.coach or leg.seat for leg in legs),
         has_lines=any(leg.line for leg in legs),
