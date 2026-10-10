@@ -266,6 +266,15 @@
   }
 }
 
+/* Keep keyboard focus halos and controls clear of scrollport edges, including fractional
+   layout coordinates at browser zoom. */
+button, input, textarea, select, a[href] {
+  scroll-margin-block: 0.5rem;
+}
+.app-shell, .thin-scrollbar {
+  scroll-padding-block: 0.5rem;
+}
+
 /* Horizontal page gutter that also clears notches and rounded corners. */
 .px-safe {
   padding-left: max(1rem, env(safe-area-inset-left));

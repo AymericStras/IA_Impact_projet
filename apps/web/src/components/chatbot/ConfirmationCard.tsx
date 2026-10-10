@@ -42,24 +42,24 @@ export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEd
         aria-labelledby="confirmation-done-title"
         // The milestone: a navy block (white text 15.74:1), check mark in yellow. No red on
         // navy: the way forward is a white button with navy content.
-        className="on-navy min-w-0 rounded-2xl bg-primary text-primary-foreground shadow-card tall:p-5 short:p-3"
+        className="on-navy min-w-0 rounded-2xl bg-primary text-primary-foreground shadow-card tall:p-5 short:p-2"
         data-testid="confirmation-done"
       >
-        <div className="flex items-start gap-3">
-          <CheckCircle2Icon className="mt-0.5 size-6 shrink-0 text-highlight" aria-hidden="true" />
+        <div className="flex items-start gap-3 short:gap-2">
+          <CheckCircle2Icon className="mt-0.5 size-6 short:size-5 shrink-0 text-highlight" aria-hidden="true" />
           <div className={cn("flex-1", WRAP_ANYWHERE)}>
-            <h2 id="confirmation-done-title" className={cn(DISPLAY, "text-2xl leading-tight short:text-xl")}>
+            <h2 id="confirmation-done-title" className={cn(DISPLAY, "text-2xl leading-tight short:text-lg")}>
               {fr.confirmation.confirmedTitle}
             </h2>
-            <p className="mt-1.5 text-[0.9375rem]">{fr.confirmation.confirmedMessage}</p>
-            <p className="mt-1 text-[0.8125rem] opacity-80">{fr.confirmation.stillEditable}</p>
+            <p className="mt-1.5 text-[0.9375rem] short:mt-0.5 short:text-sm">{fr.confirmation.confirmedMessage}</p>
+            <p className="mt-1 text-[0.8125rem] opacity-80 short:mt-0.5 short:text-xs">{fr.confirmation.stillEditable}</p>
             {onContinue ? (
               <Button
                 type="button"
                 variant="inverse"
                 size="sm"
                 onClick={onContinue}
-                className={cn("mt-3", FLUID_BUTTON_SM, TOUCH_TARGET)}
+                className={cn("mt-3 short:mt-1", FLUID_BUTTON_SM, TOUCH_TARGET)}
                 data-testid="journey-continue"
               >
                 <ArrowDownIcon aria-hidden="true" />
@@ -68,7 +68,7 @@ export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEd
             ) : null}
           </div>
         </div>
-        <div className="on-light mt-4 short:mt-3">
+        <div className="on-light mt-4 short:mt-2">
           <ConfirmedJsonBlock payload={confirmedRequirements} />
         </div>
       </motion.section>

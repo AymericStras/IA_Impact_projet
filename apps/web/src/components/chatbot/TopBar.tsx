@@ -33,7 +33,7 @@ interface TopBarProps {
 export function TopBar({ onRestart, disabled = false }: TopBarProps) {
   return (
     <header className="on-navy z-20 shrink-0 bg-primary pt-[env(safe-area-inset-top)] text-primary-foreground">
-      <div className="px-page flex w-full flex-wrap items-center gap-x-3 short:min-h-11 short:gap-y-0.5 short:py-0.5 single:tall:gap-y-0 single:tall:pt-1.5 single:tall:pb-3.5 wide:tall:gap-x-6 wide:tall:py-4">
+      <div className="px-page flex w-full flex-wrap items-center gap-x-3 short:min-h-11 short:gap-y-0.5 short:py-0.5 single:tall:gap-y-0 single:tall:pt-1.5 single:tall:pb-3.5 narrow:tall:pb-1.5 wide:tall:gap-x-6 wide:tall:py-4">
         {/* `contents` on tall single-column shells: wordmark, title and trame become items of
             the row above, so the controls can sit between the wordmark and the title. */}
         <div className="flex min-w-0 short:flex-row short:items-center short:gap-3 single:tall:contents wide:tall:flex-col wide:tall:gap-2">
@@ -46,13 +46,13 @@ export function TopBar({ onRestart, disabled = false }: TopBarProps) {
               className={cn(
                 DISPLAY,
                 WRAP_ANYWHERE,
-                "sr-only leading-none titled:not-sr-only tall:not-sr-only short:text-lg single:tall:order-3 single:tall:mt-1 single:tall:basis-full single:tall:text-[1.625rem] single:tall:leading-[1.1] wide:tall:text-[1.75rem] roomy:tall:text-[2rem]",
+                "sr-only leading-none titled:not-sr-only tall:not-sr-only short:text-lg single:tall:order-3 single:tall:mt-1 single:tall:basis-full single:tall:text-[1.625rem] single:tall:leading-[1.1] narrow:tall:mt-0 narrow:tall:text-xl wide:tall:text-[1.75rem] roomy:tall:text-[2rem]",
               )}
             >
               {fr.app.headerTitle}
             </h1>
           </div>
-          <Trame className="max-w-full short:w-24 narrow:short:hidden single:tall:order-4 single:tall:mt-2.5 single:tall:w-36 wide:tall:w-44" />
+          <Trame className="max-w-full short:w-24 narrow:short:hidden single:tall:order-4 single:tall:mt-2.5 single:tall:w-36 narrow:tall:mt-1 wide:tall:w-44" />
         </div>
         <div className="ml-auto flex items-center gap-1 single:tall:order-2 wide:tall:gap-2">
           {isDemoMode ? <DemoBadge /> : null}

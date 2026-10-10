@@ -74,10 +74,14 @@
     },
     {
       "id": "DEPLOY-002",
-      "status": "ready",
+      "status": "blocked",
       "priority": 3,
-      "title": "Redeploy once the five-field frontend and the journey UI are committed; exercise a rollback; prune old images",
-      "acceptance": "Public site shows five rows and the simulated journey; rollback to the previous release verified; only current and previous images kept"
+      "title": "Publish the verified V3 interface through admitted deployment tooling",
+      "acceptance": "Reviewed V3 interfaces serve publicly; target and neighbouring health verified; only unused task-authorized artifacts cleaned, with data preserved",
+      "requires": [
+        "Verified host-guard admission and accounting for Docker import, runtime replacement and gateway transaction"
+      ],
+      "evidence": "2026-10-10 read-only inspection: live API/web a2d62efa4418; host preflight allowed offline_readonly_sandbox only. No deployment attempted."
     },
     {
       "id": "QA-REAL-VOICE",

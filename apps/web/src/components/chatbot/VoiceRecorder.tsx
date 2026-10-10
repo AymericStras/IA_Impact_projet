@@ -231,11 +231,11 @@ export function VoiceRecorder({
           onDismiss={onClose}
         />
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void start()} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => void start()} className={cn("narrow:px-2", FLUID_BUTTON_SM, TOUCH_TARGET)}>
             <MicIcon aria-hidden="true" />
             {fr.voice.reRecord}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} className={cn("narrow:px-2", FLUID_BUTTON_SM, TOUCH_TARGET)}>
             {fr.voice.writeInstead}
           </Button>
         </div>
@@ -291,12 +291,12 @@ export function VoiceRecorder({
         ) : null}
       </div>
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        <Button type="button" variant="ghost-inverse" size="sm" onClick={cancel} disabled={uploading} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+        <Button type="button" variant="ghost-inverse" size="sm" onClick={cancel} disabled={uploading} className={cn("narrow:px-2", FLUID_BUTTON_SM, TOUCH_TARGET)}>
           {/* Decorative: dropped on very narrow shells so both buttons fit on one row. */}
           <XIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.cancel}
         </Button>
-        <Button type="button" variant="inverse" size="sm" onClick={stop} disabled={!recording} className={cn("font-bold tracking-[0.07em] uppercase", FLUID_BUTTON_SM, TOUCH_TARGET)}>
+        <Button type="button" variant="inverse" size="sm" onClick={stop} disabled={!recording} className={cn("font-bold tracking-[0.07em] uppercase narrow:px-2 narrow:tracking-normal narrow:normal-case", FLUID_BUTTON_SM, TOUCH_TARGET)}>
           <SquareIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.stop}
         </Button>
