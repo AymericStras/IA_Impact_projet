@@ -76,6 +76,20 @@ def _integer(env: Mapping[str, str], name: str, default: int) -> int:
     return value
 
 
+def _addresses(env: Mapping[str, str], name: str) -> tuple[str, ...]:
+    """Comma-separated email addresses, each kept once, in the given order."""
+    seen: dict[str, str] = {}
+    for item in env.get(name, "").split(","):
+        address = item.strip()
+        if not address:
+            continue
+        local, at, domain = address.rpartition("@")
+        if not at or not local or "." not in domain or any(c.isspace() for c in address):
+            raise ConfigurationError(f"{name}: '{address}' is not an email address.")
+        seen.setdefault(address.lower(), address)
+    return tuple(seen.values())
+
+
 @dataclass(frozen=True)
 class Config:
     data_dir: Path = REPO_ROOT / "var"
@@ -86,6 +100,9 @@ class Config:
     sender_name: str = "L'équipe Sorties scolaires liO"
     resend_api_key: str | None = field(default=None, repr=False)
     allowed_domains: tuple[str, ...] = ()
+    # Blind copy of every email (BILAN_COPY_TO): the team follows what is sent
+    # without appearing on the message. The recipient is never copied to itself.
+    copy_to: tuple[str, ...] = ()
     logo_svg: Path = REPO_ROOT / "assets" / "brand" / "logo.svg"
     logo_png: Path = REPO_ROOT / "assets" / "brand" / "logo.png"
     daily_limit: int = 80
@@ -105,6 +122,7 @@ class Config:
             for item in env.get("BILAN_ALLOWED_DOMAINS", "").split(",")
             if item.strip()
         )
+        copy_to = _addresses(env, "BILAN_COPY_TO")
         return cls(
             data_dir=Path(env.get("BILAN_DATA_DIR") or defaults.data_dir),
             api_key=_secret(env, "BILAN_API_KEY"),
@@ -114,6 +132,7 @@ class Config:
             sender_name=env.get("BILAN_SENDER_NAME") or defaults.sender_name,
             resend_api_key=_secret(env, "RESEND_API_KEY"),
             allowed_domains=domains,
+            copy_to=copy_to,
             logo_svg=Path(env.get("BILAN_LOGO_SVG") or defaults.logo_svg),
             logo_png=Path(env.get("BILAN_LOGO_PNG") or defaults.logo_png),
             daily_limit=_integer(env, "BILAN_DAILY_LIMIT", defaults.daily_limit),

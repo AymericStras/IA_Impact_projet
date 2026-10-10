@@ -57,11 +57,13 @@ def compose(request: RecapRequest, pdf: bytes, config: Config) -> Message:
     if not config.logo_png.is_file():
         raise FileNotFoundError(f"Logo file is missing: {config.logo_png}")
     parts = render_parts(request, config)
+    recipient = request.recipient.email
     return Message(
-        to=[request.recipient.email],
+        to=[recipient],
         subject=parts["subject"],
         text=parts["text"],
         html=parts["html"],
+        bcc=[address for address in config.copy_to if address.lower() != recipient.lower()],
         reply_to=[config.reply_to] if config.reply_to else [],
         attachments=[
             Attachment(parts["attachment_name"], pdf, "application/pdf"),

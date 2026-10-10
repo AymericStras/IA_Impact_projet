@@ -31,6 +31,14 @@ nothing is generated** (HTTP 422, no PDF, no email).
 for a simple round trip, more with connections. Order does not matter, they
 are sorted by departure.
 
+> **Where does `recipient.email` come from?** No existing module holds it: the
+> chatbot does not collect it and the planner's travel file has none. The
+> owner's decision (2026-10-10): **the teacher gives the email address when
+> they submit their feedback / confirmation**, and the merged product passes it
+> here. The same address feeds `sncf_rapport` (`recipient.email` too). If you
+> merge with a coding agent, say so in the prompt: an agent that only maps
+> existing data will not add the field to the form.
+
 **Price.** The tariff is fixed and is not part of the request: every traveller
 pays **1,00 €**, and the recap shows "Prix par personne : 1,00 €" and
 "Prix total : participants × 1,00 €" (30 travellers → 30,00 €). A request that
@@ -194,8 +202,10 @@ run time; never copy it into source, logs, commits or frontend code.
 
 Do this:
 1. Find where this project holds a confirmed trip (stations, departure and
-   arrival times, number of travellers, class, reference, the traveller's
-   email). There is no price to send: the tariff is fixed at 1,00 € per
+   arrival times, number of travellers, class, reference). The recipient's
+   email is NOT stored anywhere yet: the teacher's confirmation / feedback
+   form must ask for it and keep it with the trip (same address is used by
+   sncf_rapport). There is no price to send: the tariff is fixed at 1,00 € per
    traveller and the service computes the total. List which required fields we have and which are
    missing; stop and tell me if a required one has no source.
 2. Write one server-side function that maps our trip object to the request
@@ -263,6 +273,7 @@ read at start-up (a variable set in the shell wins over the file):
 | `BILAN_API_KEY` | the `X-Bilan-Key` value; required to start the service |
 | `RESEND_API_KEY` | sending from `zhaoyang.fr`; required in `live` mode only |
 | `BILAN_MAIL_MODE` | `dry-run` (default) or `live` |
+| `BILAN_COPY_TO` | optional, comma-separated: every email is also sent as a blind copy to these addresses (the recipient is never copied to itself) |
 
 Template and optional settings: `credentials.env.example`. Do not commit the
 file, paste the keys in an issue or chat, or call the service from frontend

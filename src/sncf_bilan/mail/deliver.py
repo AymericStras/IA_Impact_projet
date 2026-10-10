@@ -24,7 +24,7 @@ def _mailato_settings(config: Config) -> mailato.Settings:
         provider="resend",
         resend_api_key=config.resend_api_key,
         allowed_domains=config.allowed_domains,
-        max_recipients=1,
+        max_recipients=1 + len(config.copy_to),
     )
 
 

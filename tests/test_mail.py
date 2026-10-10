@@ -192,3 +192,31 @@ def test_composed_message_passes_mailato_validation_and_builds_a_resend_payload(
     assert payload["to"] == ["destinataire@example.fr"]
     assert {item.get("content_id") for item in payload["attachments"]} == {None, "logo"}
     write_eml(message, config, config.data_dir / "x.eml")
+
+
+def test_copy_addresses_get_a_blind_copy_except_the_recipient(config):
+    copied = replace(config, copy_to=("equipe@example.fr", "Destinataire@example.fr"))
+    message = compose(example("01-aller-retour-complet"), PDF, copied)
+    assert message.to == ["destinataire@example.fr"]
+    assert message.bcc == ["equipe@example.fr"]
+    assert compose(example("01-aller-retour-complet"), PDF, config).bcc == []
+
+
+def test_copy_addresses_come_from_the_environment():
+    from sncf_bilan.config import Config, ConfigurationError
+
+    env = {"BILAN_COPY_TO": " a@example.fr , b@example.fr,A@example.fr,, "}
+    assert Config.from_env(env).copy_to == ("a@example.fr", "b@example.fr")
+    assert Config.from_env({}).copy_to == ()
+    with pytest.raises(ConfigurationError):
+        Config.from_env({"BILAN_COPY_TO": "not-an-address"})
+
+
+def test_copies_are_delivered_in_dry_run_and_fit_the_recipient_cap(config, tmp_path):
+    copied = replace(config, copy_to=("a@example.fr", "b@example.fr"), data_dir=tmp_path)
+    message = compose(example("01-aller-retour-complet"), PDF, copied)
+    delivery = deliver(message, copied, recap_id="copy-test")
+    assert delivery.provider == "dry-run"
+    raw = (tmp_path / "outbox" / "copy-test.eml").read_bytes().decode("utf-8", "replace")
+    assert "To: destinataire@example.fr" in raw
+    assert "a@example.fr" not in raw.split("\n\n", 1)[0]  # blind: not in the headers
