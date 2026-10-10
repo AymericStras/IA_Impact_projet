@@ -66,7 +66,7 @@ export function TextEntry({
         onKeyDown={(event) => {
           if (isSubmitEnter(event)) submit(event);
         }}
-        className="field-sizing-content max-h-[40vh] min-h-24 w-full resize-none rounded-xl border border-input bg-card px-3 py-2.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground disabled:opacity-50"
+        className="field-sizing-content max-h-[40vh] min-h-24 w-full resize-none rounded-xl border-2 border-input bg-card px-3 py-2.5 text-base leading-relaxed text-foreground placeholder:text-muted-foreground disabled:opacity-50"
       />
       <div className="flex flex-wrap items-center justify-end gap-2">
         {onCancel ? (

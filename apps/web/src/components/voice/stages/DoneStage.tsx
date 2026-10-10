@@ -35,7 +35,7 @@ export interface DoneSearch {
 
 const SEARCH_SCENARIOS: readonly SearchScenario[] = ["auto", "adjustments", "no_match", "error"];
 const BOOKING_SCENARIOS: readonly BookingScenario[] = ["confirmed", "refused", "error"];
-const SELECT = "min-h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2 text-base text-foreground";
+const SELECT = "min-h-11 w-full min-w-0 rounded-full border-2 border-input bg-card px-3 text-base text-foreground";
 
 /**
  * Stage 5 — the hand-over is confirmed (the server says so). Success in words and icon,

@@ -673,7 +673,7 @@ test("controls remain legible and keyboard focus visible on light and navy surfa
         const value = n / 255;
         return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
       });
-      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722;
     };
     const foreground = luminance(style.color);
     const background = luminance(style.backgroundColor);
