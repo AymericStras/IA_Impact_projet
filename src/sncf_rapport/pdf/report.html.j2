@@ -1,0 +1,281 @@
+{% macro nc(value) -%}
+{% if value %}{{ value }}{% else %}<span class="missing">non communiqué</span>{% endif %}
+{%- endmacro %}
+{% macro status_glyph(status) -%}
+{% if status == "acquise" %}
+<svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#0f2149"/><path d="M5.6 10.4l3 3 5.8-6.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+{% elif status == "en_cours" %}
+<svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.25" fill="#fff" stroke="#0f2149" stroke-width="1.5"/><path d="M10 1.75a8.25 8.25 0 0 0 0 16.5z" fill="#0f2149"/></svg>
+{% else %}
+<svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.25" fill="#fff" stroke="#5d6680" stroke-width="1.3" stroke-dasharray="2.6 2.6"/></svg>
+{% endif %}
+{%- endmacro %}
+{% macro mark_glyph(mark) -%}
+{% if mark == "done" %}
+<svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#0f2149"/><path d="M5.6 10.4l3 3 5.8-6.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+{% elif mark == "not_done" %}
+<svg class="glyph" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.25" fill="#fff" stroke="#5d6680" stroke-width="1.3"/><path d="M6.2 10h7.6" fill="none" stroke="#5d6680" stroke-width="1.8" stroke-linecap="round"/></svg>
+{% else %}
+<svg class="glyph dot" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.2" fill="#0f2149"/></svg>
+{% endif %}
+{%- endmacro %}
+<!DOCTYPE html>
+<html lang="{{ view.language }}">
+<head>
+<meta charset="utf-8">
+<title>{{ view.document_title }}</title>
+<link rel="stylesheet" href="{{ css_href }}">
+</head>
+<body>
+<div class="page-footer">
+  <p class="basis">{{ view.footer.basis }}</p>
+  <p class="trace">{{ view.footer.trace }}{% if view.footer.simulation %} · {{ view.footer.simulation }}{% endif %}</p>
+</div>
+{% if view.simulated %}
+<div class="watermark">SIMULATION</div>
+{% endif %}
+
+<header class="masthead">
+  {% if view.logo_uri %}<img class="logo" src="{{ view.logo_uri }}" alt="SNCF Voyageurs">{% else %}<span></span>{% endif %}
+  <p class="kind"><span class="brand">liO</span><span class="sep">·</span>{{ view.cover.document_kind }}</p>
+</header>
+
+<section class="cover">
+  <h1>{{ view.cover.title }}</h1>
+  {% if view.cover.trip_title %}
+  <p class="trip-title">{{ view.cover.trip_title }}</p>
+  {% endif %}
+  <div class="facts">
+    {% for fact in view.cover.facts %}
+    <div class="fact{% if fact.compact %} compact{% endif %}">
+      <p class="label">{{ fact.label }}</p>
+      <p class="value">{{ nc(fact.value) }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="figures">
+    {% for figure in view.cover.figures %}
+    <div class="figure figure-{{ figure.kind }}{% if figure.long %} long{% endif %}">
+      {% if figure.value %}
+      <p class="number">{% if figure.prefix %}<span class="prefix">{{ figure.prefix }}</span> {% endif %}<span class="digits">{{ figure.value }}</span>{% if figure.unit %} <span class="unit">{{ figure.unit }}</span>{% endif %}</p>
+      {% else %}
+      <p class="number none"><span class="missing">non communiqué</span></p>
+      {% endif %}
+      <p class="label">{{ figure.label }}</p>
+      {% if figure.note %}<p class="note">{{ figure.note }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="journey">
+  <h2>Notre parcours</h2>
+  {% if view.journey.empty_note %}
+  <p class="lead">{{ view.journey.empty_note }} : <span class="missing">non communiqués</span>.</p>
+  {% endif %}
+  {% if view.journey.map_svg %}
+  <div class="map">{{ view.journey.map_svg|safe }}</div>
+  {% elif view.journey.route_text %}
+  <p class="route-text">{% for name in view.journey.route_text %}{% if not loop.first %}<span class="arrow">→</span>{% endif %}<span>{{ name }}</span>{% endfor %}</p>
+  {% endif %}
+  {% if view.journey.distance %}
+  <p class="distance"><strong>{{ view.journey.distance }}</strong> <span class="how">{{ view.journey.distance_note }}</span></p>
+  {% endif %}
+  {% if view.journey.legs %}
+  <div class="legs">
+    {% for leg in view.journey.legs %}
+    <div class="leg">
+      <p class="label">{{ leg.label }}</p>
+      {% if leg.known %}
+      <table class="stops">
+        <tr><td class="time">{{ nc(leg.departure) }}</td><td class="rail"><span class="node"></span></td><td class="station">{{ nc(leg.from_station) }}</td></tr>
+        <tr><td class="time">{{ nc(leg.arrival) }}</td><td class="rail last"><span class="node"></span></td><td class="station">{{ nc(leg.to_station) }}</td></tr>
+      </table>
+      {% if leg.duration or leg.train %}
+      <p class="meta">{% if leg.duration %}<strong>{{ leg.duration }}</strong>{% endif %}{% if leg.duration and leg.train %} · {% endif %}{% if leg.train %}{{ leg.train }}{% endif %}</p>
+      {% endif %}
+      {% else %}
+      <p class="unknown"><span class="missing">non communiqué</span></p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if view.journey.places %}
+  <div class="places">
+    <h3>Lieux visités</h3>
+    <div class="place-list">
+      {% for place in view.journey.places %}
+      <div class="place">
+        <p class="name">{{ place.title }}{% if place.walk %}<span class="walk">{{ place.walk }}</span>{% endif %}</p>
+        {% if place.note %}<p class="note">{{ place.note }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="done">
+  <h2>Ce que nous avons fait</h2>
+  <p class="lead completion-{{ view.done.completion_kind }}">{% if view.done.completion %}{{ view.done.completion }}{% else %}Déroulement du voyage : <span class="missing">non communiqué</span>.{% endif %}</p>
+  {% if view.done.why %}
+  <div class="why">
+    <h3>Pourquoi ce voyage{% if view.done.why_tag %}<span class="tag">{{ view.done.why_tag }}</span>{% endif %}</h3>
+    {% for paragraph in view.done.why %}
+    <p>{{ paragraph }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if view.done.activities or view.done.objectives %}
+  <div class="columns{% if view.done.stacked %} stacked{% endif %}">
+    {% if view.done.activities %}
+    <div class="col activities">
+      <h3>Les activités</h3>
+      {% for activity in view.done.activities %}
+      <div class="activity mark-{{ activity.mark }}">
+        <div class="mark">{{ mark_glyph(activity.mark) }}</div>
+        <div class="body">
+          <p class="name">{{ activity.title }}</p>
+          {% if activity.time or activity.mark_label %}
+          <p class="meta">{% if activity.time %}{{ activity.time }}{% endif %}{% if activity.time and activity.mark_label %} · {% endif %}{{ activity.mark_label }}</p>
+          {% endif %}
+          {% if activity.description %}<p class="description">{{ activity.description }}</p>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% if view.done.activities_note %}<p class="aside">{{ view.done.activities_note }}</p>{% endif %}
+    </div>
+    {% endif %}
+    {% if view.done.objectives %}
+    <div class="col objectives">
+      <h3>Nos objectifs</h3>
+      <ul>
+        {% for objective in view.done.objectives %}
+        <li>{{ objective }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% if view.done.changes %}
+  <div class="changes">
+    <h3>Ce qui a changé par rapport au programme</h3>
+    <p>{{ view.done.changes }}</p>
+  </div>
+  {% endif %}
+  {% if view.done.quote %}
+  <div class="quote">
+    <h3>Le mot de l'enseignant·e</h3>
+    <blockquote>
+      {% for paragraph in view.done.quote %}
+      <p>{% if loop.first %}«&nbsp;{% endif %}{{ paragraph }}{% if loop.last %}&nbsp;»{% endif %}</p>
+      {% endfor %}
+      {% if view.done.quote_author %}<footer>{{ view.done.quote_author }}</footer>{% endif %}
+    </blockquote>
+  </div>
+  {% endif %}
+</section>
+
+<section class="skills">
+  <h2>Compétences développées</h2>
+  <p class="lead">{{ view.competencies.summary }}</p>
+  <table class="skill-table">
+    {% for row in view.competencies.rows %}
+    <tr class="skill status-{{ row.status }}">
+      <td class="what">
+        <p class="name">{{ row.label }}</p>
+        <p class="gloss">{{ row.gloss }}</p>
+      </td>
+      <td class="detail">
+        <p class="status">{{ status_glyph(row.status) }}<span class="status-label">{{ row.status_label }}</span></p>
+        {% if row.insight %}
+        <p class="insight"><span class="lead-in">Ce que la sortie a permis de travailler :</span> {{ row.insight }}</p>
+        {% endif %}
+        {% if row.comment %}
+        <p class="comment"><span class="lead-in">Appréciation de l'enseignant·e :</span> {{ row.comment }}</p>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="disclaimer">{{ view.competencies.disclaimer }}</p>
+  {% if view.competencies.questions %}
+  <div class="questions">
+    <h3>Pour en parler à la maison{% if view.competencies.questions_tag %}<span class="tag">{{ view.competencies.questions_tag }}</span>{% endif %}</h3>
+    <ul>
+      {% for question in view.competencies.questions %}
+      <li>{{ question }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</section>
+
+{% if view.carbon %}
+<section class="carbon">
+  <h2>Notre impact carbone</h2>
+  <p class="lead">{{ view.carbon.intro }}</p>
+  <table class="bars">
+    {% for row in view.carbon.rows %}
+    <tr class="{% if row.is_train %}train{% else %}other{% endif %}">
+      <td class="mode"><p>{{ row.label }}</p>{% if row.note %}<p class="assume">{{ row.note }}</p>{% endif %}</td>
+      <td class="track"><div class="bar" style="width: {{ row.bar_percent }}%"></div></td>
+      <td class="amount"><p class="kg">{{ row.kg }}</p><p class="each">{{ row.per_person }}</p></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% if view.carbon.comparisons %}
+  <div class="comparisons">
+    {% for sentence in view.carbon.comparisons %}
+    <p>{{ sentence }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="method">
+    {% if view.carbon.method_note %}
+    <p><strong>Méthode.</strong> {{ view.carbon.method_note }}</p>
+    <p><strong>Données du calcul.</strong> {% for sentence in view.carbon.method %}{{ sentence }} {% endfor %}<strong>{{ view.carbon.disclaimer }}</strong></p>
+    {% else %}
+    <p><strong>Méthode.</strong> {% for sentence in view.carbon.method %}{{ sentence }} {% endfor %}<strong>{{ view.carbon.disclaimer }}</strong></p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if view.photo_groups %}
+<section class="photos">
+  {% for group in view.photo_groups %}
+  <div class="photo-group">
+    <h2{% if not loop.first %} class="minor"{% endif %}>{{ group.title }}</h2>
+    <div class="grid grid-{{ group.layout }}">
+      {% for photo in group.photos %}
+      <figure>
+        <img class="{{ photo.fit }}" src="{{ photo.src }}" alt="">
+        {% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="sources">
+  <h2>Sources et validation</h2>
+  <p class="validation {% if view.sources.validated %}yes{% else %}no{% endif %}">{{ status_glyph("acquise" if view.sources.validated else "non_evaluee") }}<span>{{ view.sources.validation }}</span></p>
+  {% if view.sources.items or view.sources.data_lines %}
+  <ul class="source-list">
+    {% for source in view.sources.items + view.sources.data_lines %}
+    <li>{% if source.label %}<span class="label">{{ source.label }}</span>{% endif %}{% if source.url %}{% if source.label %} — {% endif %}<span class="url">{{ source.url }}</span>{% endif %}{% if source.detail %} <span class="detail">({{ source.detail }})</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if view.sources.ai_notice %}
+  <p class="ai-notice">{{ view.sources.ai_notice }}</p>
+  {% endif %}
+  <p class="generated">{{ view.sources.generated }}.</p>
+</section>
+</body>
+</html>

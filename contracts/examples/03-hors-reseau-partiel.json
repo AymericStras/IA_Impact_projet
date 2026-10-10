@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "school": { "name": "Collège du Parc (exemple)", "class_name": "5e A" },
+  "trip": {
+    "title": "Sortie au musée",
+    "date": "2026-12-03",
+    "origin_station": "Toulouse Matabiau",
+    "destination_station": "Bordeaux Saint-Jean",
+    "outbound": {
+      "from_station": "Toulouse Matabiau",
+      "to_station": "Bordeaux Saint-Jean",
+      "departure": "2026-12-03T07:42+01:00",
+      "arrival": "2026-12-03T09:50+01:00",
+      "train_number": "4660"
+    },
+    "planned_participants": { "total": 24 },
+    "simulated": false
+  },
+  "education": {
+    "subject": "Arts plastiques",
+    "activities": [
+      { "id": "a", "title": "Visite des collections" },
+      { "id": "b", "title": "Atelier de pratique" }
+    ]
+  },
+  "teacher_feedback": {
+    "trip_completed": "partial",
+    "activities_completed": "partial",
+    "completed_activity_ids": ["a"],
+    "changes": "L'atelier a été annulé par le musée.",
+    "competencies": {
+      "savoir": { "status": "partiel" },
+      "savoir_faire": { "status": "non_evalue" }
+    }
+  },
+  "environment": { "distance_km_override": 257, "baselines": ["autocar"] }
+}

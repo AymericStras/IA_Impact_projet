@@ -1,0 +1,266 @@
+{
+  "summary": {
+    "model": "gpt-5.4-mini",
+    "cases": 12,
+    "fields": 89,
+    "dropped": 0,
+    "drop_rate": 0.0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "estimated_cost_usd": 0.0,
+    "problems": []
+  },
+  "cases": [
+    {
+      "id": "histoire-carcassonne",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie permet de découvrir une cité médiévale en lien avec le programme d’histoire. Les élèves observent les remparts et le château comtal, et ils s’appuient sur une visite guidée et un atelier pour mieux comprendre la vie au Moyen Âge.",
+        "competencies": {
+          "savoir": "Découvrir le Moyen Âge à travers une cité médiévale, ses remparts et son château comtal.",
+          "savoir_faire": "Observer des lieux historiques, écouter une visite guidée et participer à un atelier sur la vie au Moyen Âge.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en respectant les consignes du trajet.",
+          "savoir_s_orienter": "Se repérer avec un plan, des panneaux et les indications du groupe pendant la sortie.",
+          "savoir_etre": "Adopter un comportement calme, attentif et respectueux dans le train, sur le site et en groupe."
+        },
+        "questions": [
+          "Qu’as-tu remarqué sur les remparts ?",
+          "Qu’aimes-tu retenir de la vie au Moyen Âge ?",
+          "Comment t’es-tu repéré pendant la sortie ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.449660Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "sciences-sete",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie en sciences de la vie et de la Terre permet d’observer un milieu littoral et lagunaire dans un cadre réel. Elle aide à décrire un milieu de vie et à réfléchir aux liens entre activités humaines et environnement.",
+        "competencies": {
+          "savoir": "Découvrir les caractéristiques d’un milieu littoral et lagunaire, et comprendre qu’il accueille des êtres vivants et des activités humaines.",
+          "savoir_faire": "Observer des oiseaux, recueillir des informations auprès d’un conchyliculteur et décrire ce que l’on voit avec des mots précis.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en respectant les consignes et le rythme collectif.",
+          "savoir_s_orienter": "Se repérer avec des panneaux, des horaires et les indications du trajet entre la gare et les lieux visités.",
+          "savoir_etre": "Adopter une attitude calme, attentive et respectueuse dans le train, sur place et face aux personnes rencontrées."
+        },
+        "questions": [
+          "Qu’as-tu observé sur la lagune ?",
+          "Qu’a expliqué le conchyliculteur ?",
+          "Qu’est-ce qui t’a surpris dans ce milieu ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.450828Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "arts-albi",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie en train permet de découvrir le portrait à partir d’œuvres observées au musée et dans la cathédrale. Elle aide aussi les élèves à relier ce qu’ils voient à une pratique de dessin au fusain.",
+        "competencies": {
+          "savoir": "Découvrir le portrait à travers des œuvres d’art et des lieux de visite.",
+          "savoir_faire": "Observer des œuvres et essayer un dessin au fusain à partir de ce que l’on voit.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied avec le groupe, en respectant les consignes.",
+          "savoir_s_orienter": "Lire un plan simple, suivre des panneaux et repérer les horaires du trajet.",
+          "savoir_etre": "Adopter une attitude calme, attentive et respectueuse dans le groupe et les lieux visités."
+        },
+        "questions": [
+          "Qu’as-tu préféré voir pendant la visite ?",
+          "Comment as-tu utilisé le fusain pour dessiner ?",
+          "Qu’est-ce qui t’a aidé à te repérer pendant la sortie ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.451685Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "geographie-nimes",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie permet d’observer comment une ville s’organise et comment on y vit. Le parcours entre les Arènes de Nîmes et les Jardins de la Fontaine aide à comparer des espaces urbains différents. Le carnet de croquis encourage à regarder, noter et représenter ce que l’on voit.",
+        "competencies": {
+          "savoir": "Découvrir des éléments de la ville et comprendre l’organisation de différents espaces urbains.",
+          "savoir_faire": "Observer sur place et réaliser un carnet de croquis à partir de ce qui est vu.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en respectant le trajet prévu.",
+          "savoir_s_orienter": "Se repérer avec un plan, des panneaux et les indications du trajet.",
+          "savoir_etre": "Adopter un comportement calme, attentif et respectueux dans le groupe et dans l’espace public."
+        },
+        "questions": [
+          "Qu’as-tu remarqué sur la ville pendant le parcours ?",
+          "Qu’as-tu dessiné dans ton carnet de croquis ?",
+          "Comment t’es-tu repéré pendant la sortie ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.452449Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "minimal-theme-seul",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie autour de l’eau permet d’observer ce thème dans des situations concrètes. Elle aide les élèves à faire le lien entre leurs connaissances et ce qu’ils voient, tout en travaillant l’attention, les échanges et la découverte en groupe.",
+        "competencies": {
+          "savoir": "Découvrir l’eau comme thème d’étude et enrichir ses connaissances à partir d’observations simples.",
+          "savoir_faire": "Observer, comparer, écouter et noter des informations en lien avec l’eau.",
+          "savoir_se_deplacer": "Se déplacer en train et à pied avec le groupe, en respectant les consignes.",
+          "savoir_s_orienter": "Se repérer avec un plan, des panneaux et des indications utiles pendant la sortie.",
+          "savoir_etre": "Adopter un comportement calme, respectueux et attentif dans le groupe et dans l’espace public."
+        },
+        "questions": [
+          "Qu’as-tu observé sur l’eau pendant la sortie ?",
+          "Qu’est-ce qui t’a aidé à te repérer ?",
+          "Qu’as-tu aimé faire avec le groupe ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.453148Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "destination-seule",
+      "status": "no_material",
+      "dropped": [],
+      "insights": null
+    },
+    {
+      "id": "maternelle-ferme",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie permet de découvrir les animaux de la ferme dans un contexte concret. Elle offre aussi un moment pour relier une activité de découverte du monde à une fabrication simple autour du pain. Les élèves observent, comparent et échangent autour de ce qu’ils voient et font.",
+        "competencies": {
+          "savoir": "Découvrir les animaux de la ferme et le lien entre une activité de ferme et la fabrication du pain.",
+          "savoir_faire": "Nourrir les animaux et participer à la fabrication du pain en suivant des étapes simples.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en restant avec la classe.",
+          "savoir_etre": "Adopter un comportement calme et respectueux avec le groupe, les animaux et les lieux visités."
+        },
+        "questions": [
+          "Qu’as-tu aimé découvrir sur les animaux de la ferme ?",
+          "Comment s’est passée la fabrication du pain ?",
+          "Qu’as-tu fait pour nourrir les animaux ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.454049Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "lycee-memoire",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie en histoire permet d’aborder les mémoires du XXe siècle à partir d’un lieu de mémoire et de documents d’archives. Elle aide les élèves à comprendre comment on observe, questionne et compare des traces du passé.",
+        "competencies": {
+          "savoir": "Découvrir un lieu de mémoire lié aux mémoires du XXe siècle et le rôle des archives pour comprendre le passé.",
+          "savoir_faire": "Observer un lieu, lire des documents d’archives et mettre en relation des informations simples.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en respectant les consignes de déplacement.",
+          "savoir_s_orienter": "Se repérer entre la gare, le mémorial et les indications données sur place.",
+          "savoir_etre": "Adopter une attitude calme, respectueuse et attentive dans le groupe et dans un lieu de mémoire."
+        },
+        "questions": [
+          "Qu’as-tu observé au mémorial de Rivesaltes ?",
+          "Que t’ont appris les archives sur cette sortie ?",
+          "Comment s’est passé le trajet en train avec la classe ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.454881Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "eps-randonnee",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie en train permet de vivre une course d’orientation dans un autre cadre que la classe. Les élèves travaillent la lecture de carte et apprennent à gérer leur effort pendant un déplacement en groupe et une activité en forêt.",
+        "competencies": {
+          "savoir": "Découvrir les repères nécessaires à une course d’orientation et le lien entre carte et terrain.",
+          "savoir_faire": "Lire une carte, s’orienter et adapter son effort pendant une activité de course d’orientation.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, en respectant les consignes du trajet.",
+          "savoir_s_orienter": "Utiliser une carte et des repères pour se situer et suivre un parcours.",
+          "savoir_etre": "Adopter un comportement calme, attentif et respectueux dans le groupe et les espaces traversés."
+        },
+        "questions": [
+          "Comment t’es-tu repéré pendant la course d’orientation ?",
+          "Qu’est-ce qui t’a aidé à mieux gérer ton effort ?",
+          "Qu’as-tu observé sur le trajet en train et à pied ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.455690Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "activites-partielles",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie permet de découvrir l’Antiquité romaine à travers la visite du musée Narbo Via. Elle aide les élèves à observer des traces du passé et à mieux comprendre comment on présente l’histoire dans un musée.",
+        "competencies": {
+          "savoir": "Découvrir l’Antiquité romaine grâce aux objets et aux traces conservés au musée Narbo Via.",
+          "savoir_faire": "Observer des œuvres et des documents, écouter des explications et comparer ce que l’on voit.",
+          "savoir_se_deplacer": "Se déplacer en train puis à pied en groupe, avec attention et sécurité.",
+          "savoir_s_orienter": "Se repérer dans un musée et suivre des indications simples de trajet et de visite.",
+          "savoir_etre": "Adopter un comportement calme, respectueux et attentif dans le train, le musée et les espaces publics."
+        },
+        "questions": [
+          "Qu’as-tu observé au musée sur l’Antiquité romaine ?",
+          "Qu’est-ce qui t’a aidé à comprendre les objets exposés ?",
+          "Comment t’es-tu repéré pendant la visite ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.456442Z",
+        "reviewed_by_teacher": false
+      }
+    },
+    {
+      "id": "texte-hostile",
+      "status": "no_material",
+      "dropped": [],
+      "insights": null
+    },
+    {
+      "id": "langues-perpignan",
+      "status": "cached",
+      "dropped": [],
+      "insights": {
+        "why": "Cette sortie permet de découvrir la culture et la langue catalanes dans un cadre réel. Les élèves observent un lieu du patrimoine et pratiquent la lecture et la compréhension lors d’un jeu de piste bilingue dans le centre-ville.",
+        "competencies": {
+          "savoir": "Découvrir la culture catalane et un lieu du patrimoine à Perpignan.",
+          "savoir_faire": "Lire des indices, observer un site et coopérer pendant un jeu de piste bilingue.",
+          "savoir_se_deplacer": "Voyager en train puis marcher en groupe dans la ville.",
+          "savoir_s_orienter": "Se repérer avec un plan, des panneaux et des indications dans le centre-ville.",
+          "savoir_etre": "Adopter une attitude calme, respectueuse et attentive dans le groupe et les espaces publics."
+        },
+        "questions": [
+          "Qu’as-tu repéré pendant le jeu de piste bilingue ?",
+          "Qu’est-ce que tu as observé au Palais des rois de Majorque ?",
+          "Comment t’es-tu repéré dans le centre-ville ?"
+        ],
+        "origin": "ai",
+        "model": "gpt-5.4-mini",
+        "generated_at": "2026-10-10T10:25:25.457311Z",
+        "reviewed_by_teacher": false
+      }
+    }
+  ]
+}

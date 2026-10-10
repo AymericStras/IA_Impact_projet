@@ -1,0 +1,61 @@
+{
+  "factors": [
+    {
+      "api_id": 6,
+      "api_url": "https://impactco2.fr/api/v1/transport?km=1&displayAll=1&transports=15%2C6%2C4&includeConstruction=1&occupencyRate=1&language=fr",
+      "basis": "passenger_km",
+      "g_co2e_per_pkm": 37.56,
+      "g_co2e_per_pkm_usage_only": 33.14,
+      "label": "Autocar",
+      "mode": "autocar",
+      "note": "Per passenger-km, diesel coach ('Autocar thermique'). Impact CO2 assumes an average of 30 passengers per coach. Underlying source shown by Impact CO2: Base Empreinte ADEME.",
+      "retrieved_at": "2026-10-10",
+      "source_name": "ADEME, Impact CO2",
+      "source_url": "https://impactco2.fr/outils/transport/autocar",
+      "version": "Impact CO2 API v1"
+    },
+    {
+      "api_id": 15,
+      "api_url": "https://impactco2.fr/api/v1/transport?km=1&displayAll=1&transports=15%2C6%2C4&includeConstruction=1&occupencyRate=1&language=fr",
+      "basis": "passenger_km",
+      "g_co2e_per_pkm": 27.69,
+      "g_co2e_per_pkm_usage_only": 22.9,
+      "label": "TER",
+      "mode": "ter",
+      "note": "Per passenger-km, French national average for regional trains (TER), not specific to liO Occitanie. Underlying source shown by Impact CO2: Base Empreinte ADEME. Train occupancy comes from operator data that Impact CO2 does not publish.",
+      "retrieved_at": "2026-10-10",
+      "source_name": "ADEME, Impact CO2",
+      "source_url": "https://impactco2.fr/outils/transport/ter",
+      "version": "Impact CO2 API v1"
+    },
+    {
+      "api_id": 4,
+      "api_url": "https://impactco2.fr/api/v1/transport?km=1&displayAll=1&transports=15%2C6%2C4&includeConstruction=1&occupencyRate=1&language=fr",
+      "basis": "vehicle_km",
+      "default_occupancy": 1,
+      "default_occupancy_source": "Occupancy requested from the API (occupencyRate=1, its documented default, https://impactco2.fr/doc/api): one person per car. No sourced average occupancy is used; callers may pass their own.",
+      "g_co2e_per_pkm": 142.253412,
+      "g_co2e_per_pkm_usage_only": 110.55776,
+      "label": "Voiture",
+      "mode": "voiture",
+      "note": "'Voiture thermique' (Impact CO2 default: medium diesel car), requested with one person on board, so the figure is per vehicle-km: divide by the number of people in the car (driver included) to get a per-passenger figure. Underlying source shown by Impact CO2: 'Modélisation de l'empreinte carbone de la voiture - 2025'.",
+      "retrieved_at": "2026-10-10",
+      "source_name": "ADEME, Impact CO2",
+      "source_url": "https://impactco2.fr/outils/transport/voiturethermique",
+      "version": "Impact CO2 API v1"
+    }
+  ],
+  "retrieved_at": "2026-10-10",
+  "schema_version": "1.0",
+  "source": {
+    "documentation_url": "https://impactco2.fr/doc/api",
+    "methodology_url": "https://impactco2.fr/outils/transport",
+    "name": "ADEME, Impact CO2",
+    "publisher": "ADEME (Agence de la transition écologique)",
+    "retrieval": "api",
+    "scope": "Usage (fuel or electricity) plus construction of the vehicle (includeConstruction=1). Construction and maintenance of roads, tracks and stations are not included.",
+    "unit": "g CO2e per km (per passenger, or per vehicle when basis is vehicle_km)",
+    "url": "https://impactco2.fr/api/v1/transport?km=1&displayAll=1&transports=15%2C6%2C4&includeConstruction=1&occupencyRate=1&language=fr",
+    "version": "Impact CO2 API v1"
+  }
+}

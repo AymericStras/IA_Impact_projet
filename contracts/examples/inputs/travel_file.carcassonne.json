@@ -1,0 +1,112 @@
+{
+  "reference": "SIM-050033B9",
+  "title": "Sortie pédagogique — Cité médiévale de Carcassonne",
+  "requirements": {
+    "participants_count": 30,
+    "participants_breakdown": {
+      "students": 27,
+      "accompanying": 3
+    },
+    "departure_station": "Toulouse",
+    "departure": {
+      "date": "2026-11-12",
+      "time": "08:00",
+      "constraint": "approximate"
+    },
+    "return": {
+      "date": "2026-11-12",
+      "time": "17:30",
+      "constraint": "latest"
+    },
+    "teaching_type": {
+      "subject": "Histoire",
+      "theme": "Moyen Âge"
+    }
+  },
+  "itinerary": {
+    "id": "iti_9f11c4f37d",
+    "destination_id": "carcassonne",
+    "title": "Cité médiévale de Carcassonne",
+    "label": "Journée complète",
+    "outbound": {
+      "line": "liO Toulouse Matabiau – Carcassonne (horaire simulé)",
+      "from_station": "Toulouse Matabiau",
+      "to_station": "Carcassonne",
+      "departure": "2026-11-12T08:05+01:00",
+      "arrival": "2026-11-12T09:00+01:00"
+    },
+    "return": {
+      "line": "liO Carcassonne – Toulouse Matabiau (horaire simulé)",
+      "from_station": "Carcassonne",
+      "to_station": "Toulouse Matabiau",
+      "departure": "2026-11-12T16:25+01:00",
+      "arrival": "2026-11-12T17:20+01:00"
+    },
+    "activities": [
+      {
+        "title": "Visite guidée des remparts",
+        "start": "2026-11-12T09:37+01:00",
+        "end": "2026-11-12T11:07+01:00"
+      },
+      {
+        "title": "Atelier « vie au Moyen Âge »",
+        "start": "2026-11-12T12:07+01:00",
+        "end": "2026-11-12T13:22+01:00"
+      }
+    ],
+    "free_minutes": 221,
+    "checks": [
+      {
+        "label": "Horaires de départ et de retour respectés",
+        "ok": true
+      },
+      {
+        "label": "Capacité pour 30 participants (simulée)",
+        "ok": true
+      },
+      {
+        "label": "Lieux à 22 minutes à pied de la gare au plus",
+        "ok": true
+      },
+      {
+        "label": "Temps sur place suffisant pour les activités choisies",
+        "ok": true
+      }
+    ],
+    "participants_count": 30,
+    "simulated": true
+  },
+  "places": [
+    {
+      "title": "Cité et remparts",
+      "walk_minutes": 20,
+      "note": "Accueil des groupes sur réservation ; horaires à confirmer."
+    },
+    {
+      "title": "Château comtal",
+      "walk_minutes": 22,
+      "note": "Visite commentée possible pour les scolaires."
+    }
+  ],
+  "schedule": [
+    "8 h 05 — Départ de Toulouse Matabiau",
+    "9 h 00 — Arrivée à Carcassonne",
+    "9 h 37 – 11 h 07 — Visite guidée des remparts",
+    "12 h 07 – 13 h 22 — Atelier « vie au Moyen Âge »",
+    "16 h 25 — Départ de Carcassonne",
+    "17 h 20 — Retour à Toulouse Matabiau"
+  ],
+  "safety_advice": [
+    "Compter les élèves à chaque montée et descente de train.",
+    "Prévoir la liste des participants et les numéros d'urgence des familles.",
+    "Désigner un adulte en tête et un adulte en fin de groupe pour les trajets à pied.",
+    "Arriver en gare 20 minutes avant le départ."
+  ],
+  "useful_contacts": [
+    "Accueil groupes de la gare de départ (coordonnées fournies par le module de réservation)",
+    "Lieu d'accueil sur place (coordonnées fournies par le module d'activités)",
+    "Numéro d'urgence européen : 112"
+  ],
+  "official_links": [],
+  "simulated": true
+}

@@ -1,0 +1,1174 @@
+{
+  "$defs": {
+    "Activity": {
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        }
+      },
+      "title": "Activity",
+      "type": "object"
+    },
+    "Competencies": {
+      "properties": {
+        "savoir": {
+          "$ref": "#/$defs/Competency"
+        },
+        "savoir_faire": {
+          "$ref": "#/$defs/Competency"
+        },
+        "savoir_se_deplacer": {
+          "$ref": "#/$defs/Competency"
+        },
+        "savoir_s_orienter": {
+          "$ref": "#/$defs/Competency"
+        },
+        "savoir_etre": {
+          "$ref": "#/$defs/Competency"
+        }
+      },
+      "title": "Competencies",
+      "type": "object"
+    },
+    "Competency": {
+      "properties": {
+        "status": {
+          "default": "non_evalue",
+          "enum": [
+            "acquis",
+            "partiel",
+            "non_evalue"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 600,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        }
+      },
+      "title": "Competency",
+      "type": "object"
+    },
+    "CompetencyInsights": {
+      "properties": {
+        "savoir": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Savoir"
+        },
+        "savoir_faire": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Savoir Faire"
+        },
+        "savoir_se_deplacer": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Savoir Se Deplacer"
+        },
+        "savoir_s_orienter": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Savoir S Orienter"
+        },
+        "savoir_etre": {
+          "anyOf": [
+            {
+              "maxLength": 280,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Savoir Etre"
+        }
+      },
+      "title": "CompetencyInsights",
+      "type": "object"
+    },
+    "Education": {
+      "properties": {
+        "subject": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Theme"
+        },
+        "objectives": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Objectives",
+          "type": "array"
+        },
+        "places": {
+          "items": {
+            "$ref": "#/$defs/Place"
+          },
+          "title": "Places",
+          "type": "array"
+        },
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/Activity"
+          },
+          "title": "Activities",
+          "type": "array"
+        },
+        "insights": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Insights"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Education",
+      "type": "object"
+    },
+    "Environment": {
+      "properties": {
+        "baselines": {
+          "items": {
+            "enum": [
+              "autocar",
+              "voiture"
+            ],
+            "type": "string"
+          },
+          "title": "Baselines",
+          "type": "array"
+        },
+        "distance_km_override": {
+          "anyOf": [
+            {
+              "maximum": 5000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distance Km Override"
+        },
+        "car_occupancy": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 9,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Car Occupancy"
+        }
+      },
+      "title": "Environment",
+      "type": "object"
+    },
+    "Insights": {
+      "description": "Short texts on the educational value of the trip.\n\nWritten by `enrich.py` with a language model, or supplied by the caller.\nThey describe what the trip let the class work on; they never state a\nresult, which only `teacher_feedback.competencies` does.",
+      "properties": {
+        "why": {
+          "anyOf": [
+            {
+              "maxLength": 700,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Why"
+        },
+        "competencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CompetencyInsights"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "questions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "origin": {
+          "default": "ai",
+          "enum": [
+            "ai",
+            "teacher"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "generated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generated At"
+        },
+        "reviewed_by_teacher": {
+          "default": false,
+          "title": "Reviewed By Teacher",
+          "type": "boolean"
+        }
+      },
+      "title": "Insights",
+      "type": "object"
+    },
+    "Media": {
+      "properties": {
+        "photos": {
+          "items": {
+            "$ref": "#/$defs/Photo"
+          },
+          "title": "Photos",
+          "type": "array"
+        }
+      },
+      "title": "Media",
+      "type": "object"
+    },
+    "Participants": {
+      "properties": {
+        "total": {
+          "anyOf": [
+            {
+              "maximum": 2000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total"
+        },
+        "students": {
+          "anyOf": [
+            {
+              "maximum": 2000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Students"
+        },
+        "accompanying": {
+          "anyOf": [
+            {
+              "maximum": 500,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accompanying"
+        }
+      },
+      "title": "Participants",
+      "type": "object"
+    },
+    "Photo": {
+      "properties": {
+        "data_base64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Data Base64"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "media_type": {
+          "anyOf": [
+            {
+              "maxLength": 60,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Type"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        },
+        "taken_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Taken At"
+        },
+        "consent": {
+          "default": false,
+          "title": "Consent",
+          "type": "boolean"
+        },
+        "kind": {
+          "default": "trip",
+          "enum": [
+            "trip",
+            "documentary"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "title": "Photo",
+      "type": "object"
+    },
+    "Place": {
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 400,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "entity_id": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity Id"
+        },
+        "official_url": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Official Url"
+        },
+        "latitude": {
+          "anyOf": [
+            {
+              "maximum": 90,
+              "minimum": -90,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latitude"
+        },
+        "longitude": {
+          "anyOf": [
+            {
+              "maximum": 180,
+              "minimum": -180,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Longitude"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "License"
+        },
+        "attribution": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attribution"
+        },
+        "walk_minutes": {
+          "anyOf": [
+            {
+              "maximum": 600,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Walk Minutes"
+        }
+      },
+      "title": "Place",
+      "type": "object"
+    },
+    "School": {
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "class_name": {
+          "anyOf": [
+            {
+              "maxLength": 60,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Class Name"
+        },
+        "teacher_name": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Teacher Name"
+        },
+        "city": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "City"
+        }
+      },
+      "title": "School",
+      "type": "object"
+    },
+    "Source": {
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "retrieved_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retrieved At"
+        }
+      },
+      "title": "Source",
+      "type": "object"
+    },
+    "TeacherFeedback": {
+      "properties": {
+        "trip_completed": {
+          "anyOf": [
+            {
+              "enum": [
+                "completed",
+                "partial",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trip Completed"
+        },
+        "actual_participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Participants"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "activities_completed": {
+          "anyOf": [
+            {
+              "enum": [
+                "all",
+                "partial",
+                "none"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activities Completed"
+        },
+        "completed_activity_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Completed Activity Ids",
+          "type": "array"
+        },
+        "changes": {
+          "anyOf": [
+            {
+              "maxLength": 1500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changes"
+        },
+        "competencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Competencies"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "observations": {
+          "anyOf": [
+            {
+              "maxLength": 3000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observations"
+        },
+        "validated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Validated At"
+        }
+      },
+      "title": "TeacherFeedback",
+      "type": "object"
+    },
+    "TrainLeg": {
+      "properties": {
+        "line": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "train_number": {
+          "anyOf": [
+            {
+              "maxLength": 20,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Train Number"
+        },
+        "from_station": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From Station"
+        },
+        "to_station": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To Station"
+        },
+        "departure": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Departure"
+        },
+        "arrival": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrival"
+        }
+      },
+      "title": "TrainLeg",
+      "type": "object"
+    },
+    "Trip": {
+      "properties": {
+        "reference": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "return_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Date"
+        },
+        "origin_station": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin Station"
+        },
+        "destination_station": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Destination Station"
+        },
+        "destination_city": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Destination City"
+        },
+        "outbound": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrainLeg"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "return": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrainLeg"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "planned_participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Participants"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "title": "Trip",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "locale": {
+      "const": "fr",
+      "default": "fr",
+      "title": "Locale",
+      "type": "string"
+    },
+    "school": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/School"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "trip": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Trip"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "education": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Education"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "teacher_feedback": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TeacherFeedback"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "environment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Environment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "media": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Media"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "title": "TripReportRequest",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

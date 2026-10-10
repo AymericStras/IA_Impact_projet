@@ -1,0 +1,205 @@
+/* Palette: navy #0f2149, navy-2 #1d3166, red #c90c0f (map destination only),
+   yellow #ffd500, greys #eceef3 / #c9cdd8, tint #f5f6f9, muted #5d6680. */
+
+@font-face { font-family: "Source Sans 3"; font-weight: 400; src: url("../../../assets/fonts/SourceSans3-Regular.ttf"); }
+@font-face { font-family: "Source Sans 3"; font-weight: 600; src: url("../../../assets/fonts/SourceSans3-Semibold.ttf"); }
+@font-face { font-family: "Source Sans 3"; font-weight: 700; src: url("../../../assets/fonts/SourceSans3-Bold.ttf"); }
+
+@page {
+  size: A4;
+  margin: 15mm 19mm 27mm 19mm;
+  @bottom-left { content: element(footer); vertical-align: top; padding-top: 5mm; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 600 8pt "Source Sans 3"; color: #0f2149; vertical-align: top; padding-top: 7.6mm; width: 18mm; text-align: right; }
+}
+
+* { box-sizing: border-box; }
+html { font-family: "Source Sans 3", sans-serif; font-size: 10pt; line-height: 1.42; color: #0f2149; }
+/* Any text may be a 5000-character word: it wraps, it never widens the page. */
+body { margin: 0; overflow-wrap: anywhere; }
+img, svg { max-width: 100%; }
+p, h1, h2, h3, ul, figure, blockquote { margin: 0; padding: 0; }
+table { border-collapse: collapse; }
+td { padding: 0; vertical-align: top; }
+strong { font-weight: 600; }
+.missing { font-weight: 400; font-style: italic; color: #5d6680; }
+.glyph { width: 4.2mm; height: 4.2mm; vertical-align: -0.9mm; }
+
+/* ---- running footer and watermark */
+.page-footer { position: running(footer); font-size: 7.8pt; line-height: 1.4; color: #5d6680; border-top: 0.5pt solid #c9cdd8; padding-top: 2.4mm; }
+.page-footer .basis { color: #0f2149; }
+.watermark { position: fixed; top: 108mm; left: -8mm; width: 188mm; text-align: center; font-size: 76pt; font-weight: 700; letter-spacing: 6pt; color: #0f2149; opacity: 0.05; z-index: 10; transform: rotate(-32deg); }
+
+/* ---- masthead */
+.masthead { display: flex; align-items: center; justify-content: space-between; }
+.masthead .logo { height: 13mm; max-width: 60mm; object-fit: contain; }
+.masthead .kind { font-size: 9pt; font-weight: 600; letter-spacing: 0.9pt; text-transform: uppercase; color: #5d6680; }
+.masthead .brand { color: #0f2149; font-weight: 700; text-transform: none; font-size: 11pt; letter-spacing: 0.3pt; }
+.masthead .sep { margin: 0 2mm; color: #c9cdd8; }
+
+/* ---- cover */
+.cover { margin-top: 7.5mm; }
+.cover h1 { font-size: 31pt; line-height: 1.08; font-weight: 700; letter-spacing: -0.4pt; }
+.cover h1::before { content: ""; display: block; width: 14mm; height: 1.7mm; background: #ffd500; margin-bottom: 4.5mm; }
+.cover .trip-title { margin-top: 2.6mm; font-size: 14pt; line-height: 1.25; color: #1d3166; }
+
+.facts { display: table; width: 100%; margin-top: 7mm; }
+.fact .missing, .fact .label { white-space: nowrap; }
+.fact { display: table-cell; vertical-align: top; padding-right: 8mm; }
+.fact:last-child { padding-right: 0; }
+.fact.compact .value { white-space: nowrap; }
+.fact .label, h3, .leg .label { font-size: 7.6pt; font-weight: 600; letter-spacing: 0.9pt; text-transform: uppercase; color: #5d6680; }
+.fact .value { margin-top: 0.7mm; font-size: 10.5pt; font-weight: 600; line-height: 1.3; }
+.fact .value .missing { font-size: 10pt; }
+
+.figures { display: flex; margin-top: 6.5mm; background: #f5f6f9; border-radius: 2.5mm; padding: 5mm 0 4.6mm; }
+.figure { flex: 1 1 0; min-width: 0; padding: 0 6mm; border-left: 0.5pt solid #c9cdd8; }
+.figure:first-child { border-left: 0; }
+.figure .number { font-size: 11pt; line-height: 1; color: #1d3166; white-space: nowrap; }
+.figure .digits { font-size: 33pt; font-weight: 700; letter-spacing: -0.5pt; color: #0f2149; }
+.figure .unit { font-size: 13pt; font-weight: 600; color: #0f2149; }
+.figure .prefix { font-size: 10pt; color: #5d6680; }
+.figure .number.none { font-size: 12pt; line-height: 33pt; }
+.figure.long .number { white-space: normal; line-height: 1.1; }
+.figure.long .digits { font-size: 19pt; letter-spacing: 0; }
+.figure .label { margin-top: 1.8mm; font-size: 10.5pt; font-weight: 600; line-height: 1.25; }
+.figure .note { margin-top: 0.8mm; font-size: 8.4pt; line-height: 1.3; color: #5d6680; }
+
+/* ---- sections */
+section { margin-top: 11mm; }
+section.cover { margin-top: 7.5mm; }
+h2 { font-size: 17pt; line-height: 1.15; font-weight: 700; break-after: avoid; }
+h2::before { content: ""; display: block; width: 9mm; height: 1.2mm; background: #ffd500; margin-bottom: 2.6mm; }
+h2.minor { font-size: 12pt; }
+h2.minor::before { display: none; }
+h3 { break-after: avoid; margin-bottom: 2mm; }
+.lead { margin-top: 2.2mm; font-size: 11.5pt; line-height: 1.35; color: #1d3166; break-after: avoid; }
+
+/* ---- journey */
+.journey { margin-top: 8mm; }
+.map { margin-top: 4mm; line-height: 0; }
+.map svg { width: 100%; height: auto; display: block; }
+.route-text { margin-top: 4mm; padding: 6mm 7mm; background: #f5f6f9; border-radius: 2.5mm; font-size: 16pt; font-weight: 700; line-height: 1.25; }
+.route-text .arrow { margin: 0 3.5mm; font-weight: 400; color: #5d6680; }
+.distance { margin-top: 2.6mm; font-size: 9.5pt; }
+.distance .how { color: #5d6680; font-size: 8.6pt; }
+.legs { display: flex; gap: 10mm; margin-top: 4.5mm; break-inside: avoid; }
+.leg { flex: 1 1 0; min-width: 0; border-top: 1pt solid #0f2149; padding-top: 2.2mm; }
+.leg .stops { margin-top: 1.6mm; width: 100%; table-layout: fixed; }
+.leg .time { width: 15mm; font-size: 11pt; font-weight: 700; white-space: nowrap; padding-bottom: 1.3mm; }
+.leg .time .missing { font-size: 8.5pt; }
+.leg .station { font-size: 11pt; padding-bottom: 1.3mm; }
+.leg .rail { width: 6mm; position: relative; }
+.leg .rail .node { position: absolute; left: 1.4mm; top: 1.55mm; width: 2.2mm; height: 2.2mm; border-radius: 50%; border: 1pt solid #0f2149; background: #fff; }
+.leg .rail::before { content: ""; position: absolute; left: 2.33mm; top: 3.7mm; bottom: -1.6mm; border-left: 1pt solid #0f2149; }
+.leg .rail.last::before { display: none; }
+.leg .rail.last .node { background: #0f2149; }
+.leg .meta { margin-top: 0.6mm; font-size: 8.6pt; color: #5d6680; }
+.leg .meta strong { color: #0f2149; }
+.leg .unknown { margin-top: 1.6mm; }
+.places { margin-top: 4.5mm; break-inside: avoid; }
+.place-list { display: flex; flex-wrap: wrap; gap: 3mm 9mm; }
+.place { flex: 0 0 81mm; max-width: 81mm; min-width: 0; break-inside: avoid; }
+.place .name { font-weight: 600; font-size: 10.5pt; }
+.place .walk { margin-left: 2.5mm; font-weight: 400; font-size: 8.6pt; color: #5d6680; }
+.place .note { font-size: 9pt; color: #5d6680; line-height: 1.35; }
+
+/* ---- what we did */
+.why { margin-top: 5.5mm; break-inside: avoid; }
+.why p { max-width: 158mm; font-size: 10.5pt; line-height: 1.45; }
+.why p + p { margin-top: 1.4mm; }
+.columns { display: flex; gap: 10mm; margin-top: 6mm; }
+.columns .col { flex: 1 1 0; min-width: 0; }
+.columns .col.activities { flex: 1.15 1 0; }
+.columns.stacked { display: block; }
+.columns.stacked .col + .col { margin-top: 5.5mm; }
+.activity { display: flex; gap: 2.6mm; padding: 1.7mm 0; border-top: 0.5pt solid #eceef3; break-inside: avoid; }
+.activity:first-of-type { border-top: 0; padding-top: 0; }
+.activity .mark { flex: 0 0 4.2mm; }
+.activity .glyph { vertical-align: -1.1mm; }
+.activity .body { flex: 1 1 0; min-width: 0; }
+.activity .name { font-size: 10.5pt; font-weight: 600; line-height: 1.3; }
+.activity.mark-not_done .name { color: #5d6680; font-weight: 400; }
+.activity .meta { font-size: 8.6pt; color: #5d6680; }
+.activity .description { margin-top: 0.4mm; font-size: 9pt; line-height: 1.35; color: #1d3166; }
+.aside { margin-top: 2mm; font-size: 9pt; color: #5d6680; }
+.objectives ul { list-style: none; }
+.objectives li { position: relative; padding: 0 0 1.9mm 4.4mm; font-size: 10pt; line-height: 1.38; break-inside: avoid; }
+.objectives li::before { content: ""; position: absolute; left: 0; top: 2.05mm; width: 2.2mm; border-top: 1.2pt solid #ffd500; }
+.changes { margin-top: 5.5mm; break-inside: avoid; }
+.changes p { max-width: 150mm; }
+.quote { margin-top: 6.5mm; break-inside: avoid; }
+.quote blockquote { border-left: 2.2pt solid #ffd500; padding: 0.4mm 0 0.6mm 5.5mm; }
+.quote blockquote p { font-size: 12pt; line-height: 1.45; color: #0f2149; }
+.quote blockquote p + p { margin-top: 1.6mm; }
+.quote blockquote footer { margin-top: 2.2mm; font-size: 9pt; font-weight: 600; color: #5d6680; }
+.quote blockquote footer::before { content: "— "; }
+
+/* ---- competencies */
+.skill-table { width: 100%; margin-top: 4.5mm; table-layout: fixed; }
+.skill { break-inside: avoid; }
+/* never one row alone at the bottom or at the top of a page */
+.skill:first-child, .skill:nth-last-child(2) { break-after: avoid; }
+.skill td { padding: 2.2mm 0; border-top: 0.5pt solid #c9cdd8; }
+.skill:first-child td { border-top: 1pt solid #0f2149; }
+.skill:last-child td { border-bottom: 0.5pt solid #c9cdd8; }
+.skill .what { width: 66mm; padding-right: 4mm; }
+.skill .name { font-size: 11pt; font-weight: 700; line-height: 1.25; }
+.skill .gloss { margin-top: 0.4mm; font-size: 8.6pt; line-height: 1.33; color: #5d6680; }
+.skill .status { font-size: 10pt; font-weight: 600; line-height: 1.25; }
+.skill .status .glyph { margin-right: 2.2mm; }
+.skill.status-non_evaluee .status { font-weight: 400; color: #5d6680; }
+.skill .insight, .skill .comment { margin-top: 1mm; font-size: 9.2pt; line-height: 1.4; }
+.skill .insight { color: #5d6680; }
+.skill .comment { color: #0f2149; }
+.skill .lead-in { font-weight: 600; }
+.skill .insight .lead-in { color: #1d3166; }
+.disclaimer { break-before: avoid; margin-top: 3mm; font-size: 8.6pt; color: #5d6680; }
+.questions { margin-top: 5mm; padding: 4.5mm 6mm 3.4mm; background: #f5f6f9; border-radius: 2.5mm; break-inside: avoid; }
+.questions ul { list-style: none; }
+.questions li { position: relative; padding: 0 0 1.5mm 4.4mm; font-size: 10.5pt; line-height: 1.38; }
+.questions li::before { content: ""; position: absolute; left: 0; top: 2.15mm; width: 2.2mm; border-top: 1.2pt solid #ffd500; }
+.tag { margin-left: 2.5mm; font-size: 7.4pt; font-weight: 400; letter-spacing: 0; text-transform: none; color: #5d6680; }
+.tag::before { content: "· "; }
+
+/* ---- carbon */
+.carbon { break-inside: avoid; }
+.bars { width: 100%; margin-top: 3.5mm; table-layout: fixed; }
+.bars td { padding: 1.6mm 0; vertical-align: middle; }
+.bars .mode { width: 36mm; font-size: 10.5pt; font-weight: 600; line-height: 1.2; padding-right: 4mm; }
+.bars .assume { font-size: 8.4pt; font-weight: 400; color: #5d6680; }
+.bars .track { padding-right: 5mm; }
+.bars .bar { height: 6mm; max-width: 100%; border-radius: 1mm; background: #c9cdd8; }
+.bars .train .bar { background: #0f2149; }
+.bars .amount { width: 42mm; }
+.bars .kg { font-size: 12pt; font-weight: 700; line-height: 1.15; }
+.bars .each { font-size: 8.4pt; color: #5d6680; }
+.comparisons { margin-top: 3mm; border-left: 2.2pt solid #ffd500; padding-left: 5.5mm; }
+.comparisons p { font-size: 11.5pt; font-weight: 600; line-height: 1.45; }
+.method { margin-top: 3.5mm; font-size: 8.3pt; line-height: 1.45; color: #5d6680; }
+.method p + p { margin-top: 1.4mm; }
+.method strong { color: #1d3166; }
+
+/* ---- photos */
+.photo-group + .photo-group { margin-top: 8mm; }
+.grid { display: flex; flex-wrap: wrap; gap: 5mm 4mm; margin-top: 4.5mm; }
+.grid figure { break-inside: avoid; min-width: 0; }
+.grid img { display: block; width: 100%; max-height: 80mm; object-fit: cover; border-radius: 1.5mm; background: #eceef3; }
+.grid-one figure { flex: 0 0 120mm; }
+.grid-one img { height: 80mm; }
+.grid-two figure { flex: 0 0 84mm; }
+.grid-two img { height: 58mm; }
+.grid-three figure { flex: 0 0 54.6mm; }
+.grid-three img { height: 40mm; }
+.grid img.contain { object-fit: contain; }
+.grid figcaption { margin-top: 1.4mm; font-size: 8.6pt; line-height: 1.35; color: #5d6680; }
+
+/* ---- sources and validation */
+.sources { break-inside: avoid; }
+.sources .validation { margin-top: 3.5mm; font-size: 11pt; font-weight: 600; }
+.sources .validation.no { font-weight: 400; color: #5d6680; }
+.sources .validation .glyph { margin-right: 2.2mm; }
+.source-list { list-style: none; margin-top: 3.5mm; font-size: 8.4pt; line-height: 1.45; color: #5d6680; }
+.source-list li { padding-bottom: 0.9mm; }
+.source-list .label { color: #1d3166; }
+.ai-notice { margin-top: 2mm; font-size: 8.4pt; line-height: 1.45; color: #5d6680; }
+.generated { margin-top: 2mm; font-size: 8.4pt; color: #5d6680; }
