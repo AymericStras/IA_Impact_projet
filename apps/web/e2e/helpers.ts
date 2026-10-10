@@ -51,3 +51,51 @@ export async function settle(page: Page): Promise<void> {
   await expect(page.getByText("Mis à jour", { exact: true })).toHaveCount(0, { timeout: 10_000 });
   await page.mouse.move(0, 0);
 }
+
+/** Describes the project in two messages and confirms it: the journey can start from here. */
+export async function confirmProject(page: Page): Promise<void> {
+  await send(page, FIRST_MESSAGE);
+  await send(page, "Avant 17 h.");
+  await page.getByTestId("confirm-button").click();
+  await expect(page.getByTestId("confirmation-done")).toBeVisible();
+  await expect(page.getByTestId("journey-start-button")).toBeVisible();
+}
+
+export interface Scenarios {
+  search?: "auto" | "adjustments" | "no_match" | "error";
+  booking?: "confirmed" | "refused" | "error";
+}
+
+/** Picks the simulation's test scenarios in the (collapsed) « Scénario de test » tool. */
+export async function pickScenarios(page: Page, scenarios: Scenarios): Promise<void> {
+  const journey = page.getByTestId("journey");
+  const toggle = journey.getByRole("button", { name: "Scénario de test" });
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  if (scenarios.search) await journey.getByLabel("Recherche", { exact: true }).selectOption(scenarios.search);
+  if (scenarios.booking) await journey.getByLabel("Réservation", { exact: true }).selectOption(scenarios.booking);
+}
+
+/** Starts the search from the start card and waits for the first journey stage. */
+export async function startJourney(page: Page, scenarios: Scenarios = {}): Promise<void> {
+  if (scenarios.search || scenarios.booking) await pickScenarios(page, scenarios);
+  await page.getByTestId("journey-start-button").click();
+}
+
+/** The journey section in a given stage (`data-stage` mirrors the server's `Journey.stage`). */
+export async function expectStage(page: Page, stage: string): Promise<void> {
+  await expect(page.getByTestId("journey")).toHaveAttribute("data-stage", stage, { timeout: 15_000 });
+}
+
+/** Chooses a destination card by its id, ticking the given activities first. */
+export async function chooseDestination(page: Page, destinationId: string, activities: string[] = []): Promise<void> {
+  const card = page.locator(`[data-testid="destination-card"][data-destination="${destinationId}"]`);
+  for (const activity of activities) await card.getByRole("checkbox", { name: activity }).check();
+  await card.getByRole("button", { name: "Choisir cette destination" }).click();
+}
+
+/** The simulation label must be on screen (in the journey section) in every journey view. */
+export async function expectSimulationLabel(page: Page): Promise<void> {
+  await expect(page.getByTestId("journey").getByTestId("journey-notices").first()).toContainText(
+    "Simulation : destinations, horaires, lieux et réservation sont illustratifs, sans disponibilité réelle.",
+  );
+}

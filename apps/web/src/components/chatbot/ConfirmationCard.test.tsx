@@ -56,5 +56,17 @@ describe("ConfirmationCard", () => {
     expect(json).toHaveTextContent('"departure_station": "Toulouse Matabiau"');
     expect(json).toHaveTextContent('"constraint": "latest"');
     expect(screen.getByRole("button", { name: "Copier" })).toBeInTheDocument();
+    // No journey follows: no pointer to it.
+    expect(screen.queryByRole("button", { name: /Voir la suite/ })).not.toBeInTheDocument();
+  });
+
+  it("points to the journey when one follows the confirmed card", async () => {
+    const onContinue = vi.fn();
+    render(
+      <ConfirmationCard ready={false} confirmedRequirements={confirmed} onConfirm={vi.fn()} onEdit={vi.fn()} onContinue={onContinue} />,
+    );
+    await userEvent.setup().click(screen.getByRole("button", { name: "Voir la suite : propositions de sortie" }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("confirmed-json")).toBeInTheDocument();
   });
 });

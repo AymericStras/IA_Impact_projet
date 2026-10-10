@@ -232,6 +232,137 @@ export const fr = {
   loading: {
     conversation: "Chargement de la conversation…",
   },
+  /**
+   * Journey after confirmation (docs/PLANNER_CONTRACT.md). Only chrome and labels: stage
+   * messages, reasons, adjustment labels, notices and booking messages come from the server.
+   */
+  journey: {
+    sectionLabel: "Propositions et réservation",
+    noticesLabel: "À savoir sur ces propositions",
+    loading: "Chargement des propositions…",
+    interrupted:
+      "La recherche de propositions est interrompue : confirmez à nouveau vos informations pour la relancer.",
+    /** Pointer from the confirmed card to the journey, which may be below the fold. */
+    continue: "Voir la suite : propositions de sortie",
+    restart: "Relancer la recherche",
+    restarting: "Recherche…",
+    editRequest: "Modifier ma demande",
+    start: {
+      title: "Propositions de sortie",
+      message:
+        "Vos informations sont confirmées. Lancez la recherche pour voir des destinations, des activités et des itinéraires.",
+      action: "Rechercher des propositions",
+      pending: "Recherche…",
+    },
+    scenario: {
+      toggle: "Scénario de test",
+      hint: "Outil de test de la simulation : choisissez la situation à reproduire à la prochaine recherche.",
+      searchLabel: "Recherche",
+      bookingLabel: "Réservation",
+      search: {
+        auto: "Automatique",
+        adjustments: "Ajustements proposés",
+        no_match: "Aucun résultat",
+        error: "Erreur technique",
+      },
+      booking: {
+        confirmed: "Confirmée",
+        refused: "Refusée une fois",
+        error: "Erreur technique",
+      },
+    },
+    stages: {
+      destinations: "Destinations proposées",
+      itineraries: "Itinéraires possibles",
+      adjustments: "Ajustements possibles",
+      no_match: "Aucune proposition",
+      review: "Vérification avant réservation",
+      booking_pending: "Demande de réservation envoyée",
+      booked: "Réservation confirmée",
+      booking_refused: "Réservation non confirmée",
+      closed: "Sortie clôturée",
+    },
+    destinations: {
+      listLabel: "Destinations",
+      changeTitle: "Choisir une autre destination",
+      change: "Changer de destination",
+      back: "Revenir à l'étape en cours",
+      current: "Destination actuelle",
+      travel: (duration: string) => `${duration} de trajet`,
+      station: (station: string) => `Gare d'arrivée : ${station}`,
+      departureStations: (stations: string) => `Gares de départ possibles : ${stations}`,
+      places: "Lieux",
+      walk: (minutes: number) => `${minutes} min à pied de la gare`,
+      activities: "Activités",
+      activitiesHint: "Cochez les activités souhaitées. Sans activité cochée, la première est retenue.",
+      choose: "Choisir cette destination",
+      choosing: "Recherche des itinéraires…",
+    },
+    itinerary: {
+      listLabel: "Itinéraires",
+      outbound: "Aller",
+      return: "Retour",
+      to: "vers",
+      activities: "Activités sur place",
+      activityTime: (start: string, end: string) => `${start} – ${end}`,
+      freeTime: (duration: string) => `Temps libre sur place : ${duration}`,
+      participants: (count: number) => (count > 1 ? `${count} participants` : `${count} participant`),
+      checks: "Vérifications",
+      checkOk: "Vérifié",
+      checkFailed: "Non vérifié",
+      choose: "Choisir cet itinéraire",
+      choosing: "Sélection…",
+    },
+    adjustments: {
+      reasonTitle: "Pourquoi rien ne convient tel quel",
+      consent: "Rien n'est modifié tant que vous n'avez pas accepté un ajustement.",
+      listLabel: "Ajustements proposés",
+      becomes: "devient",
+      unlocks: (count: number) => (count > 1 ? `${count} itinéraires possibles` : `${count} itinéraire possible`),
+      accept: "Accepter cet ajustement",
+      accepting: "Application…",
+      otherDestination: "Choisir une autre destination",
+    },
+    noMatch: {
+      hint: "La recherche a bien fonctionné : il ne s'agit pas d'une erreur technique.",
+      otherDestination: "Choisir une autre destination",
+    },
+    review: {
+      notBooked: "Rien n'est réservé pour l'instant.",
+      submit: "Envoyer la demande de réservation",
+      submitting: "Envoi de la demande…",
+      otherItinerary: "Choisir un autre itinéraire",
+    },
+    pending: {
+      reference: (reference: string) => `Référence : ${reference}`,
+      waiting: "Réponse du service de réservation en attente…",
+      check: "Vérifier la réponse",
+      checking: "Vérification…",
+    },
+    refused: {
+      alternatives: "Autres itinéraires possibles",
+    },
+    travelFile: {
+      title: "Dossier de voyage",
+      loading: "Préparation du dossier de voyage…",
+      reference: (reference: string) => `Référence : ${reference}`,
+      schedule: "Déroulé de la journée",
+      places: "Lieux",
+      safety: "Conseils de sécurité",
+      contacts: "Contacts utiles",
+      links: "Liens officiels",
+      print: "Imprimer le dossier",
+    },
+    feedback: {
+      title: "Votre retour d'expérience",
+      ratingLegend: "Note globale",
+      rating: (rating: number) => `${rating} sur 5`,
+      commentLabel: "Commentaire (facultatif)",
+      submit: "Envoyer mon avis",
+      submitting: "Envoi…",
+      given: (rating: number) => `Votre note : ${rating} sur 5`,
+    },
+  },
 } as const;
 
 export type Fr = typeof fr;

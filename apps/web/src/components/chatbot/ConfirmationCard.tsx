@@ -1,10 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { CheckCircle2Icon, ClipboardCheckIcon, Loader2Icon, PencilIcon } from "lucide-react";
+import { ArrowDownIcon, CheckCircle2Icon, ClipboardCheckIcon, Loader2Icon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { FLUID_BUTTON, FLUID_BUTTON_SM, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { ConfirmedRequirements } from "@/types/contracts";
 import { ConfirmedJsonBlock } from "./ConfirmedJsonBlock";
@@ -18,9 +18,14 @@ interface ConfirmationCardProps {
   /** "Modifier": moves focus to the requirements panel. */
   onEdit: () => void;
   pending?: boolean;
+  /**
+   * Confirmed state only: when the journey follows (it sits under the JSON block, often
+   * below the fold), a button that brings it into view.
+   */
+  onContinue?: () => void;
 }
 
-export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEdit, pending = false }: ConfirmationCardProps) {
+export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEdit, pending = false, onContinue }: ConfirmationCardProps) {
   const reduceMotion = useReducedMotion();
   if (!ready && !confirmedRequirements) return null;
 
@@ -46,6 +51,19 @@ export function ConfirmationCard({ ready, confirmedRequirements, onConfirm, onEd
             </h2>
             <p className="mt-1 text-sm text-foreground">{fr.confirmation.confirmedMessage}</p>
             <p className="mt-1 text-xs text-muted-foreground">{fr.confirmation.stillEditable}</p>
+            {onContinue ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onContinue}
+                className={cn("mt-2 bg-card", FLUID_BUTTON_SM, TOUCH_TARGET)}
+                data-testid="journey-continue"
+              >
+                <ArrowDownIcon aria-hidden="true" />
+                {fr.journey.continue}
+              </Button>
+            ) : null}
           </div>
         </div>
         <div className="mt-3">

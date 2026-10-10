@@ -27,6 +27,7 @@ import type {
   TeachingType,
   TimeConstraint,
 } from "@/types/contracts";
+import type { Journey, RequirementChange } from "@/types/journey";
 import { ApiError, type ConversationService } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,10 @@ const T = {
   nothingNew: "Je n'ai pas trouvé d'information sur votre projet dans ce message. ",
   providerError: "Désolé, je n'ai pas pu traiter votre message. Pouvez-vous réessayer ?",
   staleVersion: "Les informations ont été modifiées entre-temps. Rechargez le projet avant de modifier à nouveau.",
+  // Accepted journey adjustment (services/api/app/services/conversation.py, `_apply_accepted_changes`).
+  adjustmentAccepted: (label: string) => `Ajustement accepté : ${label}.`,
+  adjustmentNoted: (label: string) => `C'est noté : ${label}. Votre demande a été mise à jour.`,
+  adjustmentStale: "Votre demande a changé depuis cette proposition. Relancez la recherche.",
   confirmNotReady: "La confirmation n'est possible qu'une fois le récapitulatif complet et vérifié.",
   exportNotReady: "Le projet n'est pas encore confirmé.",
   notFound: "Conversation introuvable.",
@@ -490,6 +495,8 @@ interface StoredConversation {
   pending: PendingClarification | null;
   processed: Record<string, ConversationResponse>;
   messageCounter: number;
+  /** Journey after confirmation (the backend's `plan` column); dropped with the confirmation. */
+  journey?: Journey | null;
 }
 
 function isComplete(value: PartialDateTime | null | undefined): value is DateTimeRequirement {
@@ -838,7 +845,32 @@ function newId(prefix: string): string {
   return `${prefix}_${random}`;
 }
 
+/**
+ * What the demo journey (`mockJourneyApi.ts`) needs from the demo conversation: the same
+ * things the backend's journey methods read and write on the conversation row. Internal to
+ * the mock services; never used by application code.
+ */
+export interface MockJourneyBridge {
+  /** Throws the 404 of an unknown conversation. */
+  read(conversationId: string): { version: number; confirmed: ConfirmedRequirements | null; journey: Journey | null };
+  saveJourney(conversationId: string, journey: Journey): void;
+  /**
+   * Applies the before/after values of an accepted adjustment: the requirements change and
+   * stay confirmed (version + 1, two messages), as the backend does. Returns the new version.
+   */
+  applyAcceptedChanges(conversationId: string, changes: RequirementChange[], label: string): number;
+}
+
+export interface MockDemo {
+  service: ConversationService;
+  journeyBridge: MockJourneyBridge;
+}
+
 export function createMockConversationService(options: MockOptions = {}): ConversationService {
+  return createMockDemo(options).service;
+}
+
+export function createMockDemo(options: MockOptions = {}): MockDemo {
   const latencyMs = options.latencyMs ?? 700;
   const audioLatencyMs = options.audioLatencyMs ?? 1500;
   const now = options.now ?? (() => new Date());
@@ -887,12 +919,65 @@ export function createMockConversationService(options: MockOptions = {}): Conver
     r.ready_for_confirmation = decision.ready;
     r.assistant_message = decision.message;
     r.confirmed_requirements = null;
+    // Losing the confirmation drops the proposals computed for it.
+    conv.journey = null;
     if (bumpVersion) r.version += 1;
     r.messages.push(message(conv, "assistant", decision.message));
     conv.pending = decision.pending;
   }
 
-  return {
+  function buildConfirmed(conv: StoredConversation): ConfirmedRequirements {
+    const req = conv.response.requirements;
+    return {
+      schema_version: "1.1",
+      conversation_id: conv.response.conversation_id,
+      status: "confirmed",
+      timezone: "Europe/Paris",
+      confirmed_at: now().toISOString(),
+      requirements: {
+        participants_count: req.participants_count as number,
+        participants_breakdown: req.participants_breakdown ?? null,
+        departure_station: req.departure_station as string,
+        departure: req.departure as DateTimeRequirement,
+        return: req.return as DateTimeRequirement,
+        teaching_type: req.teaching_type as TeachingType,
+      },
+    };
+  }
+
+  const journeyBridge: MockJourneyBridge = {
+    read(conversationId) {
+      const conv = find(conversationId);
+      const confirmed = conv.response.state === "CONFIRMED" ? (conv.response.confirmed_requirements ?? null) : null;
+      return JSON.parse(
+        JSON.stringify({ version: conv.response.version, confirmed, journey: confirmed ? (conv.journey ?? null) : null }),
+      ) as ReturnType<MockJourneyBridge["read"]>;
+    },
+    saveJourney(conversationId, journey) {
+      find(conversationId).journey = JSON.parse(JSON.stringify(journey)) as Journey;
+      save();
+    },
+    applyAcceptedChanges(conversationId, changes, label) {
+      const conv = find(conversationId);
+      const req = cloneRequirements(conv.response.requirements);
+      for (const change of changes) {
+        const current = req[change.field];
+        if (!isComplete(current) || current.time !== change.before) {
+          throw new ApiError(409, "État invalide", T.adjustmentStale, "INVALID_STATE");
+        }
+        req[change.field] = { ...current, time: change.after };
+      }
+      conv.response.requirements = req;
+      conv.response.version += 1;
+      conv.response.confirmed_requirements = buildConfirmed(conv);
+      conv.response.messages.push(message(conv, "user", T.adjustmentAccepted(label), "edit"));
+      conv.response.messages.push(message(conv, "assistant", T.adjustmentNoted(label)));
+      save();
+      return conv.response.version;
+    },
+  };
+
+  const service: ConversationService = {
     async getConfig() {
       return { ...DEFAULT_CLIENT_CONFIG, planner_mode: "simulated" };
     },
@@ -1027,22 +1112,7 @@ export function createMockConversationService(options: MockOptions = {}): Conver
       const conv = find(conversationId);
       if (conv.response.state !== "AWAITING_CONFIRMATION") throw new ApiError(409, "Confirmation impossible", T.confirmNotReady, "NOT_AWAITING_CONFIRMATION");
       if (expectedVersion !== conv.response.version) throw new ApiError(409, "Version obsolète", T.staleVersion, "VERSION_CONFLICT");
-      const req = conv.response.requirements;
-      const confirmed: ConfirmedRequirements = {
-        schema_version: "1.1",
-        conversation_id: conv.response.conversation_id,
-        status: "confirmed",
-        timezone: "Europe/Paris",
-        confirmed_at: now().toISOString(),
-        requirements: {
-          participants_count: req.participants_count as number,
-          participants_breakdown: req.participants_breakdown ?? null,
-          departure_station: req.departure_station as string,
-          departure: req.departure as DateTimeRequirement,
-          return: req.return as DateTimeRequirement,
-          teaching_type: req.teaching_type as TeachingType,
-        },
-      };
+      const confirmed = buildConfirmed(conv);
       conv.response.state = "CONFIRMED";
       conv.response.ready_for_confirmation = false;
       conv.response.assistant_message = T.acknowledge;
@@ -1059,7 +1129,14 @@ export function createMockConversationService(options: MockOptions = {}): Conver
       return JSON.parse(JSON.stringify(conv.response.confirmed_requirements)) as ConfirmedRequirements;
     },
   };
+
+  return { service, journeyBridge };
 }
 
+const defaultDemo = createMockDemo();
+
 /** Default instance used by the app in demo mode. */
-export const mockConversationApi: ConversationService = createMockConversationService();
+export const mockConversationApi: ConversationService = defaultDemo.service;
+
+/** Journey side of the same instance; imported by `mockJourneyApi.ts` only. */
+export const mockJourneyBridge: MockJourneyBridge = defaultDemo.journeyBridge;

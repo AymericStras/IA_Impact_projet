@@ -58,6 +58,7 @@ export function RequirementsPanel({
   const [expanded, setExpanded] = useState(false);
   const [recentlyUpdated, setRecentlyUpdated] = useState<Set<FieldName>>(new Set());
   const previousRef = useRef<PartialRequirements | null>(null);
+  const tickTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sectionRef = useRef<HTMLElement>(null);
   const handledEditRequestRef = useRef(0);
 
@@ -87,11 +88,14 @@ export function RequirementsPanel({
     const changed = FIELD_NAMES.filter(
       (field) => JSON.stringify(previous[field]) !== JSON.stringify(requirements[field]),
     );
+    // A response that changes no value (a confirmation right after an answer) must not
+    // cancel the pending removal: the tick would stay for ever.
     if (changed.length === 0) return;
     setRecentlyUpdated(new Set(changed));
-    const timer = setTimeout(() => setRecentlyUpdated(new Set()), UPDATE_TICK_MS);
-    return () => clearTimeout(timer);
+    clearTimeout(tickTimerRef.current);
+    tickTimerRef.current = setTimeout(() => setRecentlyUpdated(new Set()), UPDATE_TICK_MS);
   }, [requirements]);
+  useEffect(() => () => clearTimeout(tickTimerRef.current), []);
 
   return (
     <section

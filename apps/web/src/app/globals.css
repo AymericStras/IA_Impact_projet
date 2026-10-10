@@ -219,3 +219,37 @@
     scrollbar-color: var(--border) transparent;
   }
 }
+
+/*
+  Printing the travel file. When a travel file is on screen (`[data-print-area]`), printing
+  the page prints that file and nothing else: every element that is neither the file, nor
+  inside it, nor one of its ancestors is removed, and the ancestors lose the viewport-high,
+  scrolling shell so the file flows over as many pages as it needs. Without a travel file
+  on screen, printing is left to the browser's defaults.
+*/
+@media print {
+  body:has([data-print-area]) *:not([data-print-area]):not([data-print-area] *):not(:has([data-print-area])),
+  [data-print-area] [data-print-hidden] {
+    display: none !important;
+  }
+  body:has([data-print-area]),
+  body:has([data-print-area]) *:has([data-print-area]) {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: none !important;
+    container-type: normal !important;
+  }
+  [data-print-area] {
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}

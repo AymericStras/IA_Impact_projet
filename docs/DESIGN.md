@@ -7,7 +7,7 @@ Before any UI change: read this file, then `apps/web/AGENTS.md`. After any UI ch
 ## 1. Principles
 
 - Calm French public-service look: light background, white surfaces, one deep blue-teal accent, thin borders, no decoration.
-- The interface renders **server state only** (`ConversationResponse`). It never computes missing fields, totals, readiness or validation.
+- The interface renders **server state only** (`ConversationResponse`, and `Journey` / `TravelFile` after the confirmation). It never computes missing fields, totals, readiness or validation, and never plans, sorts, filters or judges the feasibility of a trip.
 - Every state is conveyed by **icon + text**, never by colour alone.
 - All user-facing text is French and lives in `apps/web/src/i18n/fr.ts`. Assistant messages come from the server and are displayed verbatim as plain text.
 
@@ -29,7 +29,7 @@ Defined once as CSS variables in `apps/web/src/app/globals.css` (`:root`) and ex
 | `--accent` / `-foreground` | `0.94 0.025 215` / `0.3 0.07 222` | `#d9f0f6` / `#003547` | Confirmation card tint, notice, help numbers, highlighted JSON lines |
 | `--success` / `-foreground` | `0.47 0.12 152` / `0.99 0 0` | `#0a6d37` | Known-field check, confirmed card icon and border |
 | `--success-soft` | `0.95 0.035 152` | `#def6e3` | Confirmed card background, "Mis à jour" tick |
-| `--warning` | `0.6 0.13 70` | `#b17000` | **Icons and borders only** (demo badge, pending clarification) |
+| `--warning` | `0.6 0.13 70` | `#b17000` | **Icons and borders only** (demo badge, pending clarification, journey notices, refused booking) |
 | `--destructive` / `-foreground` | `0.5 0.19 27` / `0.99 0 0` | `#b7191c` | Error title, error border, recording dot |
 | `--border` | `0.9 0.01 240` | `#d8dfe4` | Decorative separators and card outlines |
 | `--input` | `0.62 0.015 240` | `#7e888e` | Boundary of editable fields (inputs, select, composer) |
@@ -148,7 +148,7 @@ On coarse pointers every interactive control is at least 44 × 44 CSS px (`TOUCH
 
 ### 5.7 Thread scrolling
 
-`ConversationThread`: on each new message or footer change the thread follows the conversation. If the newest reply plus what follows it (e.g. confirmation card + JSON) is taller than the conversation area, the start of that reply is aligned to the top instead of jumping to the end. If the thread is not at its end, a « Revenir en bas » pill is offered; it sits on its own row under the list (in the `low` tier: icon-only in a right gutter), so it never covers message text. If the user has scrolled up, nothing moves; the user's own message always brings the thread back down. Scrolling is instant, never animated.
+`ConversationThread`: on each new message or footer change the thread follows the conversation. When the footer holds an element marked `data-thread-anchor` (the journey, §14) and the footer changes, the **start of that element** is aligned to the top instead, wherever the thread was — the content under the reader has just been replaced by the teacher's own choice — and the thread does not re-glue to the bottom when that element grows (travel file arriving). The scroll container is `position: relative` so that absolutely positioned descendants (screen-reader-only text, stretched checkbox inputs) scroll with it instead of giving the shell a phantom scrollable height. If the newest reply plus what follows it (e.g. confirmation card + JSON) is taller than the conversation area, the start of that reply is aligned to the top instead of jumping to the end. If the thread is not at its end, a « Revenir en bas » pill is offered; it sits on its own row under the list (in the `low` tier: icon-only in a right gutter), so it never covers message text. If the user has scrolled up, nothing moves; the user's own message always brings the thread back down. Scrolling is instant, never animated.
 
 ## 6. Motion
 
@@ -184,10 +184,11 @@ All in `apps/web/src/components/chatbot/`, one component per file. Copy source f
 | `AudioTranscriptionPreview` | editable transcript, « Réenregistrer » / « Envoyer »; demo notice | `transcription` |
 | `RequirementsPanel` | five rows in the canonical order (participants, gare de départ, départ, retour, matière ou thème) · collapsed/expanded (single column) · progress « n / 5 informations », then « 5 / 5 informations · complet » · state pill (panel ≥ 19rem wide) | `panel`, `states` |
 | `RequirementField` | known (green check + value) · missing (dashed circle + « À préciser ») · partial (server value with « heure à préciser ») · clarification pending (warning icon + « Une précision est attendue ») · just updated (« Mis à jour ») · editing · saving | `panel`, `fields`, `constraints`, `dateTime` |
-| `ConfirmationCard` | hidden · ready (« Vérification avant transmission », « Modifier », « Confirmer et continuer ») · confirming · confirmed (« Projet confirmé » + JSON) | `confirmation` |
+| `ConfirmationCard` | hidden · ready (« Vérification avant transmission », « Modifier », « Confirmer et continuer ») · confirming · confirmed (« Projet confirmé » + JSON; when the journey follows, a small « Voir la suite : propositions de sortie » button that brings it into view) | `confirmation`, `journey.continue` |
 | `ConfirmedJsonBlock` | open/closed · copied · copy failed; `"constraint"` lines highlighted | `confirmation` |
 | `ErrorMessage` | with retry · with restart · dismiss only | `errors` |
 | `LoadingState` | skeleton bubbles | `loading` |
+| `journey/*` | the journey after confirmation, see §14 | `journey` |
 
 Component rules that must hold:
 
@@ -233,6 +234,7 @@ The server's French `detail` is always what is displayed. The reaction is chosen
 - Loading: skeleton bubbles; typing dots while a reply is awaited; spinners inside the acting button.
 - Empty conversation: the server's welcome message; the panel shows five « À préciser » rows and « 0 / 5 informations ».
 - In real mode a failed request is **never** answered by the mock.
+- Journey failures (§14) are shown inside the journey section by the same `ErrorMessage` block: `PLANNER_ERROR`, `BOOKING_ERROR`, network failures and uncoded 5xx with « Réessayer » (replays the same call); a refused acceptance of an adjustment without it (a second acceptance is refused by the server). A failure never changes the stage on screen. "No result" (`no_match`) and a refused booking are **stages**, not errors: they never use `role="alert"` nor the destructive tint.
 
 ## 10. Accessibility rules
 
@@ -262,7 +264,7 @@ The server's French `detail` is always what is displayed. The reaction is chosen
 
 ## 12. Visual regression baselines
 
-`apps/web/e2e/visual.spec.ts` compares full-viewport screenshots in demo mode (fixed clock, fixed ids, reduced motion) for four projects and nine states:
+`apps/web/e2e/visual.spec.ts` compares full-viewport screenshots in demo mode (fixed clock, fixed ids, reduced motion) for four projects and thirteen states:
 
 | Project | Viewport | Layout |
 |---|---|---|
@@ -271,9 +273,9 @@ The server's French `detail` is always what is displayed. The reaction is chosen
 | `tablet` | 768 × 1024, touch | two columns, 17.5rem panel |
 | `landscape` | 844 × 390, touch | two columns, compact mode |
 
-`01-welcome` · `02-partial-4-of-5` · `03-inline-edit-open` · `04-complete-confirmation-card` · `05-confirmed-json` · `06-recorder-recording` (timer masked) · `07-transcript-preview` · `08-error-retry` · `09-help-dialog`
+`01-welcome` · `02-partial-4-of-5` · `03-inline-edit-open` · `04-complete-confirmation-card` · `05-confirmed-json` (with the « Voir la suite » pointer) · `06-recorder-recording` (timer masked) · `07-transcript-preview` · `08-error-retry` · `09-help-dialog` · `10-journey-destinations` · `11-journey-adjustments` · `12-journey-review` · `13-journey-travel-file`
 
-Baselines: `apps/web/e2e/__screenshots__/<platform>/<project>/<name>.png` (currently `darwin` only, 36 PNGs). They are platform-specific because font rasterisation differs; on a new platform they must be generated once and reviewed against the committed ones by eye.
+The four journey states come from one run of the `adjustments` test scenario (destinations → adjustments → accepted « Retour à 17 h 30 » → review → travel file). Baselines: `apps/web/e2e/__screenshots__/<platform>/<project>/<name>.png` (currently `darwin` only, 52 PNGs for the classic chat; the `voice-*` files belong to `/vocal`). They are platform-specific because font rasterisation differs; on a new platform they must be generated once and reviewed against the committed ones by eye.
 
 - Run: `pnpm test:e2e` (from `apps/web`). It builds the app in demo mode into `.next-e2e` and serves it on port 3100.
 - A failure writes `*-actual.png` and `*-diff.png` under `apps/web/test-results/`. **Open them.** Unintended diff → fix the code. Intended change → update this document first, then `pnpm test:e2e --update-snapshots`, review the new PNGs, commit them with the change.
@@ -284,7 +286,7 @@ Baselines: `apps/web/e2e/__screenshots__/<platform>/<project>/<name>.png` (curre
 
 Matrix: 320×568 · 360×640 · 390×844 · 430×932 · 568×320 · 667×375 · 844×390 · 768×1024 · 820×1180 · 1024×768 · 1280×720 · 1440×900 · 1920×1080, plus 390×844 and 1280×720 with the root font size at 200 % (set before the page loads).
 
-States audited at every size: welcome · help dialog · recorder recording · transcript preview · complete + confirmation card · station editor open · departure editor open (five rows) · confirmed + JSON.
+States audited at every size: welcome · help dialog · recorder recording · transcript preview · complete + confirmation card · station editor open · departure editor open (five rows) · confirmed + JSON (with the journey's start card) · and the journey (§14): start card with the test-scenario tool open · destinations (top, and scrolled to the activity checkboxes) · adjustments (top, and its actions) · change of destination · itineraries · review (top, and its buttons) · booked · travel file (start and end) · feedback form · closed.
 
 What the audit (`auditLayout`) reports:
 
@@ -310,3 +312,39 @@ At root font 200 % on phone widths the conversation floor is 30 % (35 % everywhe
 
 The classic top bar carries an icon link to `/vocal` (hidden on `narrow` shells, where four controls do not fit); the Help dialog always carries the same link as text with a 44 px target. `/vocal` links back from its own top bar.
 
+## 14. Journey after confirmation
+
+What follows the confirmation — destinations, itineraries, adjustments, booking, travel file, feedback — belongs to teammates' modules; the backend simulates them (`docs/PLANNER_CONTRACT.md`). The classic chat renders that journey **in the thread**, under the confirmed card and its JSON block (which stay as they are), once the conversation is `CONFIRMED` and `GET /config` says `planner_mode` is not `"off"` (absent counts as off). Components: `apps/web/src/components/chatbot/journey/`, one per file; copy in `fr.journey`.
+
+Rules:
+
+- **Server state only.** Stage, lists and their order, messages, reasons, adjustment labels, `unlocks` counts and feasibility checks are read from the `Journey` object and shown as received. The client formats times and durations (`formatClock` « 8 h 05 », `formatDuration` « 1 h 15 », `src/lib/format.ts`) and pluralises its own labels; it plans, sorts, filters and checks nothing.
+- **The simulation label is on every journey view.** `JourneyNotices` renders every string of `journey.notices` (warning border and tint, flask icon), directly under the stage header and again inside the travel file, so that the printed page carries it. Nothing is hardcoded: no notice from the server, no label.
+- **Nothing is applied without a click.** Adjustments are cards with one button each; none is preselected. The sentence « Rien n'est modifié tant que vous n'avez pas accepté un ajustement. » stands above the list.
+- **Change at any time.** In every stage before a booking request is waiting (`destinations`, `itineraries`, `adjustments`, `no_match`, `review`, `booking_refused`) the section ends with `JourneyActions`: « Changer de destination » (« Choisir une autre destination » in `adjustments` and `no_match`; shows `journey.destinations` again with the current choice marked and its activities ticked; absent when the server listed no destination), « Modifier ma demande » (opens "Votre projet" on its first « Modifier » button) and « Relancer la recherche ». Editing a requirement clears the confirmation: the journey leaves the screen at once and a `role="status"` notice (« La recherche de propositions est interrompue… ») stays above the confirmation card until the project is confirmed again.
+- **"No result" is not an error.** `no_match` and `booking_refused` use the neutral header (muted tint, `SearchX` / warning-triangle icon) and plain text; technical failures use the `ErrorMessage` block (§9). The two never share a look.
+
+| Component | Shows | States |
+|---|---|---|
+| `JourneyPanel` | chooses the view from `journey.stage`; holds only what the teacher asked to look at again (destination list, other itineraries) and the test-scenario selection | idle (nothing) · loading · start · one view per stage · error block on top of the current view |
+| `JourneyStart` | « Propositions de sortie », primary button « Rechercher des propositions » | idle · searching |
+| `ScenarioControls` | « Scénario de test »: two selects (recherche: automatique / ajustements proposés / aucun résultat / erreur technique; réservation: confirmée / refusée une fois / erreur technique), dashed border | collapsed (default) · open. Only when `planner_mode === "simulated"`; on the start card and next to « Relancer la recherche » |
+| `JourneyHeader` | stage title (`h2`) + `journey.message` | accent tint (in progress) · success tint (`booked`, `closed`) · muted tint (`no_match`, `booking_refused`) |
+| `JourneyNotices` | every `journey.notices` line | — |
+| `DestinationList` / `DestinationCard` | title, `theme_match`, travel time and arrival station, places (walking time, note), activities as checkboxes with durations, « Choisir cette destination »; the stations a city was expanded into | default · current destination · sending |
+| `ItineraryList` / `ItineraryCard` / `TrainLegRow` | label, destination · day · participants, « Aller » and « Retour » (time + station → time + station, line label), timed activities, free time, feasibility checks (icon **and** « Vérifié » / « Non vérifié » in words), « Choisir cet itinéraire » | default · sending |
+| `AdjustmentList` / `AdjustmentCard` | the reason (once when all adjustments share it, per card otherwise), the consent sentence, then **every** adjustment: the server's `label`, before → after for each time change, « → n itinéraire(s) possible(s) », « Accepter cet ajustement » | default · applying |
+| `NoMatchCard` | « La recherche a bien fonctionné : il ne s'agit pas d'une erreur technique. » | — |
+| `ReviewCard` | the selected itinerary in full, « Rien n'est réservé pour l'instant. », « Choisir un autre itinéraire », « Envoyer la demande de réservation » | default · sending |
+| `BookingPending` | reference, waiting line, « Vérifier la réponse »; the answer is looked up **once** automatically after 2.5 s (no polling) | waiting · checking |
+| `BookingRefused` | the server's refusal message, then `journey.alternatives` as itinerary cards | with / without alternatives |
+| `TravelFileView` | title, reference, notices, timetable of the day, places, safety advice, contacts, official links as plain text (only when the server sends some), « Imprimer le dossier » | — |
+| `FeedbackForm` / `FeedbackGiven` | 1–5 rating as a native radio group (arrow keys), optional comment (1000 characters), « Envoyer mon avis »; after `closed`, the recorded rating and comment | empty (button disabled) · rated · sending |
+| `JourneyActions` | the three ways out described above | — |
+| `JourneyInterruptedNotice` | notice shown after an edit dropped the journey | — |
+
+Layout: the section is a container (`@container/journey`). Cards are one per row and go side by side from 40rem of section width (destinations, itineraries; three itineraries from 62rem) or 36rem / 58rem (adjustments); button rows stack below 24rem–30rem. Checkboxes and radios are native inputs stretched invisibly over their row or cell (the whole row is the hit area, ≥ 44 px on touch; the focus ring is drawn on the row). Times carry non-breaking spaces. A new stage always starts from its header (§5.7).
+
+**Printing.** `TravelFileView` is the print area (`data-print-area`). `@media print` in `globals.css` removes everything that is neither the file, inside it, nor one of its ancestors, releases the viewport-high scrolling shell so the file flows over as many pages as needed, and hides the print button (`data-print-hidden`). Without a travel file on screen, printing keeps the browser's default behaviour.
+
+Demo mode: `src/services/mockJourneyApi.ts` is a scripted port of the backend's simulation (same catalogue, same French strings, same error codes), validated against `journey.schema.json` / `travel_file.schema.json` and against the contract examples. It is scaffolding for the demo and the e2e suite, not a planner.

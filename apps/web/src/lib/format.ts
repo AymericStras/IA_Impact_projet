@@ -79,3 +79,55 @@ export function formatElapsed(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+const NBSP = "\u00a0";
+
+const parisClockFormatter = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: PARIS,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+const parisDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: PARIS,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/**
+ * Clock time of an ISO date-time, in Paris: "2026-11-12T08:05+01:00" → "8 h 05".
+ * Non-breaking spaces keep the value on one line. An unreadable value is shown as received.
+ */
+export function formatClock(isoDateTime: string): string {
+  const date = new Date(isoDateTime);
+  if (Number.isNaN(date.getTime())) return isoDateTime;
+  const parts = parisClockFormatter.formatToParts(date);
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "";
+  return `${Number(hour)}${NBSP}h${NBSP}${minute}`;
+}
+
+/** Day of an ISO date-time, in Paris: "2026-11-12T08:05+01:00" → "jeudi 12 novembre". */
+export function formatDay(isoDateTime: string, now: Date = new Date()): string {
+  const date = new Date(isoDateTime);
+  if (Number.isNaN(date.getTime())) return isoDateTime;
+  return formatDate(parisDateFormatter.format(date), now);
+}
+
+/** "HH:MM" → "17 h 30" with non-breaking spaces (same wording as `formatTime`). */
+export function formatTimeNoWrap(time: string): string {
+  return formatTime(time).replace(/ /g, NBSP);
+}
+
+/** Minutes → "45 min", "1 h", "1 h 15" (non-breaking spaces). */
+export function formatDuration(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes < 0) return String(minutes);
+  const whole = Math.round(minutes);
+  const hours = Math.floor(whole / 60);
+  const rest = whole % 60;
+  if (hours === 0) return `${rest}${NBSP}min`;
+  if (rest === 0) return `${hours}${NBSP}h`;
+  return `${hours}${NBSP}h${NBSP}${String(rest).padStart(2, "0")}`;
+}

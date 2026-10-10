@@ -1,5 +1,16 @@
 import { expect, test } from "@playwright/test";
-import { FIRST_MESSAGE, failNextMessage, openDemo, send, setPanelExpanded, settle } from "./helpers";
+import {
+  FIRST_MESSAGE,
+  chooseDestination,
+  confirmProject,
+  expectStage,
+  failNextMessage,
+  openDemo,
+  send,
+  setPanelExpanded,
+  settle,
+  startJourney,
+} from "./helpers";
 
 /**
  * Visual regression of the frozen design (docs/DESIGN.md), in demo mode.
@@ -34,8 +45,49 @@ test("conversation states", async ({ page }) => {
 
   await page.getByTestId("confirm-button").click();
   await expect(page.getByTestId("confirmed-json")).toBeVisible();
+  // The journey's start card comes right after the confirmed card (when it fits in the viewport).
+  await expect(page.getByTestId("journey-start-button")).toBeVisible();
   await settle(page);
   await expect.soft(page).toHaveScreenshot("05-confirmed-json.png");
+});
+
+test("journey states", async ({ page }) => {
+  await openDemo(page);
+  await confirmProject(page);
+  await startJourney(page, { search: "adjustments" });
+  await expectStage(page, "destinations");
+  await expect(page.getByTestId("destination-card")).toHaveCount(4);
+  await settle(page);
+  await expect.soft(page).toHaveScreenshot("10-journey-destinations.png");
+
+  await chooseDestination(page, "carcassonne", ["Visite guidée des remparts", "Atelier « vie au Moyen Âge »"]);
+  await expectStage(page, "adjustments");
+  await expect(page.getByTestId("adjustment-card")).toHaveCount(6);
+  await settle(page);
+  await expect.soft(page).toHaveScreenshot("11-journey-adjustments.png");
+
+  await page
+    .getByTestId("adjustment-card")
+    .filter({ hasText: "Retour à 17 h 30 au lieu de 17 h 00" })
+    .getByRole("button", { name: "Accepter cet ajustement" })
+    .click();
+  await expectStage(page, "itineraries");
+  await page.getByTestId("itinerary-card").getByRole("button", { name: "Choisir cet itinéraire" }).click();
+  await expectStage(page, "review");
+  await settle(page);
+  await expect.soft(page).toHaveScreenshot("12-journey-review.png");
+
+  await page.getByTestId("booking-submit").click();
+  await expectStage(page, "booked");
+  const file = page.getByTestId("travel-file");
+  await expect(file).toBeVisible();
+  // Bring the file itself to the top of the conversation area (the thread only, not the shell).
+  await file.evaluate((el) => {
+    const scroller = el.closest<HTMLElement>("[data-thread-scroll]")!;
+    scroller.scrollTop += el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
+  });
+  await settle(page);
+  await expect.soft(page).toHaveScreenshot("13-journey-travel-file.png");
 });
 
 test("voice recorder states", async ({ page }) => {

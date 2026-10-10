@@ -41,6 +41,11 @@ const REPLY_TOP_OFFSET = 12;
  * aligned to the top instead of jumping to the very end, so nothing is skipped.
  * Scrolling is instant: the list never animates under the reader.
  *
+ * A footer element marked `data-thread-anchor` (the journey after confirmation) takes the
+ * place of the newest reply in that rule: when the footer changes — the teacher chose
+ * something, a new stage arrived — the START of the anchor is brought to the top, wherever
+ * the thread was, because the content under the reader has just been replaced.
+ *
  * "Revenir en bas" never covers message text: it gets its own row under the list, or, on
  * phone-landscape sized viewports (`low`), an icon-only button in a reserved right gutter.
  */
@@ -59,6 +64,7 @@ export function ConversationThread({
   const atBottomRef = useRef(true);
   const userScrolledUpRef = useRef(false);
   const programmaticTopRef = useRef<number | null>(null);
+  const footerKeyRef = useRef(footerKey);
   const [showJump, setShowJump] = useState(false);
 
   const lastMessageId = messages[messages.length - 1]?.id;
@@ -98,7 +104,7 @@ export function ConversationThread({
       let target = max;
       if (alignReplyStart) {
         const replies = el.querySelectorAll<HTMLElement>('[data-role="assistant"]');
-        const last = replies[replies.length - 1];
+        const last = el.querySelector<HTMLElement>("[data-thread-anchor]") ?? replies[replies.length - 1];
         if (last) {
           const top = last.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
           target = Math.min(max, Math.max(0, top - REPLY_TOP_OFFSET));
@@ -122,8 +128,12 @@ export function ConversationThread({
   // New message, typing indicator or footer: follow the conversation.
   useEffect(() => {
     const ownSend = optimisticId !== undefined;
+    const footerChanged = footerKeyRef.current !== footerKey;
+    footerKeyRef.current = footerKey;
+    // An anchored footer that changed has replaced what was on screen: show its start.
+    const anchored = footerChanged && scrollRef.current?.querySelector("[data-thread-anchor]") != null;
     // The user's own message always brings the thread back down.
-    if (userScrolledUpRef.current && !ownSend) {
+    if (userScrolledUpRef.current && !ownSend && !anchored) {
       measure();
       return;
     }
@@ -138,8 +148,12 @@ export function ConversationThread({
     const el = scrollRef.current;
     const content = contentRef.current;
     if (!el || !content) return;
-    const observer = new ResizeObserver(() => {
-      if (atBottomRef.current && !userScrolledUpRef.current) scrollToBottom();
+    const observer = new ResizeObserver((entries) => {
+      // An anchored footer growing under its start (a travel file arriving, a detail opened)
+      // must not push that start out of view: only a resized viewport re-glues then.
+      const contentOnly = entries.every((entry) => entry.target === content);
+      const keepStart = contentOnly && el.querySelector("[data-thread-anchor]") !== null;
+      if (atBottomRef.current && !userScrolledUpRef.current && !keepStart) scrollToBottom();
       else measure();
     });
     observer.observe(el);
@@ -152,8 +166,12 @@ export function ConversationThread({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="@container/thread thin-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain wide:pr-1"
+        // `relative`: absolutely positioned descendants (screen-reader-only text, stretched
+        // checkbox inputs) must scroll and be clipped with the thread; without it they are laid
+        // out against an outer box and give the app shell a phantom scrollable height.
+        className="@container/thread thin-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain wide:pr-1"
         data-testid="conversation-scroll"
+        data-thread-scroll=""
       >
         <div ref={contentRef} className="flex flex-col gap-4 tall:pt-4 tall:pb-6 short:pt-2 short:pb-3 low:pr-12">
           <ul role="log" aria-label={fr.conversation.logLabel} aria-relevant="additions" className="flex flex-col gap-3">

@@ -74,4 +74,57 @@ describe("ConversationThread", () => {
     );
     expect(scroller.scrollTop).toBe(1_500);
   });
+  it("brings the start of an anchored footer (the journey) to the top when it changes, wherever the thread was", () => {
+    const messages = [message("m1", "assistant", "Merci, votre projet est confirmé.")];
+    const footer = (stage: string) => (
+      <div data-thread-anchor="" data-testid="anchor">
+        {stage}
+      </div>
+    );
+    const { rerender } = render(
+      <ConversationThread messages={messages} optimisticMessage={null} typing={false} footerKey="confirmed|">
+        {null}
+      </ConversationThread>,
+    );
+    const scroller = screen.getByTestId("conversation-scroll");
+    setMetrics(scroller, { scrollHeight: 3_000, clientHeight: 500 });
+    // The teacher has scrolled down a long list to press a button: not at the bottom.
+    scroller.scrollTop = 900;
+    fireEvent.scroll(scroller);
+
+    rerender(
+      <ConversationThread messages={messages} optimisticMessage={null} typing={false} footerKey="confirmed|destinations:stage">
+        {footer("destinations")}
+      </ConversationThread>,
+    );
+    // The anchor appeared (jsdom lays it out at the top of the visible area): aligned to it.
+    expect(scroller.scrollTop).toBe(900 - 12);
+    // jsdom has no layout: place the anchor 400 px below the top of the visible area.
+    const place = (top: number) => {
+      screen.getByTestId("anchor").getBoundingClientRect = () => ({ top, bottom: top + 50, left: 0, right: 0, width: 0, height: 50, x: 0, y: top, toJSON: () => ({}) });
+    };
+    place(400);
+    rerender(
+      <ConversationThread messages={messages} optimisticMessage={null} typing={false} footerKey="confirmed|itineraries:stage">
+        {footer("itineraries")}
+      </ConversationThread>,
+    );
+    // Aligned to the anchor's start (with the usual breathing room), not left where it was.
+    expect(scroller.scrollTop).toBe(888 + 400 - 12);
+
+    // Without a change of the footer, the reader's position is respected again.
+    scroller.scrollTop = 200;
+    fireEvent.scroll(scroller);
+    rerender(
+      <ConversationThread
+        messages={[...messages, message("m2", "assistant", "Autre chose ?")]}
+        optimisticMessage={null}
+        typing={false}
+        footerKey="confirmed|itineraries:stage"
+      >
+        {footer("itineraries")}
+      </ConversationThread>,
+    );
+    expect(scroller.scrollTop).toBe(200);
+  });
 });

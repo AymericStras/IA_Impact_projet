@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { FIRST_MESSAGE, openDemo, send, setPanelExpanded } from "./helpers";
+import { FIRST_MESSAGE, chooseDestination, expectStage, openDemo, pickScenarios, send, setPanelExpanded } from "./helpers";
 import { auditLayout, type AuditResult } from "./layout-audit";
 
 /**
@@ -170,7 +170,71 @@ for (const viewport of MATRIX) {
       // Confirmed + JSON.
       await page.getByTestId("confirm-button").click();
       await expect(page.getByTestId("confirmed-json")).toBeVisible();
+      // The journey's start card follows the confirmed card: wait for it, it is part of this state.
+      await expect(page.getByTestId("journey-start-button")).toBeVisible();
       await audit(page, viewport, "confirmed + JSON");
+
+      // Journey after confirmation (docs/DESIGN.md §14). The adjustments scenario goes
+      // through the most views: destinations → adjustments → itineraries → review → travel file.
+      const journey = page.getByTestId("journey");
+      const header = page.getByTestId("journey-header");
+      await pickScenarios(page, { search: "adjustments" });
+      await journey.getByLabel("Recherche", { exact: true }).scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey start + test scenario tool");
+      await page.getByTestId("journey-start-button").click();
+
+      await expectStage(page, "destinations");
+      await expect(page.getByTestId("destination-card")).toHaveCount(4);
+      await audit(page, viewport, "journey destinations");
+      // Further down: the activity checkboxes and the button of a card.
+      await page.getByTestId("destination-card").first().getByRole("button", { name: "Choisir cette destination" }).scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey destinations (activities)");
+      await chooseDestination(page, "carcassonne", ["Visite guidée des remparts", "Atelier « vie au Moyen Âge »"]);
+
+      await expectStage(page, "adjustments");
+      await expect(page.getByTestId("adjustment-card")).toHaveCount(6);
+      await audit(page, viewport, "journey adjustments");
+      await page.getByTestId("journey-actions").scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey adjustments (actions)");
+      // A view asked for again: the destinations, with the current choice marked.
+      await page.getByRole("button", { name: "Choisir une autre destination" }).click();
+      await expect(journey).toHaveAttribute("data-view", "destinations");
+      await audit(page, viewport, "journey change of destination");
+      await page.getByRole("button", { name: "Revenir à l'étape en cours" }).click();
+      await page
+        .getByTestId("adjustment-card")
+        .filter({ hasText: "Retour à 17 h 30 au lieu de 17 h 00" })
+        .getByRole("button", { name: "Accepter cet ajustement" })
+        .click();
+
+      await expectStage(page, "itineraries");
+      await expect(page.getByTestId("itinerary-card")).toHaveCount(1);
+      await audit(page, viewport, "journey itineraries");
+      await page.getByTestId("itinerary-card").getByRole("button", { name: "Choisir cet itinéraire" }).click();
+
+      await expectStage(page, "review");
+      await audit(page, viewport, "journey review");
+      await page.getByTestId("booking-submit").scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey review (actions)");
+      await page.getByTestId("booking-submit").click();
+
+      await expectStage(page, "booked");
+      const file = page.getByTestId("travel-file");
+      await expect(file).toBeVisible();
+      await audit(page, viewport, "journey booked");
+      await file.scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey travel file");
+      await file.getByRole("button", { name: "Imprimer le dossier" }).scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey travel file (end)");
+      const form = page.getByTestId("feedback-form");
+      await form.getByRole("button", { name: "Envoyer mon avis" }).scrollIntoViewIfNeeded();
+      await audit(page, viewport, "journey feedback");
+      // Every stage starts from its header: the simulation label is the first thing read.
+      await form.getByRole("radio", { name: "5 sur 5" }).check();
+      await form.getByRole("button", { name: "Envoyer mon avis" }).click();
+      await expectStage(page, "closed");
+      await expect(header).toBeVisible();
+      await audit(page, viewport, "journey closed");
     });
   });
 }

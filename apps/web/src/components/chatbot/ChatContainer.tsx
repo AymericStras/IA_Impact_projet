@@ -1,19 +1,22 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { InfoIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useConversation } from "@/hooks/useConversation";
+import { useJourney } from "@/hooks/useJourney";
 import { useHeightVariable, useKeyboardInset } from "@/hooks/useViewportTracking";
 import { fr } from "@/i18n/fr";
 import { isDemoMode } from "@/lib/env";
 import { TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
-import type { ConversationService } from "@/services";
+import type { ConversationService, JourneyService } from "@/services";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { ConversationThread } from "./ConversationThread";
 import { ErrorMessage } from "./ErrorMessage";
+import { JourneyInterruptedNotice } from "./journey/JourneyInterruptedNotice";
+import { JOURNEY_REGION_ID, JourneyPanel } from "./journey/JourneyPanel";
 import { LoadingState } from "./LoadingState";
 import { MessageComposer } from "./MessageComposer";
 import { RequirementsPanel } from "./RequirementsPanel";
@@ -24,11 +27,16 @@ const PANEL_ID = "requirements-panel";
 interface ChatContainerProps {
   /** Injectable service (tests); defaults to the one selected by NEXT_PUBLIC_DEMO_MODE. */
   service?: ConversationService;
+  /** Injectable journey service (tests); same default rule. */
+  journeyService?: JourneyService;
 }
 
 /**
  * Orchestrates the page: top bar, conversation thread + composer,
- * "Votre projet" panel. All business state comes from `useConversation`.
+ * "Votre projet" panel. All business state comes from `useConversation`, and from
+ * `useJourney` for what follows the confirmation (docs/PLANNER_CONTRACT.md): the journey is
+ * shown under the confirmed card while the project is CONFIRMED and the server's
+ * `planner_mode` is not "off".
  *
  * The page is a viewport-high shell (`.app-shell`): only the thread (and, in two-column
  * layouts, the panel column) scrolls. The composer is a normal flex item below the thread,
@@ -39,10 +47,12 @@ interface ChatContainerProps {
  * Responsive behaviour is driven by the tiers declared in globals.css (`wide`, `single`,
  * `short`, `narrow`…), which are container queries on the shell.
  */
-export function ChatContainer({ service }: ChatContainerProps) {
+export function ChatContainer({ service, journeyService }: ChatContainerProps) {
   const chat = useConversation(service);
   const [draft, setDraft] = useState("");
   const [editRequest, setEditRequest] = useState(0);
+  const [journeyView, setJourneyView] = useState("");
+  const [journeyInterrupted, setJourneyInterrupted] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -53,9 +63,42 @@ export function ChatContainer({ service }: ChatContainerProps) {
   const confirmed =
     conversation?.state === "CONFIRMED" ? (conversation.confirmed_requirements ?? null) : null;
 
+  // Unknown until `GET /config` answers: no journey is offered before the server says so.
+  const plannerMode = config.planner_mode ?? "off";
+  const conversationId = conversation?.conversation_id ?? null;
+  const journeyEnabled = confirmed !== null && plannerMode !== "off";
+  const journey = useJourney({
+    conversationId,
+    enabled: journeyEnabled,
+    // An accepted time adjustment changed the requirements on the server: show them.
+    onRequirementsChanged: chat.refresh,
+    service: journeyService,
+  });
+
+  // Editing a requirement clears the confirmation, and the journey with it (on the server
+  // too). Say so when proposals were on screen; a new confirmation or conversation clears it.
+  const hasJourney = journeyEnabled && journey.journey !== null;
+  const previousRef = useRef({ conversationId, confirmed: false, hadJourney: false });
+  useEffect(() => {
+    const previous = previousRef.current;
+    const isConfirmed = confirmed !== null;
+    if (previous.conversationId !== conversationId || isConfirmed) setJourneyInterrupted(false);
+    else if (previous.confirmed && previous.hadJourney) setJourneyInterrupted(true);
+    previousRef.current = { conversationId, confirmed: isConfirmed, hadJourney: hasJourney };
+  }, [conversationId, confirmed, hasJourney]);
+
   useKeyboardInset(shellRef);
   // The expanded panel (single-column layouts) is capped to the conversation area.
   useHeightVariable(threadRef, mainRef, "--thread-height", conversation !== null);
+
+  // The journey sits under the JSON block: bring its start into view on request. Only the
+  // thread moves (instantly): `scrollIntoView` would also scroll the shell around it.
+  const showJourney = useCallback(() => {
+    const target = document.getElementById(JOURNEY_REGION_ID);
+    const scroller = target?.closest<HTMLElement>("[data-thread-scroll]");
+    if (!target || !scroller) return;
+    scroller.scrollTop += target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
+  }, []);
 
   const sendText = useCallback(
     async (content: string, source: "text" | "audio") => {
@@ -74,6 +117,7 @@ export function ChatContainer({ service }: ChatContainerProps) {
   const footerKey = [
     error ? "error" : "",
     confirmed ? "confirmed" : conversation?.ready_for_confirmation ? "confirm" : "",
+    journeyEnabled ? journeyView : "",
   ].join("|");
 
   return (
@@ -153,13 +197,23 @@ export function ChatContainer({ service }: ChatContainerProps) {
                     onDismiss={dismissError}
                   />
                 ) : null}
+                {journeyInterrupted && !journeyEnabled ? <JourneyInterruptedNotice /> : null}
                 <ConfirmationCard
                   ready={conversation.ready_for_confirmation}
                   confirmedRequirements={confirmed}
                   onConfirm={() => void chat.confirm()}
                   onEdit={() => setEditRequest((n) => n + 1)}
                   pending={pending === "confirm"}
+                  onContinue={journeyEnabled ? showJourney : undefined}
                 />
+                {journeyEnabled ? (
+                  <JourneyPanel
+                    state={journey}
+                    simulated={plannerMode === "simulated"}
+                    onEditRequest={() => setEditRequest((n) => n + 1)}
+                    onViewChange={setJourneyView}
+                  />
+                ) : null}
               </ConversationThread>
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto py-4">

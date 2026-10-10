@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { PartialRequirements } from "@/types/contracts";
 import { RequirementsPanel } from "./RequirementsPanel";
@@ -13,6 +13,18 @@ const partial: PartialRequirements = {
 };
 
 describe("RequirementsPanel", () => {
+  it("removes the « Mis à jour » tick even when another response arrives before it expires", async () => {
+    const props = { missingFields: [], state: "AWAITING_CONFIRMATION" as const, onEdit: vi.fn(async () => true) };
+    const complete: PartialRequirements = { ...partial, return: { date: "2026-11-12", time: "17:00", constraint: "latest" } };
+    const { rerender } = render(<RequirementsPanel requirements={partial} {...props} />);
+    rerender(<RequirementsPanel requirements={complete} {...props} />);
+    expect(screen.getByText("Mis à jour")).toBeInTheDocument();
+    // A confirmation right after the answer: same values, new response object.
+    rerender(<RequirementsPanel requirements={{ ...complete }} {...props} state="CONFIRMED" />);
+    expect(screen.getByText("Mis à jour")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Mis à jour")).not.toBeInTheDocument(), { timeout: 4_000 });
+  });
+
   it("renders known values, flags missing fields and shows server-driven progress", () => {
     render(
       <RequirementsPanel
