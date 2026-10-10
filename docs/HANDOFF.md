@@ -25,8 +25,10 @@ and "JSON in, PDF emailed" (same pipeline as `sncf_bilan`).
 ## Verified on 2026-10-10
 
 - `uv run ruff check . && uv run ruff format --check . && uv run pytest && uv run python scripts/export_schema.py --check`: 518 tests pass.
-- No real email was sent: everything ran in dry-run. A live send still needs the owner's
-  `credentials.env` (Resend key for `zhaoyang.fr`) and their go-ahead.
+- Deployed at `https://zhaoyang.fr/sncf-rapport` (live sending); one report sent through it to the
+  owner's address came back `sent`. Details in `docs/DEPLOYMENT.md` (owner's copy only).
+- Published to the team repository, branch `feature/rapport-pedagogique-pdf`, with
+  `scripts/publish_team_branch.sh`.
 - `uv run python scripts/stress.py 300`: 0 failure, mean 0.9 s per report, longest 11 pages.
 - `evals/evaluate.py` with `gpt-5.4-mini`: 12 trips, 89 texts kept, 0 dropped by the guard rails,
   the two cases that must stay empty are empty. Cost of the run: about USD 0.02.
@@ -36,7 +38,6 @@ and "JSON in, PDF emailed" (same pipeline as `sncf_bilan`).
 
 - No teacher form: `school.*`, `teacher_feedback.*` **and `recipient.email`** must be produced by
   the merged product. The form must ask the teacher for the email address (owner, 2026-10-10).
-- Deployment: see `docs/DEPLOYMENT.md` for the current state of the hosted instance.
 - Stations outside Occitanie: no map; CO2 only with `environment.distance_km_override`.
 - Places are not linked to `sncf_events` ids, so coordinates and official links arrive only if
   the caller fills them.

@@ -35,6 +35,20 @@ Ready-made examples: `docs/example/rapport-exemple.pdf` (full data, with the
 model-written texts) and `docs/example/rapport-exemple-sans-donnees.pdf` (an
 empty request, to see how missing data looks).
 
+A hosted instance runs at `https://zhaoyang.fr/sncf-rapport` (live sending).
+It needs the `X-Rapport-Key` value, which the project owner sends privately;
+call it from a server, never from a browser, and never commit the key.
+
+```bash
+B=https://zhaoyang.fr/sncf-rapport
+# PDF back, nothing stored or sent
+curl -sS -H "X-Rapport-Key: $KEY" -H 'Content-Type: application/json' \
+  --data @contracts/examples/01-carcassonne-complet.json $B/api/v1/render -o rapport.pdf
+# PDF emailed to recipient.email (edit the example first: it has a placeholder address)
+curl -sS -H "X-Rapport-Key: $KEY" -H 'Content-Type: application/json' \
+  --data @my-request.json $B/api/v1/reports
+```
+
 From the planner's data plus the teacher's answers:
 
 ```bash
