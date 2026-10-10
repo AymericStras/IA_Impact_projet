@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
 import { DEFAULT_CLIENT_CONFIG } from "@/lib/env";
 import { formatElapsed } from "@/lib/format";
-import { FLUID_BUTTON_SM, TOUCH_TARGET } from "@/lib/ui";
+import { DISPLAY, FLUID_BUTTON_SM, TOUCH_TARGET } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import { toApiError } from "@/services";
 import { AudioTranscriptionPreview } from "./AudioTranscriptionPreview";
@@ -249,7 +249,9 @@ export function VoiceRecorder({
   return (
     <div
       // One row on short viewports (phone landscape), two otherwise; rows wrap when text is large.
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border bg-card tall:p-3 short:px-2 short:py-1"
+      // A navy block: the change of surface says the microphone is live, the yellow dot and
+      // the words say it too. On navy the main control is white with navy content, never red.
+      className="on-navy flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[1.5rem] bg-primary text-primary-foreground tall:px-4 tall:py-3.5 short:px-3 short:py-1"
       role="group"
       aria-label={fr.voice.title}
       data-testid="voice-recorder"
@@ -263,24 +265,24 @@ export function VoiceRecorder({
         <span className="relative flex size-[min(2.25rem,12cqw)] shrink-0 items-center justify-center" aria-hidden="true">
           {recording ? (
             <>
-              <span className="absolute inset-0 animate-ping rounded-full bg-destructive/30 motion-reduce:animate-none" />
-              <span className="relative size-3.5 rounded-full bg-destructive" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-highlight/35 motion-reduce:animate-none" />
+              <span className="relative size-3.5 rounded-full bg-highlight" />
             </>
           ) : (
-            <Loader2Icon className="size-5 animate-spin text-muted-foreground motion-reduce:animate-none" />
+            <Loader2Icon className="size-5 animate-spin opacity-80 motion-reduce:animate-none" />
           )}
         </span>
         <div className="min-w-0 flex-[1_1_6rem] [overflow-wrap:anywhere]">
-          <p className="text-sm font-medium" role="status" aria-live="polite">
+          <p className="text-[0.9375rem] font-bold" role="status" aria-live="polite">
             {state.phase === "requesting" ? fr.voice.requesting : uploading ? fr.voice.uploading : fr.voice.recording}
           </p>
-          <p className="text-xs text-muted-foreground short:hidden">
+          <p className="text-[0.8125rem] opacity-80 short:hidden">
             {recording && state.notice ? state.notice : recording ? fr.voice.recordingHint : null}
           </p>
         </div>
         {recording ? (
           <output
-            className="ml-auto font-mono text-sm tabular-nums text-muted-foreground"
+            className={cn(DISPLAY, "ml-auto text-xl tabular-nums")}
             aria-label={fr.voice.timerLabel}
             data-testid="voice-timer"
           >
@@ -289,12 +291,12 @@ export function VoiceRecorder({
         ) : null}
       </div>
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={cancel} disabled={uploading} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+        <Button type="button" variant="ghost-inverse" size="sm" onClick={cancel} disabled={uploading} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
           {/* Decorative: dropped on very narrow shells so both buttons fit on one row. */}
           <XIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.cancel}
         </Button>
-        <Button type="button" size="sm" onClick={stop} disabled={!recording} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+        <Button type="button" variant="inverse" size="sm" onClick={stop} disabled={!recording} className={cn("font-bold tracking-[0.07em] uppercase", FLUID_BUTTON_SM, TOUCH_TARGET)}>
           <SquareIcon aria-hidden="true" className="narrow:hidden" />
           {fr.voice.stop}
         </Button>

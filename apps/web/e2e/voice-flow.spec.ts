@@ -662,3 +662,34 @@ test("measured contrast on the accent surface and of the sheet's text pairs", as
     expect(ratio, pair).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+
+test("controls remain legible and keyboard focus visible on light and navy surfaces", async ({ page }) => {
+  await openVoice(page);
+  const contrast = async (testId: string) => page.getByTestId(testId).evaluate((element) => {
+    const style = getComputedStyle(element);
+    const luminance = (color: string) => {
+      const channels = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((n) => {
+        const value = n / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const foreground = luminance(style.color);
+    const background = luminance(style.backgroundColor);
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+  });
+  expect(await contrast("talk-disc")).toBeGreaterThanOrEqual(4.5);
+  expect(await contrast("demo-badge")).toBeGreaterThanOrEqual(4.5);
+  await page.getByTestId("classic-link").focus();
+  await expect(page.getByTestId("classic-link")).toHaveCSS("outline-style", "solid");
+  await expect(page.getByTestId("classic-link")).not.toHaveCSS("box-shadow", "none");
+  await tapTalk(page);
+  await expectStage(page, "listen");
+  expect(await contrast("talk-disc")).toBeGreaterThanOrEqual(4.5);
+  await page.getByTestId("listen-cancel").focus();
+  await expect(page.getByTestId("listen-cancel")).toHaveCSS("outline-style", "solid");
+  await expect(page.getByTestId("listen-cancel")).not.toHaveCSS("box-shadow", "none");
+  await page.getByTestId("listen-cancel").click();
+  await expectStage(page, "ask");
+});

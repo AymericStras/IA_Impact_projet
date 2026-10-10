@@ -28,7 +28,7 @@ export function ScenarioControls({ value, onChange, disabled = false }: Scenario
   const [open, setOpen] = useState(false);
   const id = useId();
   return (
-    <div className="min-w-0 rounded-xl border border-dashed border-input" data-testid="scenario-controls">
+    <div className="min-w-0 rounded-2xl border-2 border-dashed border-input" data-testid="scenario-controls">
       <Button
         type="button"
         variant="ghost"
@@ -42,14 +42,15 @@ export function ScenarioControls({ value, onChange, disabled = false }: Scenario
         {fr.journey.scenario.toggle}
       </Button>
       {open ? (
-        <div id={`${id}-content`} className="grid gap-2.5 border-t border-dashed border-input px-3 py-2.5">
+        <div id={`${id}-content`} className="grid gap-3 border-t-2 border-dashed border-input px-3.5 py-3">
           <p className={cn("text-xs text-muted-foreground", WRAP_ANYWHERE)}>{fr.journey.scenario.hint}</p>
           <div className="grid gap-2.5 @[30rem]/journey:grid-cols-2">
             <div className="grid min-w-0 gap-1.5">
-              <Label htmlFor={`${id}-search`}>{fr.journey.scenario.searchLabel}</Label>
+              <Label className="px-1 text-[0.8125rem] font-semibold" htmlFor={`${id}-search`}>{fr.journey.scenario.searchLabel}</Label>
               <select
                 id={`${id}-search`}
                 className={JOURNEY_SELECT}
+                data-focus-inside=""
                 value={value.search_scenario}
                 disabled={disabled}
                 onChange={(event) => onChange({ ...value, search_scenario: event.target.value as SearchScenario })}
@@ -62,10 +63,11 @@ export function ScenarioControls({ value, onChange, disabled = false }: Scenario
               </select>
             </div>
             <div className="grid min-w-0 gap-1.5">
-              <Label htmlFor={`${id}-booking`}>{fr.journey.scenario.bookingLabel}</Label>
+              <Label className="px-1 text-[0.8125rem] font-semibold" htmlFor={`${id}-booking`}>{fr.journey.scenario.bookingLabel}</Label>
               <select
                 id={`${id}-booking`}
                 className={JOURNEY_SELECT}
+                data-focus-inside=""
                 value={value.booking_scenario}
                 disabled={disabled}
                 onChange={(event) => onChange({ ...value, booking_scenario: event.target.value as BookingScenario })}

@@ -88,3 +88,42 @@ jobs:
           path: |
             apps/web/test-results/
             apps/web/playwright-report/
+
+  visual:
+    name: Visual regression (macOS 26)
+    runs-on: macos-26
+    timeout-minutes: 30
+    needs: guards
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Install browser dependencies
+        id: setup
+        working-directory: apps/web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install chromium-headless-shell
+      # Separate steps keep the voice diffs available even if the classic comparison fails.
+      # One worker in each config; builds and suites run sequentially in this isolated VM.
+      - name: Classic visual baselines
+        working-directory: apps/web
+        run: pnpm exec playwright test visual.spec.ts
+      - name: Voice visual baselines
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        working-directory: apps/web
+        run: pnpm exec playwright test -c playwright.voice.config.ts voice-visual.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        with:
+          name: visual-review-macos
+          include-hidden-files: true
+          path: |
+            apps/web/test-results/
+            apps/web/.next-voice-results/

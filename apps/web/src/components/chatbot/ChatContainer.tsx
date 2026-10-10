@@ -125,7 +125,7 @@ export function ChatContainer({ service, journeyService }: ChatContainerProps) {
       <div ref={shellRef} className="app-shell flex flex-col overflow-x-hidden overflow-y-auto" data-testid="app-shell">
         <a
           href="#composer-input"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-highlight focus:px-4 focus:py-2 focus:font-bold focus:text-highlight-foreground"
         >
           {fr.app.skipToComposer}
         </a>
@@ -145,19 +145,15 @@ export function ChatContainer({ service, journeyService }: ChatContainerProps) {
         <main
           ref={mainRef}
           className={cn(
-            "px-safe mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col",
-            "wide:grid wide:grid-cols-[minmax(0,1fr)_17.5rem] wide:grid-rows-[minmax(0,1fr)] wide:gap-4",
-            "roomy:grid-cols-[minmax(0,1fr)_22rem] roomy:gap-6 spacious:grid-cols-[minmax(0,1fr)_24rem]",
+            "px-page flex min-h-0 w-full flex-1 flex-col",
+            // The panel column carries its own left padding (it is a grey band, see `.panel-column`).
+            "wide:grid wide:grid-cols-[minmax(0,1fr)_18.75rem] wide:grid-rows-[minmax(0,1fr)]",
+            "roomy:grid-cols-[minmax(0,1fr)_23.5rem] spacious:grid-cols-[minmax(0,1fr)_25.5rem]",
           )}
         >
-          <aside
-            className={cn(
-              "thin-scrollbar relative z-10 shrink-0",
-              "single:tall:pt-3 single:tall:pb-1 single:short:pt-1.5",
-              "wide:order-2 wide:min-h-0 wide:overflow-y-auto wide:tall:py-6 wide:short:py-2",
-            )}
-            data-testid="panel-region"
-          >
+          <aside className="panel-column relative z-10 shrink-0 wide:order-2 wide:min-h-0" data-testid="panel-region">
+            {/* The scroller is inside the column, so the grey band behind it is not clipped. */}
+            <div className="thin-scrollbar wide:h-full wide:overflow-y-auto wide:pl-5 wide:tall:py-6 wide:short:py-2 roomy:pl-6">
             {conversation ? (
               <RequirementsPanel
                 id={PANEL_ID}
@@ -170,9 +166,10 @@ export function ChatContainer({ service, journeyService }: ChatContainerProps) {
                 editRequest={editRequest}
               />
             ) : null}
+            </div>
           </aside>
 
-          <section className="flex min-h-0 min-w-0 flex-1 flex-col wide:order-1" aria-label={fr.conversation.heading}>
+          <section className="flex min-h-0 min-w-0 flex-1 flex-col wide:order-1 wide:pr-5 roomy:pr-8" aria-label={fr.conversation.heading}>
             {conversation ? (
               <ConversationThread
                 ref={threadRef}
@@ -232,7 +229,7 @@ export function ChatContainer({ service, journeyService }: ChatContainerProps) {
               {notice ? (
                 <div
                   role="status"
-                  className="mb-2 flex items-start gap-2 rounded-xl border border-primary/20 bg-accent/50 px-3 py-2 text-sm"
+                  className="mb-2 flex items-start gap-2.5 rounded-2xl bg-muted px-4 py-2.5 text-sm font-medium"
                   data-testid="notice"
                 >
                   <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />

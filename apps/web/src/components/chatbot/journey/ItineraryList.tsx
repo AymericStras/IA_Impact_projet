@@ -25,14 +25,14 @@ export function ItineraryList({ itineraries, onChoose, selectedItineraryId = nul
   return (
     <ul
       aria-label={fr.journey.itinerary.listLabel}
-      className="grid min-w-0 gap-3 @[40rem]/journey:grid-cols-2 @[62rem]/journey:grid-cols-3"
+      className="grid min-w-0 gap-4 @[40rem]/journey:grid-cols-2 @[62rem]/journey:grid-cols-3"
       data-testid="itinerary-list"
     >
       {itineraries.map((itinerary) => {
         const pending = busy && submitted === itinerary.id;
         return (
           <li key={itinerary.id} className="flex min-w-0 flex-col *:flex-1">
-            <ItineraryCard itinerary={itinerary} className={itinerary.id === selectedItineraryId ? "border-primary/50" : undefined}>
+            <ItineraryCard itinerary={itinerary} className={itinerary.id === selectedItineraryId ? "border-2 border-primary" : undefined}>
               {(titleId) => (
                 <Button
                   type="button"

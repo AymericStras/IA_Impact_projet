@@ -124,7 +124,7 @@ export function JourneyPanel({ state, simulated, onEditRequest, onViewChange }: 
 
   if (status === "loading") {
     return (
-      <p id={JOURNEY_REGION_ID} role="status" className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="journey-loading">
+      <p id={JOURNEY_REGION_ID} role="status" className="flex items-center gap-2 text-sm font-medium text-muted-foreground" data-testid="journey-loading">
         <Loader2Icon className="size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
         {fr.journey.loading}
       </p>
@@ -157,7 +157,7 @@ export function JourneyPanel({ state, simulated, onEditRequest, onViewChange }: 
 
   const backButton = (
     <div className="flex">
-      <Button type="button" variant="ghost" size="sm" onClick={() => setView("stage")} disabled={busy} className={cn("text-primary", FLUID_BUTTON_SM, TOUCH_TARGET)}>
+      <Button type="button" variant="outline" size="sm" onClick={() => setView("stage")} disabled={busy} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
         <ArrowLeftIcon aria-hidden="true" />
         {fr.journey.destinations.back}
       </Button>
@@ -238,7 +238,7 @@ export function JourneyPanel({ state, simulated, onEditRequest, onViewChange }: 
         content = (
           <>
             {journey.booking ? (
-              <p className={cn(JOURNEY_CARD, "text-sm [overflow-wrap:anywhere]")} data-testid="booking-message">
+              <p className={cn(JOURNEY_CARD, "text-[0.9375rem] font-medium [overflow-wrap:anywhere]")} data-testid="booking-message">
                 {journey.booking.message}
               </p>
             ) : null}
@@ -246,7 +246,7 @@ export function JourneyPanel({ state, simulated, onEditRequest, onViewChange }: 
             {travelFile ? (
               <TravelFileView file={travelFile} notices={journey.notices} />
             ) : pending === "travel_file" ? (
-              <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="travel-file-loading">
+              <p role="status" className="flex items-center gap-2 text-sm font-medium text-muted-foreground" data-testid="travel-file-loading">
                 <Loader2Icon className="size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 {fr.journey.travelFile.loading}
               </p>
@@ -264,19 +264,23 @@ export function JourneyPanel({ state, simulated, onEditRequest, onViewChange }: 
     <section
       id={JOURNEY_REGION_ID}
       aria-labelledby="journey-title"
-      className="@container/journey grid min-w-0 gap-3"
+      className="@container/journey grid min-w-0 gap-4 short:gap-3"
       data-testid="journey"
       data-stage={journey.stage}
       data-view={shownView}
       data-thread-anchor=""
     >
-      <JourneyHeader
-        stage={journey.stage}
-        title={shownView === "destinations" ? fr.journey.destinations.changeTitle : shownView === "itineraries" ? fr.journey.review.otherItinerary : undefined}
-        message={journey.message}
-      />
-      {/* On every view: simulated data must never pass for real availability. */}
-      <JourneyNotices notices={journey.notices} />
+      {/* One block: the stage header, and — flush under it — the yellow banner of notices. */}
+      <div className="grid min-w-0 overflow-hidden rounded-2xl shadow-card">
+        <JourneyHeader
+          stage={journey.stage}
+          title={shownView === "destinations" ? fr.journey.destinations.changeTitle : shownView === "itineraries" ? fr.journey.review.otherItinerary : undefined}
+          message={journey.message}
+          className={journey.notices.length > 0 ? "rounded-b-none" : undefined}
+        />
+        {/* On every view: simulated data must never pass for real availability. */}
+        <JourneyNotices notices={journey.notices} className="rounded-t-none" />
+      </div>
       {errorBlock}
       {content}
       {open && shownView === "stage" ? (

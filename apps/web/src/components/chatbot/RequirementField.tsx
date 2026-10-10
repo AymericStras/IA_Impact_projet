@@ -2,13 +2,13 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { CheckIcon, CircleDashedIcon, Loader2Icon, PencilIcon, TriangleAlertIcon } from "lucide-react";
+import { CheckIcon, Loader2Icon, PencilIcon, TriangleAlertIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fr } from "@/i18n/fr";
 import { formatPartialDateTime } from "@/lib/format";
-import { FLUID_BUTTON_SM, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { DISPLAY, EYEBROW, FLUID_BUTTON_SM, SELECT_PILL, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import {
   TIME_CONSTRAINTS,
@@ -33,8 +33,9 @@ interface RequirementFieldProps {
   onEdit: EditHandler;
 }
 
-const SELECT_CLASS =
-  "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm pointer-coarse:min-h-[44px] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
+const SELECT_CLASS = SELECT_PILL;
+/** Editor labels: sentence case, bold navy (the row label above is already in capitals). */
+const EDITOR_LABEL = "px-1 text-[0.8125rem] leading-tight font-semibold";
 
 /** Same limit as the server; the server remains the authority. */
 const STATION_MAX_LENGTH = 80;
@@ -163,88 +164,83 @@ export function RequirementField({
   return (
     <li
       ref={itemRef}
-      className={cn(
-        "rounded-xl border bg-card p-3 transition-colors narrow:p-2",
-        clarificationPending && "border-warning/60",
-        editing && "border-ring",
-      )}
+      // A row of the card: thin decorative divider, label in small capitals, value in the
+      // condensed display face. A missing (or partial) field is a yellow block with navy text.
+      className="border-t border-border py-3.5 short:py-2.5"
       data-testid={`field-${field}`}
       data-state={known ? "known" : "missing"}
     >
-      <div className="flex items-start gap-2.5">
-        <span
-          aria-hidden="true"
-          className={cn(
-            "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
-            known ? "bg-success text-success-foreground" : "text-muted-foreground",
-          )}
-        >
-          {known ? <CheckIcon className="size-3.5" strokeWidth={3} /> : <CircleDashedIcon className="size-5" />}
-        </span>
-        <div className={cn("flex-1", WRAP_ANYWHERE)}>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <h3 className="text-sm font-medium">{labels.label}</h3>
-            <span className="sr-only">{known ? fr.panel.known : fr.panel.missing}</span>
-            <AnimatePresence>
-              {recentlyUpdated ? (
-                <motion.span
-                  key="updated"
-                  initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.2 }}
-                  className="inline-flex items-center gap-1 rounded-full bg-success-soft px-1.5 py-0.5 text-[0.65rem] font-medium text-success"
-                >
-                  <CheckIcon className="size-3" aria-hidden="true" />
-                  {fr.panel.updated}
-                </motion.span>
-              ) : null}
-            </AnimatePresence>
-          </div>
-          {!editing ? (
-            <>
-              <p className={cn("mt-0.5 text-sm", known ? "text-foreground" : "italic text-muted-foreground")} data-testid={`field-${field}-value`}>
-                {value}
-              </p>
-              {field === "participants_count" && breakdownText(requirements) ? (
-                <p className="text-xs text-muted-foreground">{breakdownText(requirements)}</p>
-              ) : null}
-              {clarificationPending ? (
-                <p className="mt-1 flex items-start gap-1 text-xs text-foreground" data-testid={`field-${field}-clarification`}>
-                  <TriangleAlertIcon className="size-3.5 shrink-0 text-warning" aria-hidden="true" />
-                  {fr.panel.clarificationPending}
-                </p>
-              ) : null}
-            </>
-          ) : null}
+      <div className="flex items-center gap-2">
+        <div className={cn("flex flex-1 flex-wrap items-center gap-x-2 gap-y-0.5", WRAP_ANYWHERE)}>
+          <h3 className={EYEBROW}>{labels.label}</h3>
+          <span className="sr-only">{known ? fr.panel.known : fr.panel.missing}</span>
+          <AnimatePresence>
+            {recentlyUpdated ? (
+              <motion.span
+                key="updated"
+                initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.2 }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[0.6875rem] leading-tight font-bold text-primary-foreground"
+              >
+                <CheckIcon className="size-3" strokeWidth={3} aria-hidden="true" />
+                {fr.panel.updated}
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
         </div>
         {!editing ? (
           <Button
             ref={editButtonRef}
             type="button"
-            variant="ghost"
+            variant="link"
             size="sm"
             onClick={openEditor}
             disabled={disabled}
             aria-label={fr.panel.editingLabel(labels.label)}
             data-edit-button=""
-            className={cn("-mr-1 -mt-1 shrink-0 text-primary", TOUCH_TARGET)}
+            // The 44 px touch target overlaps the row's own whitespace instead of stretching it.
+            className={cn("-my-1.5 -mr-2 h-7 shrink-0 px-2 font-bold pointer-coarse:-my-2.5", TOUCH_TARGET)}
           >
-            <PencilIcon aria-hidden="true" />
             {/*
               Icon-only when the panel is narrow (tablet column, small phones, large text), so
-              that five rows of values keep a readable width; aria-label names the field.
+              that the row keeps a readable width; aria-label names the field.
             */}
+            <PencilIcon aria-hidden="true" className="@[19rem]/panel:hidden" />
             <span className="@max-[19rem]/panel:sr-only">{fr.panel.edit}</span>
           </Button>
         ) : null}
       </div>
+      {!editing ? (
+        <div className={WRAP_ANYWHERE}>
+          <p
+            className={cn(
+              DISPLAY,
+              "mt-1 text-xl leading-tight",
+              !known && "mt-2 rounded-xl bg-highlight px-3.5 py-2.5 text-lg text-highlight-foreground",
+            )}
+            data-testid={`field-${field}-value`}
+          >
+            {value}
+          </p>
+          {field === "participants_count" && breakdownText(requirements) ? (
+            <p className="mt-0.5 text-sm text-muted-foreground">{breakdownText(requirements)}</p>
+          ) : null}
+          {clarificationPending ? (
+            <p className="mt-1.5 flex items-start gap-1.5 text-[0.8125rem] font-semibold text-foreground" data-testid={`field-${field}-clarification`}>
+              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden="true" />
+              {fr.panel.clarificationPending}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {editing ? (
-        <form className="mt-3 grid gap-2.5" onSubmit={(event) => void submit(event)} aria-label={fr.panel.editingLabel(labels.label)}>
+        <form className="mt-2.5 grid gap-3 rounded-2xl bg-muted p-3.5 narrow:p-2.5" onSubmit={(event) => void submit(event)} aria-label={fr.panel.editingLabel(labels.label)}>
           {field === "participants_count" ? (
             <div className="grid gap-1.5">
-              <Label htmlFor={`${baseId}-count`}>{fr.fields.participants_count.inputLabel}</Label>
+              <Label className={EDITOR_LABEL} htmlFor={`${baseId}-count`}>{fr.fields.participants_count.inputLabel}</Label>
               <Input
                 id={`${baseId}-count`}
                 ref={firstInputRef}
@@ -263,7 +259,7 @@ export function RequirementField({
 
           {field === "departure_station" ? (
             <div className="grid gap-1.5">
-              <Label htmlFor={`${baseId}-station`}>{fr.fields.departure_station.inputLabel}</Label>
+              <Label className={EDITOR_LABEL} htmlFor={`${baseId}-station`}>{fr.fields.departure_station.inputLabel}</Label>
               <Input
                 id={`${baseId}-station`}
                 ref={firstInputRef}
@@ -281,9 +277,9 @@ export function RequirementField({
           ) : null}
 
           {field === "departure" || field === "return" ? (
-            <div className="grid gap-2.5 @[21.5rem]/panel:grid-cols-2">
+            <div className="grid gap-3 @[21.5rem]/panel:grid-cols-2">
               <div className="grid gap-1.5">
-                <Label htmlFor={`${baseId}-date`}>{fr.fields[field].dateLabel}</Label>
+                <Label className={EDITOR_LABEL} htmlFor={`${baseId}-date`}>{fr.fields[field].dateLabel}</Label>
                 <Input
                   id={`${baseId}-date`}
                   ref={firstInputRef}
@@ -296,7 +292,7 @@ export function RequirementField({
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor={`${baseId}-time`}>{fr.fields[field].timeLabel}</Label>
+                <Label className={EDITOR_LABEL} htmlFor={`${baseId}-time`}>{fr.fields[field].timeLabel}</Label>
                 <Input
                   id={`${baseId}-time`}
                   type="time"
@@ -308,10 +304,11 @@ export function RequirementField({
                 />
               </div>
               <div className="grid gap-1.5 @[21.5rem]/panel:col-span-2">
-                <Label htmlFor={`${baseId}-constraint`}>{fr.fields[field].constraintLabel}</Label>
+                <Label className={EDITOR_LABEL} htmlFor={`${baseId}-constraint`}>{fr.fields[field].constraintLabel}</Label>
                 <select
                   id={`${baseId}-constraint`}
                   className={SELECT_CLASS}
+                  data-focus-inside=""
                   value={constraint}
                   onChange={(event) => setConstraint(event.target.value as TimeConstraint)}
                   disabled={saving}
@@ -327,9 +324,9 @@ export function RequirementField({
           ) : null}
 
           {field === "teaching_type" ? (
-            <div className="grid gap-2.5 @[21.5rem]/panel:grid-cols-2">
+            <div className="grid gap-3 @[21.5rem]/panel:grid-cols-2">
               <div className="grid gap-1.5">
-                <Label htmlFor={`${baseId}-subject`}>{fr.fields.teaching_type.subjectLabel}</Label>
+                <Label className={EDITOR_LABEL} htmlFor={`${baseId}-subject`}>{fr.fields.teaching_type.subjectLabel}</Label>
                 <Input
                   id={`${baseId}-subject`}
                   ref={firstInputRef}
@@ -341,7 +338,7 @@ export function RequirementField({
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor={`${baseId}-theme`}>{fr.fields.teaching_type.themeLabel}</Label>
+                <Label className={EDITOR_LABEL} htmlFor={`${baseId}-theme`}>{fr.fields.teaching_type.themeLabel}</Label>
                 <Input
                   id={`${baseId}-theme`}
                   value={theme}
@@ -355,7 +352,7 @@ export function RequirementField({
           ) : null}
 
           <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={close} disabled={saving} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
+            <Button type="button" variant="outline" size="sm" onClick={close} disabled={saving} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>
               {fr.panel.cancel}
             </Button>
             <Button type="submit" size="sm" disabled={!canSave || saving} className={cn(FLUID_BUTTON_SM, TOUCH_TARGET)}>

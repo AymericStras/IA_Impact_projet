@@ -38,7 +38,7 @@ export function ClosedStage({ journey, focusHeading, message, busy, opening, onO
         }
       />
       {feedback ? (
-        <section className="rounded-2xl border bg-card p-4" data-testid="closed-feedback">
+        <section className="rounded-2xl border bg-card shadow-card p-4" data-testid="closed-feedback">
           <p className="text-xl font-semibold text-foreground">{copy.rating(feedback.rating)}</p>
           {feedback.comment ? (
             <>

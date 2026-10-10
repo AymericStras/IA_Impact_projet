@@ -31,7 +31,7 @@ export const STATION_MAX_LENGTH = 80;
 
 // 44 px high and 16 px text at every size: comfortable to touch, never zoomed by iOS.
 const CONTROL =
-  "h-11 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-50";
+  "h-11 w-full min-w-0 rounded-full border-2 border-input bg-card px-3 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-50";
 const LABEL = "text-sm font-medium text-foreground";
 
 /**

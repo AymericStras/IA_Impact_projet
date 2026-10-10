@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { TOUCH_TARGET } from "@/lib/ui";
+import { DISPLAY, TOUCH_TARGET } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import {
   FIELD_NAMES,
@@ -39,8 +39,8 @@ const UPDATE_TICK_MS = 2_200;
  * Progress is read from `missing_fields`; nothing is recomputed client-side.
  *
  * Two presentations, chosen by the app-shell tiers (see globals.css):
- * - `wide`: a column next to the conversation, always expanded;
- * - `single`: a one- or two-line summary bar above the conversation. Expanding it opens
+ * - `wide`: a white card in the grey column next to the conversation, always expanded;
+ * - `single`: a white strip under the header (title, dots, count). Expanding it opens
  *   the details as a layer OVER the conversation area (never taller than it, see
  *   `--thread-height`), so neither the conversation nor the composer is squeezed.
  */
@@ -104,25 +104,44 @@ export function RequirementsPanel({
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
       className={cn(
-        "@container/panel relative rounded-2xl border wide:bg-card/60 single:bg-card",
-        expanded && "single:rounded-b-none",
+        "@container/panel relative bg-card",
+        "wide:rounded-2xl wide:shadow-card single:bleed-x single:border-b single:border-border",
         className,
       )}
       data-testid="requirements-panel"
       data-expanded={expanded}
     >
-      <div className="flex items-center gap-2 wide:px-4 wide:py-3 single:py-1 single:pr-1 single:pl-4">
-        {/* Title and progress share a line when they fit, and wrap to two tight lines otherwise. */}
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 leading-tight wide:flex-col wide:items-start wide:gap-y-0.5">
-          <h2 id={`${id}-title`} className="text-sm font-semibold">
+      <div className="flex items-center gap-2 wide:grid wide:grid-cols-[minmax(0,1fr)_auto] wide:gap-x-3 wide:gap-y-3 wide:px-5 wide:pt-5 wide:pb-4 single:-mr-2 single:tall:py-1.5">
+        {/*
+          Single column: title and dots share a line, the count joins them when it fits and
+          drops under them otherwise. Two columns: title and state pill, then dots and count.
+        */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 leading-tight wide:contents">
+          <h2 id={`${id}-title`} className={cn(DISPLAY, "text-lg leading-none wide:text-2xl")}>
             {fr.panel.title}
           </h2>
-          <p className="text-xs text-muted-foreground" data-testid="panel-progress" aria-live="polite">
-            {complete ? fr.panel.progressComplete(total) : fr.panel.progress(known, total)}
-          </p>
+          <div className="single:contents wide:col-span-2 wide:row-start-2 wide:flex wide:min-w-0 wide:flex-wrap wide:items-center wide:gap-x-2.5 wide:gap-y-1">
+            {/*
+              One dot per requirement, in the canonical order: navy when the server holds it,
+              yellow when it is in `missing_fields`. Decorative: the count next to it says the
+              same in words (a yellow dot alone would be 1.42:1 on white).
+            */}
+            <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true" data-testid="panel-dots">
+              {FIELD_NAMES.map((field) => (
+                <span
+                  key={field}
+                  data-known={!missingFields.includes(field)}
+                  className={cn("size-2.5 rounded-full transition-colors", missingFields.includes(field) ? "bg-highlight" : "bg-primary")}
+                />
+              ))}
+            </span>
+            <p className="text-[0.8125rem] font-semibold text-muted-foreground" data-testid="panel-progress" aria-live="polite">
+              {complete ? fr.panel.progressComplete(total) : fr.panel.progress(known, total)}
+            </p>
+          </div>
         </div>
         <span
-          className="hidden shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.7rem] font-medium text-muted-foreground wide:@[19rem]/panel:inline-flex"
+          className="hidden shrink-0 rounded-full bg-muted px-2.5 py-1 text-[0.6875rem] font-bold text-primary wide:col-start-2 wide:row-start-1 wide:@[19rem]/panel:inline-flex"
           data-testid="panel-state"
         >
           {fr.states[state]}
@@ -131,7 +150,7 @@ export function RequirementsPanel({
           type="button"
           variant="ghost"
           size="sm"
-          className={cn("shrink-0 wide:hidden", TOUCH_TARGET)}
+          className={cn("shrink-0 font-bold wide:hidden", TOUCH_TARGET)}
           data-testid="panel-toggle"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
@@ -145,19 +164,13 @@ export function RequirementsPanel({
       <div
         id={`${id}-body`}
         className={cn(
-          "thin-scrollbar px-4 pb-4 narrow:px-2 narrow:pb-2",
-          "single:absolute single:-inset-x-px single:top-full single:z-20 single:max-h-[var(--thread-height,60cqh)] single:overflow-y-auto single:overscroll-contain single:rounded-b-2xl single:border single:border-t-0 single:bg-card single:pt-1",
+          "thin-scrollbar pb-4 wide:px-5",
+          "single:pr-[var(--gutter-r)] single:pl-[var(--gutter-l)] single:absolute single:inset-x-0 single:top-full single:z-20 single:mt-px single:max-h-[var(--thread-height,60cqh)] single:overflow-y-auto single:overscroll-contain single:rounded-b-2xl single:bg-card single:shadow-raised",
           expanded ? "block" : "hidden wide:block",
         )}
         data-testid="panel-body"
       >
-        <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-          <div
-            className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-            style={{ width: `${(known / total) * 100}%` }}
-          />
-        </div>
-        <ul className="grid gap-2">
+        <ul className="grid single:[&>li:first-child]:border-t-0">
           {FIELD_NAMES.map((field) => (
             <RequirementField
               key={field}
@@ -171,7 +184,7 @@ export function RequirementsPanel({
             />
           ))}
         </ul>
-        <p className="mt-3 text-xs text-muted-foreground">{fr.panel.subtitle}</p>
+        <p className="border-t border-border pt-3 text-xs text-muted-foreground">{fr.panel.subtitle}</p>
       </div>
     </section>
   );

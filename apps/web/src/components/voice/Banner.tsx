@@ -28,7 +28,7 @@ export function Banner({ kind, title, children, action, onDismiss, testId }: Ban
       data-testid={testId}
       className={cn(
         "flex flex-wrap items-start gap-2 rounded-xl border px-3 py-2.5 text-sm text-foreground",
-        isError ? "border-destructive/30 bg-destructive/5" : "border-primary/20 bg-accent/50",
+        isError ? "border-destructive bg-destructive-soft" : "border-primary/20 bg-accent/50",
       )}
     >
       <Icon className={cn("mt-0.5 size-4 shrink-0", isError ? "text-destructive" : "text-primary")} aria-hidden="true" />

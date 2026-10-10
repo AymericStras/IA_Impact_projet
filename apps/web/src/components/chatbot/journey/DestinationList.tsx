@@ -31,13 +31,13 @@ export function DestinationList({
   // Only remembers which button was pressed, to put the spinner on that card.
   const [submitted, setSubmitted] = useState<string | null>(null);
   return (
-    <div className="grid min-w-0 gap-2">
+    <div className="grid min-w-0 gap-3">
       {departureStations.length > 1 ? (
-        <p className={cn("text-xs text-muted-foreground", WRAP_ANYWHERE)} data-testid="departure-stations">
+        <p className={cn("text-[0.8125rem] font-medium text-muted-foreground", WRAP_ANYWHERE)} data-testid="departure-stations">
           {fr.journey.destinations.departureStations(departureStations.join(", "))}
         </p>
       ) : null}
-      <ul aria-label={fr.journey.destinations.listLabel} className="grid min-w-0 gap-3 @[40rem]/journey:grid-cols-2" data-testid="destination-list">
+      <ul aria-label={fr.journey.destinations.listLabel} className="grid min-w-0 gap-4 @[40rem]/journey:grid-cols-2" data-testid="destination-list">
         {destinations.map((destination) => (
           <li key={destination.id} className="flex min-w-0 flex-col *:flex-1">
             <DestinationCard

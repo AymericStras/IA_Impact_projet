@@ -11,7 +11,7 @@ export function JourneyInterruptedNotice() {
   return (
     <p
       role="status"
-      className="flex min-w-0 items-start gap-2 rounded-xl border border-primary/20 bg-accent/50 px-3 py-2 text-sm"
+      className="flex min-w-0 items-start gap-2.5 rounded-2xl bg-muted px-4 py-3 text-sm font-medium"
       data-testid="journey-interrupted"
     >
       <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />

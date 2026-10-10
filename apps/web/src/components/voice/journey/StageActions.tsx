@@ -72,9 +72,9 @@ export function StageActions({ children, narrow = false }: StageActionsProps) {
 // 44 px in px on purpose (a finger does not grow with the text size): with very large text
 // a one-line action stays one line high instead of doubling with the root font size.
 const ACTION_BASE =
-  "inline-flex min-h-[44px] max-w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-center text-sm font-medium [overflow-wrap:anywhere] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
-const ACTION_SECONDARY = "border-input bg-card text-foreground hover:bg-muted";
-const ACTION_PRIMARY = "border-transparent bg-primary px-5 text-base font-semibold text-primary-foreground hover:bg-primary/85";
+  "inline-flex min-h-[44px] max-w-full items-center justify-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-center text-sm font-semibold [overflow-wrap:anywhere] disabled:pointer-events-none disabled:border-input disabled:bg-muted disabled:text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0";
+const ACTION_SECONDARY = "border-primary bg-card text-primary hover:bg-muted";
+const ACTION_PRIMARY = "border-transparent bg-action px-5 text-base font-semibold font-bold text-action-foreground hover:bg-action-hover";
 
 interface ActionButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   /** One per stage. */

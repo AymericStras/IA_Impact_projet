@@ -36,10 +36,10 @@ export function BookingPending({ booking, onCheck, checking = false, disabled = 
   return (
     <div className={cn("grid gap-3", JOURNEY_CARD)} data-testid="booking-pending">
       <div className={WRAP_ANYWHERE}>
-        <p className="text-sm font-medium" data-testid="booking-reference">
+        <p className="font-heading text-xl leading-tight font-extrabold" data-testid="booking-reference">
           {fr.journey.pending.reference(booking.reference)}
         </p>
-        <p className="mt-1 flex items-start gap-2 text-sm text-muted-foreground" role="status">
+        <p className="mt-1.5 flex items-start gap-2 text-[0.9375rem] font-medium text-muted-foreground" role="status">
           <Loader2Icon className="mt-0.5 size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
           <span className="flex-1">{fr.journey.pending.waiting}</span>
         </p>

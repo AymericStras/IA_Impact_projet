@@ -169,11 +169,12 @@ export function ConversationThread({
         // `relative`: absolutely positioned descendants (screen-reader-only text, stretched
         // checkbox inputs) must scroll and be clipped with the thread; without it they are laid
         // out against an outer box and give the app shell a phantom scrollable height.
-        className="@container/thread thin-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain wide:pr-1"
+        // Bleeds 0.75rem into the gutters so the soft shadows of the cards are not cut at the sides.
+        className="@container/thread thin-scrollbar relative -mx-3 min-h-0 flex-1 overflow-y-auto overscroll-contain px-3"
         data-testid="conversation-scroll"
         data-thread-scroll=""
       >
-        <div ref={contentRef} className="flex flex-col gap-4 tall:pt-4 tall:pb-6 short:pt-2 short:pb-3 low:pr-12">
+        <div ref={contentRef} className="flex flex-col gap-4 tall:pt-5 tall:pb-6 short:pt-2 short:pb-3 low:pr-12">
           <ul role="log" aria-label={fr.conversation.logLabel} aria-relevant="additions" className="flex flex-col gap-3">
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
@@ -196,7 +197,7 @@ export function ConversationThread({
               userScrolledUpRef.current = false;
               scrollToBottom();
             }}
-            className={cn("rounded-full bg-card low:aspect-square low:px-0", FLUID_BUTTON_SM, TOUCH_TARGET)}
+            className={cn("bg-card shadow-card low:aspect-square low:px-0", FLUID_BUTTON_SM, TOUCH_TARGET)}
             data-testid="scroll-to-bottom"
           >
             <ArrowDownIcon aria-hidden="true" />

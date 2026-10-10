@@ -6,7 +6,7 @@ These rules apply to everything under `apps/web`. They complement the root `AGEN
 
 ## Scope
 
-- Two experiences on the same backend and the same conversation: the classic chat at `/` (conversation + "Votre projet" panel + composer with voice input) and the staged voice flow at `/vocal` (one full-screen stage at a time: ask, listen, think, sheet, done — plan in `docs/VOICE_FLOW.md`, notes in `apps/web/VOICE_NOTES.md`). The freeze below covers the classic chat; `/vocal` reuses the same tokens and may still receive a visual direction chosen by the owner.
+- Two experiences on the same backend and the same conversation: the classic chat at `/` (conversation + "Votre projet" panel + composer with voice input) and the staged voice flow at `/vocal` (one full-screen stage at a time: ask, listen, think, sheet, done — plan in `docs/VOICE_FLOW.md`, notes in `apps/web/VOICE_NOTES.md`). Both routes use the owner-requested V3 identity (ADR-026); the freeze below covers their shared tokens and primitives as well as the classic layout.
 - `/vocal` code lives in `src/app/vocal/`, `src/components/voice/`, `src/hooks/useVoiceFlow.ts`, `useHoldToTalk.ts`, `useAudioCapture.ts`, `src/i18n/fr.voice.ts`; its e2e runs with `pnpm test:e2e:voice` (config `playwright.voice.config.ts`, port 3200, `.next-voice`). Run it after the classic suite, never at the same time.
 - **Journey after confirmation** (`docs/PLANNER_CONTRACT.md`, `docs/DESIGN.md` §14): once the project is `CONFIRMED` and `GET /config` says `planner_mode` is not `"off"`, the classic chat shows, under the confirmed card, the journey the server computed — destinations, itineraries, adjustments, booking, travel file, feedback. **It is rendered from server state only** (the `Journey` and `TravelFile` objects): the client does not plan, rank, filter, compute feasibility, count unlocked itineraries or decide a stage. Destinations, trains, itineraries and booking remain teammates' modules; the backend simulates them and labels them as simulated, and every journey view must show that label (`journey.notices`, never hardcoded).
 - Out of scope: new pages, navigation, authentication, dashboards, any planning logic of our own (searching destinations or trains, building or checking itineraries, booking), analytics, any data beyond the five requirements (participants, departure station, departure, return, subject or theme).
@@ -75,8 +75,8 @@ pnpm test:e2e:voice   # when anything under the /vocal paths, a shared hook or l
 Same list as "Do not" in `docs/DESIGN.md`:
 
 - No new colours, fonts, icon sets, UI libraries, CSS frameworks or dark theme.
-- No gradients, shadows, illustrations, background images, decorative or attention-seeking animation.
-- No restyling of shadcn primitives outside the tokens.
+- No gradients, illustrations, background images, decorative or attention-seeking animation. Only the shared V3 `shadow-card` and `shadow-raised` elevation tokens are allowed.
+- Preserve the shared V3 shadcn primitives (pill controls and inverse variants, ADR-026); no per-page primitive overrides.
 - No client-side field logic (missing fields, totals, date inference, validation, readiness), and no client-side planning logic (ranking, filtering, feasibility, adjustments) outside `mockJourneyApi.ts`.
 - No journey view without the server's notices, and no hardcoded simulation label.
 - No HTML or markdown rendering of messages; no `dangerouslySetInnerHTML`.

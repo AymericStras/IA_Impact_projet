@@ -4,8 +4,9 @@ import type { ReactNode } from "react";
 import { Loader2Icon, SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
-import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { DISPLAY, FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
+import { JOURNEY_CARD } from "./journeyStyles";
 
 interface JourneyStartProps {
   onStart: () => void;
@@ -18,15 +19,12 @@ interface JourneyStartProps {
 /** First step after the confirmation: nothing is searched until the teacher asks for it. */
 export function JourneyStart({ onStart, pending = false, disabled = false, children }: JourneyStartProps) {
   return (
-    <div className="grid min-w-0 gap-3 rounded-2xl border border-primary/25 bg-accent/40 tall:p-4 short:p-3" data-testid="journey-start">
-      <div className="flex items-start gap-3">
-        <SearchIcon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-        <div className={cn("flex-1", WRAP_ANYWHERE)}>
-          <h2 id="journey-title" className="text-sm font-semibold">
-            {fr.journey.start.title}
-          </h2>
-          <p className="mt-1 text-sm">{fr.journey.start.message}</p>
-        </div>
+    <div className={cn("grid gap-4 short:gap-3", JOURNEY_CARD)} data-testid="journey-start">
+      <div className={WRAP_ANYWHERE}>
+        <h2 id="journey-title" className={cn(DISPLAY, "text-2xl leading-tight short:text-xl")}>
+          {fr.journey.start.title}
+        </h2>
+        <p className="mt-1.5 text-[0.9375rem]">{fr.journey.start.message}</p>
       </div>
       <div className="flex flex-col gap-2 @[24rem]/journey:flex-row @[24rem]/journey:justify-end">
         <Button

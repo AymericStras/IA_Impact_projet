@@ -31,18 +31,20 @@ export function MessageBubble({ message, pendingDelivery = false, failed = false
     >
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl px-4 py-2.5 text-[0.95rem] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere] @2xl/thread:max-w-[75%]",
+          "max-w-[85%] rounded-[1.375rem] px-[1.125rem] py-3 text-base leading-normal whitespace-pre-wrap [overflow-wrap:anywhere] short:py-2 @2xl/thread:max-w-[75%]",
+          // Grey for the assistant, navy for the teacher; the bubble is carried by its text
+          // (13.56:1 and 15.74:1), not by its edge.
           isUser
             ? "rounded-br-md bg-user-bubble text-user-bubble-foreground"
-            : "rounded-bl-md bg-card text-card-foreground ring-1 ring-foreground/10",
+            : "rounded-bl-md bg-muted text-foreground",
           pendingDelivery && "opacity-70",
-          failed && "ring-2 ring-destructive/40",
+          failed && "ring-2 ring-destructive ring-offset-2 ring-offset-background",
         )}
       >
         <span className="sr-only">{isUser ? fr.conversation.you : fr.conversation.assistantName} : </span>
         {message.content}
       </div>
-      <div className="flex flex-wrap items-center gap-x-1.5 px-1 text-[0.7rem] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-1.5 px-2 text-[0.6875rem] font-medium text-muted-foreground">
         {message.source === "audio" ? (
           <span className="inline-flex items-center gap-1">
             <MicIcon className="size-3" aria-hidden="true" />

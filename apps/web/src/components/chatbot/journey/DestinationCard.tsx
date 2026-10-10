@@ -5,10 +5,10 @@ import { CheckIcon, FootprintsIcon, Loader2Icon, TrainFrontIcon } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { fr } from "@/i18n/fr";
 import { formatDuration } from "@/lib/format";
-import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
+import { DISPLAY, FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { DestinationOption } from "@/types/journey";
-import { CHOICE_FOCUS, CHOICE_INPUT, JOURNEY_CARD, JOURNEY_SUBHEADING } from "./journeyStyles";
+import { CHOICE_FOCUS, CHOICE_INPUT, JOURNEY_SUBHEADING } from "./journeyStyles";
 
 interface DestinationCardProps {
   destination: DestinationOption;
@@ -45,23 +45,28 @@ export function DestinationCard({
   return (
     <article
       aria-labelledby={`${id}-title`}
-      className={cn("flex flex-col gap-3", JOURNEY_CARD, selected && "border-primary/50")}
+      // Navy top half (name in white condensed type), white bottom half (places, activities,
+      // the red action). The destination held by the server gets a 2px navy edge and a yellow pill.
+      className={cn(
+        "flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card",
+        selected ? "border-2 border-primary" : "border-border",
+      )}
       data-testid="destination-card"
       data-destination={destination.id}
     >
-      <div className={WRAP_ANYWHERE}>
-        <h3 id={`${id}-title`} className="text-sm font-semibold">
-          {destination.title}
-        </h3>
+      <div className={cn("flex flex-col items-start bg-primary text-primary-foreground tall:p-5 short:p-3.5", WRAP_ANYWHERE)}>
         {selected ? (
-          <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-            <CheckIcon className="size-3" aria-hidden="true" />
+          <p className="mb-2.5 inline-flex items-center gap-1 rounded-full bg-highlight px-2.5 py-1 text-xs leading-tight font-bold text-highlight-foreground">
+            <CheckIcon className="size-3" strokeWidth={3} aria-hidden="true" />
             {fr.journey.destinations.current}
           </p>
         ) : null}
-        <p className="mt-1 text-sm">{destination.theme_match}</p>
-        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
-          <TrainFrontIcon className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+        <h3 id={`${id}-title`} className={cn(DISPLAY, "text-2xl leading-[1.1] short:text-xl")}>
+          {destination.title}
+        </h3>
+        <p className="mt-2 text-[0.9375rem]">{destination.theme_match}</p>
+        <p className="mt-2.5 flex items-start gap-2 text-[0.8125rem] font-medium opacity-85">
+          <TrainFrontIcon className="mt-px size-4 shrink-0" aria-hidden="true" />
           <span>
             {fr.journey.destinations.travel(formatDuration(destination.travel_minutes))} ·{" "}
             {fr.journey.destinations.station(destination.station)}
@@ -69,18 +74,20 @@ export function DestinationCard({
         </p>
       </div>
 
+      <div className="flex flex-1 flex-col gap-4 tall:p-5 short:p-3.5">
+
       {destination.places.length > 0 ? (
         <div className={WRAP_ANYWHERE}>
           <h4 className={JOURNEY_SUBHEADING}>{fr.journey.destinations.places}</h4>
-          <ul className="mt-1 grid gap-1.5">
+          <ul className="mt-1.5 grid gap-2">
             {destination.places.map((place, index) => (
-              <li key={index} className="text-sm">
-                <span className="font-medium">{place.title}</span>{" "}
-                <span className="ml-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <li key={index} className="text-[0.9375rem]">
+                <span className="font-bold">{place.title}</span>{" "}
+                <span className="ml-1 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <FootprintsIcon className="size-3.5 shrink-0" aria-hidden="true" />
                   {fr.journey.destinations.walk(place.walk_minutes)}
                 </span>{" "}
-                <span className="block text-xs text-muted-foreground">{place.note}</span>
+                <span className="block text-[0.8125rem] text-muted-foreground">{place.note}</span>
               </li>
             ))}
           </ul>
@@ -90,17 +97,18 @@ export function DestinationCard({
       {destination.activities.length > 0 ? (
         <fieldset className="min-w-0" disabled={disabled}>
           <legend className={JOURNEY_SUBHEADING}>{fr.journey.destinations.activities}</legend>
-          <p className={cn("mt-0.5 text-xs text-muted-foreground", WRAP_ANYWHERE)}>{fr.journey.destinations.activitiesHint}</p>
-          <ul className="mt-1.5 grid gap-1">
+          <p className={cn("mt-1 text-[0.8125rem] text-muted-foreground", WRAP_ANYWHERE)}>{fr.journey.destinations.activitiesHint}</p>
+          <ul className="mt-2 grid gap-1.5">
             {destination.activities.map((activity) => {
               const isChecked = checked.has(activity.id);
               return (
                 <li
                   key={activity.id}
                   className={cn(
-                    "relative flex items-start gap-2.5 rounded-lg px-2 py-1.5 pointer-coarse:min-h-[44px] pointer-coarse:py-2.5",
+                    "relative flex items-start gap-3 rounded-xl border-2 bg-muted px-3 py-2.5 transition-colors pointer-coarse:min-h-[44px]",
                     CHOICE_FOCUS,
-                    isChecked && "bg-accent/50",
+                    // A grey chip; selection = navy edge + ticked navy box, never colour alone.
+                    isChecked ? "border-primary" : "border-transparent hover:border-input",
                   )}
                 >
                   <input
@@ -114,16 +122,16 @@ export function DestinationCard({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input bg-card",
-                      isChecked && "border-primary bg-primary text-primary-foreground",
+                      "mt-px flex size-5 shrink-0 items-center justify-center rounded-[0.3125rem] border-2 border-primary bg-card",
+                      isChecked && "bg-primary text-primary-foreground",
                     )}
                   >
-                    {isChecked ? <CheckIcon className="size-3" strokeWidth={3} /> : null}
+                    {isChecked ? <CheckIcon className="size-3.5" strokeWidth={3.5} /> : null}
                   </span>
-                  <label htmlFor={`${id}-${activity.id}`} className={cn("flex-1 text-sm", WRAP_ANYWHERE)}>
-                    <span className="font-medium">{activity.title}</span>{" "}
-                    <span className="ml-1 text-xs text-muted-foreground">{formatDuration(activity.duration_minutes)}</span>{" "}
-                    <span className="block text-xs text-muted-foreground">{activity.description}</span>
+                  <label htmlFor={`${id}-${activity.id}`} className={cn("flex-1 text-[0.9375rem]", WRAP_ANYWHERE)}>
+                    <span className="font-bold">{activity.title}</span>{" "}
+                    <span className="ml-1 text-xs font-semibold text-muted-foreground">{formatDuration(activity.duration_minutes)}</span>{" "}
+                    <span className="block text-[0.8125rem] text-muted-foreground">{activity.description}</span>
                   </label>
                 </li>
               );
@@ -143,6 +151,7 @@ export function DestinationCard({
           {pending ? <Loader2Icon className="animate-spin" aria-hidden="true" /> : null}
           {pending ? fr.journey.destinations.choosing : fr.journey.destinations.choose}
         </Button>
+      </div>
       </div>
     </article>
   );

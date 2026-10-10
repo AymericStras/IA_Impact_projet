@@ -21,13 +21,14 @@ export function ErrorMessage({ detail, onRetry, onDismiss, retryLabel, className
       role="alert"
       data-testid="error-message"
       className={cn(
-        "flex flex-wrap items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm",
+        // Not the action red: a darker red on a pale red surface, with an icon and words.
+        "flex flex-wrap items-start gap-2.5 rounded-2xl border border-destructive/45 bg-destructive-soft px-4 py-3 text-sm",
         className,
       )}
     >
       <CircleAlertIcon className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
       <div className="min-w-0 flex-[1_1_12rem] [overflow-wrap:anywhere]">
-        <p className="font-medium text-destructive">{fr.errors.title}</p>
+        <p className="font-bold text-destructive">{fr.errors.title}</p>
         <p className="text-foreground">{detail}</p>
       </div>
       <div className="ml-auto flex max-w-full items-center gap-1">

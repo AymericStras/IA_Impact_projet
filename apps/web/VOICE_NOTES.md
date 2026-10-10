@@ -90,7 +90,9 @@ Two fixes made to the hooks inherited from the previous agent:
 
 ## 4. Visual language and motion
 
-Tokens are the frozen ones of `docs/DESIGN.md`: no new colour, font, radius, icon set or library. The route adds scale (question in large type, 64–88 px talk disc) and motion.
+V3 update (ADR-026): the visual tokens, navy header, primary controls and emphasis now follow `docs/DESIGN.md` §15. Earlier screenshots and test totals below describe the pre-restyle run; current verification is in `docs/HANDOFF.md`.
+
+Tokens are the frozen ones of `docs/DESIGN.md`: no additional colour, font, radius, icon set or library. The route adds scale (question in large type, 64–88 px talk disc) and motion.
 
 `listen` turns the whole shell to the accent surface (`--primary` background, `--primary-foreground` text). The focus ring inverts there (the global ring is the accent colour and would be invisible).
 

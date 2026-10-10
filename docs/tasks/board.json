@@ -4,6 +4,14 @@
   "updated": "2026-10-10",
   "tasks": [
     {
+      "id": "RESTYLE-V3",
+      "status": "ready",
+      "priority": 1,
+      "title": "Complete and verify the shared V3 identity in classic and voice interfaces",
+      "acceptance": "Functional and responsive tests green; all intended screenshots reviewed; shared rules and handoff updated; candidate pushed",
+      "evidence": "Recovered classic changes and implemented matching voice styles in feature/restyle-v3-complete; hosted validation pending."
+    },
+    {
       "id": "P0-FRAMEWORK",
       "status": "done",
       "title": "AI-native repository: AGENTS/CLAUDE, skills, role agents, contracts, scripts, CI",
@@ -76,7 +84,10 @@
       "status": "blocked",
       "priority": 3,
       "title": "Real teacher recordings and real devices",
-      "requires": ["authorised French recordings (accents, noise, numbers, dates)", "a phone and a laptop over HTTPS"],
+      "requires": [
+        "authorised French recordings (accents, noise, numbers, dates)",
+        "a phone and a laptop over HTTPS"
+      ],
       "acceptance": "Recorded results for permission denied, interruption, noisy room, long message; error rate on numbers/dates/times"
     },
     {
@@ -84,7 +95,9 @@
       "status": "blocked",
       "priority": 4,
       "title": "Hand the confirmed JSON to the teammates' planning module",
-      "requires": ["their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"],
+      "requires": [
+        "their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"
+      ],
       "acceptance": "Their module consumes packages/contracts/examples/confirmed_requirements.json and one live export"
     },
     {
@@ -106,7 +119,9 @@
       "status": "blocked",
       "priority": 7,
       "title": "Items of docs/PRODUCTION.md (identity, retention, Postgres path, device and assistive-technology passes)",
-      "requires": ["deployment and privacy requirements from the owner"],
+      "requires": [
+        "deployment and privacy requirements from the owner"
+      ],
       "acceptance": "Each item implemented and tested; none ticked from code inspection"
     }
   ]
