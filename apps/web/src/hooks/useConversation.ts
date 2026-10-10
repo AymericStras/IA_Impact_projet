@@ -58,6 +58,8 @@ export interface UseConversationResult {
   dismissError: () => void;
   dismissNotice: () => void;
   restart: () => Promise<void>;
+  /** Re-reads the conversation from the server (e.g. after the journey changed the requirements). */
+  refresh: () => Promise<void>;
 }
 
 type ActionResult = { ok: true } | { ok: false; kind: ErrorKind };
@@ -315,6 +317,16 @@ export function useConversation(service: ConversationService = conversationServi
     await initialize();
   }, [initialize]);
 
+  const refresh = useCallback(async () => {
+    const current = conversationRef.current;
+    if (!current) return;
+    try {
+      adopt(await service.get(current.conversation_id));
+    } catch {
+      // A failed refresh keeps the last known state; the next action reports the error.
+    }
+  }, [adopt, service]);
+
   return useMemo(
     () => ({
       status,
@@ -332,6 +344,7 @@ export function useConversation(service: ConversationService = conversationServi
       dismissError,
       dismissNotice,
       restart,
+      refresh,
     }),
     [
       status,
@@ -349,6 +362,7 @@ export function useConversation(service: ConversationService = conversationServi
       dismissError,
       dismissNotice,
       restart,
+      refresh,
     ],
   );
 }

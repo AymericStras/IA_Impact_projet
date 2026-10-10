@@ -43,7 +43,8 @@ async function errorFromResponse(response: Response): Promise<ApiError> {
   return new ApiError(response.status, response.statusText || "Erreur", detail);
 }
 
-async function request<T>(path: string, init: RequestInit = {}, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
+/** Shared by the journey client: same timeout, error mapping and API root. */
+export async function request<T>(path: string, init: RequestInit = {}, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
