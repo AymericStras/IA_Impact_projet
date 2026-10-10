@@ -39,5 +39,23 @@ src/
     ├── RoutePanel.tsx     # formulaire + frise des tronçons
     ├── PlacesPanel.tsx    # gares groupées par département
     ├── MapView.tsx        # carte Leaflet (réseau, gares, trajet)
+    ├── Discovery.tsx      # fiche d'un lieu à découvrir (photo, bouton « Voir en 3D »)
+    ├── ModelViewer.tsx    # visionneuse 3D three.js, chargée à la demande
     └── Trame.tsx          # motif de capsules et de points
 ```
+
+## Modèles 3D des monuments
+
+Quand un lieu a un modèle, sa fiche affiche un bouton **Voir en 3D**. Les modèles sont dans
+`public/models/<id>.glb` (l'`id` est celui de `src/data/discoveries.ts`), leurs crédits dans
+`src/data/model-credits.json` : c'est ce fichier qui décide si le bouton apparaît.
+
+Ils viennent de Sketchfab (scans photogrammétriques, 10 à 160 Mo bruts) et sont allégés pour le web :
+décimation à ~120 000 faces dans Blender quand le scan n'a aucun sommet partagé, puis
+`gltf-transform optimize --compress meshopt --texture-compress webp --texture-size 1024`.
+Cible : moins de 3 Mo par modèle. Carcassonne vient d'un scan de tout le quartier, recadré
+dans Blender sur la cité (faces **et** texture découpées selon les UV, pour garder la résolution sur les remparts).
+
+⚠️ Licences : Champollion (CC BY-NC) interdit l'usage commercial ; Carcassonne, Arènes de Nîmes,
+Maison Carrée et Viaduc de Millau sont en CC BY (créditer l'auteur, déjà affiché
+sous le modèle).

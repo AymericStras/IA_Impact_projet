@@ -3,9 +3,11 @@
 // pied est calculée à partir des coordonnées, pas écrite à la main. Photos : public/discoveries/<id>.jpg,
 // téléchargées depuis Wikimedia Commons par scripts/fetch-discoveries.py, crédits dans discovery-credits.json.
 import credits from "./discovery-credits.json";
+import modelCredits from "./model-credits.json";
 
 export type Text = { en: string; fr: string };
-export type Category = "heritage" | "museum" | "nature" | "engineering";
+export type Category = "heritage" | "museum" | "nature" | "engineering" | "music" | "sport" | "science" | "craft";
+export const CATEGORIES: Category[] = ["heritage", "museum", "nature", "engineering", "music", "sport", "science", "craft"];
 
 export type Discovery = {
   id: string;
@@ -24,6 +26,11 @@ export type Credit = { author: string; license: string; source: string };
 
 export const imageOf = (d: Discovery) => `${import.meta.env.BASE_URL}discoveries/${d.id}.jpg`;
 export const creditOf = (d: Discovery): Credit | undefined => (credits as Record<string, Credit>)[d.id];
+
+// Modèle 3D du bâtiment, quand il en existe un : public/models/<id>.glb, récupéré sur Sketchfab puis allégé
+// (décimation Blender + gltf-transform, textures WebP 1024, compression meshopt). Crédits dans model-credits.json.
+export const modelCreditOf = (d: Discovery): Credit | undefined => (modelCredits as Record<string, Credit>)[d.id];
+export const modelOf = (d: Discovery) => (modelCreditOf(d) ? `${import.meta.env.BASE_URL}models/${d.id}.glb` : undefined);
 
 export const DISCOVERIES: Discovery[] = [
   // ── Toulouse Matabiau ──────────────────────────────────
@@ -921,6 +928,304 @@ export const DISCOVERIES: Discovery[] = [
     didYouKnow: {
       en: "The bell tower was rebuilt after a fire in 1510; its upper floors were finished in the 1520s.",
       fr: "Le clocher a été reconstruit après un incendie en 1510 ; ses étages supérieurs ont été achevés dans les années 1520.",
+    },
+  },
+  // ── Nouveaux thèmes : musique, sport, sciences, savoir-faire ──
+  {
+    id: "halle-aux-grains",
+    stationId: "87611004",
+    category: "music",
+    lat: 43.5995,
+    lon: 1.4524,
+    title: { en: "Halle aux Grains", fr: "Halle aux Grains" },
+    era: { en: "Concert hall since 1974", fr: "Salle de concert depuis 1974" },
+    summary: {
+      en: "A former grain market turned into the home of the Orchestre national du Capitole.",
+      fr: "Un ancien marché aux grains devenu la maison de l'Orchestre national du Capitole.",
+    },
+    description: [
+      {
+        en: "Built in the 1860s to trade wheat, this large hexagonal hall was later converted into a concert hall. Its seats surround the stage on several sides, so the audience sits close to the musicians.",
+        fr: "Construite dans les années 1860 pour le commerce du blé, cette grande halle hexagonale a ensuite été transformée en salle de concert. Ses gradins entourent la scène sur plusieurs côtés : le public est tout près des musiciens.",
+      },
+      {
+        en: "It is the home of the Orchestre national du Capitole de Toulouse, which became internationally known under the conductor Michel Plasson.",
+        fr: "C'est la salle de l'Orchestre national du Capitole de Toulouse, devenu célèbre dans le monde entier sous la direction de Michel Plasson.",
+      },
+    ],
+    didYouKnow: {
+      en: "A concert hall inside an old market: a good example of a building given a new life instead of being torn down.",
+      fr: "Une salle de concert dans un ancien marché : un bel exemple de bâtiment réutilisé plutôt que démoli.",
+    },
+  },
+  {
+    id: "corum",
+    stationId: "87773002",
+    category: "music",
+    lat: 43.6143,
+    lon: 3.882,
+    title: { en: "Le Corum – Opéra Berlioz", fr: "Le Corum – Opéra Berlioz" },
+    era: { en: "1990", fr: "1990" },
+    summary: {
+      en: "Montpellier's large concert hall, named after the composer Hector Berlioz.",
+      fr: "La grande salle de concert de Montpellier, baptisée du nom du compositeur Hector Berlioz.",
+    },
+    description: [
+      {
+        en: "Designed by the architect Claude Vasconi, the Corum is both a conference centre and an opera house. Its main hall, the Opéra Berlioz, seats about 2,000 people.",
+        fr: "Dessiné par l'architecte Claude Vasconi, le Corum est à la fois un palais des congrès et un opéra. Sa grande salle, l'Opéra Berlioz, accueille environ 2 000 spectateurs.",
+      },
+      {
+        en: "The Orchestre national Montpellier Occitanie plays here, and every summer the building hosts concerts of the Festival Radio France Occitanie Montpellier.",
+        fr: "L'Orchestre national Montpellier Occitanie y joue, et chaque été le bâtiment accueille des concerts du Festival Radio France Occitanie Montpellier.",
+      },
+    ],
+    didYouKnow: {
+      en: "Hector Berlioz, who gave his name to the hall, composed the Symphonie fantastique in 1830.",
+      fr: "Hector Berlioz, qui a donné son nom à la salle, a composé la Symphonie fantastique en 1830.",
+    },
+  },
+  {
+    id: "espace-brassens",
+    stationId: "87773200",
+    category: "music",
+    lat: 43.3966,
+    lon: 3.6798,
+    title: { en: "Espace Georges-Brassens", fr: "Espace Georges-Brassens" },
+    era: { en: "Opened in 1991", fr: "Ouvert en 1991" },
+    summary: {
+      en: "A museum devoted to the singer-songwriter Georges Brassens, in the town where he was born.",
+      fr: "Un musée consacré au chanteur Georges Brassens, dans la ville où il est né.",
+    },
+    description: [
+      {
+        en: "Georges Brassens was born in Sète in 1921. With his guitar, his pipe and his carefully written lyrics, he became one of the great French songwriters of the 20th century.",
+        fr: "Georges Brassens est né à Sète en 1921. Avec sa guitare, sa pipe et ses textes ciselés, il est devenu l'un des grands auteurs de chansons françaises du XXᵉ siècle.",
+      },
+      {
+        en: "Visitors walk through his life with headphones: his songs, his voice and his words play as you move from room to room. A good way to study poetry set to music.",
+        fr: "La visite se fait avec un casque : chansons, voix et paroles de Brassens accompagnent chaque salle. Une belle façon d'étudier la poésie mise en musique.",
+      },
+    ],
+    didYouKnow: {
+      en: "Brassens rests in the Le Py cemetery, just across the road — not on the beach, as he had asked in his song « Supplique pour être enterré à la plage de Sète ».",
+      fr: "Brassens repose au cimetière Le Py, juste en face — et non sur la plage, comme il le demandait dans sa chanson « Supplique pour être enterré à la plage de Sète ».",
+    },
+  },
+  {
+    id: "stadium-toulouse",
+    stationId: "87611301",
+    category: "sport",
+    lat: 43.5833,
+    lon: 1.4341,
+    title: { en: "Stadium de Toulouse", fr: "Stadium de Toulouse" },
+    era: { en: "1949", fr: "1949" },
+    summary: {
+      en: "The big stadium on an island in the Garonne, nicknamed « the little Wembley ».",
+      fr: "Le grand stade posé sur une île de la Garonne, surnommé « le petit Wembley ».",
+    },
+    description: [
+      {
+        en: "The Stadium stands on the Île du Ramier, surrounded by the river. It is the home ground of the football club Toulouse FC and also hosts big rugby matches.",
+        fr: "Le Stadium se dresse sur l'île du Ramier, entouré par le fleuve. C'est le stade du Toulouse FC, et il accueille aussi de grands matchs de rugby.",
+      },
+      {
+        en: "It hosted matches of the 1998 Football World Cup and of the Rugby World Cups in 2007 and 2023.",
+        fr: "Il a accueilli des matchs de la Coupe du monde de football 1998 et des Coupes du monde de rugby 2007 et 2023.",
+      },
+    ],
+    didYouKnow: {
+      en: "Its English-style stands, very close to the pitch, earned it the nickname « le petit Wembley ».",
+      fr: "Ses tribunes à l'anglaise, tout près de la pelouse, lui ont valu le surnom de « petit Wembley ».",
+    },
+  },
+  {
+    id: "cnea-font-romeu",
+    stationId: "87784819",
+    category: "sport",
+    lat: 42.5065,
+    lon: 2.0432,
+    title: { en: "National Altitude Training Centre", fr: "Centre national d'entraînement en altitude" },
+    era: { en: "1967", fr: "1967" },
+    summary: {
+      en: "Where French athletes come to train at 1,850 m, reached by the little Yellow Train.",
+      fr: "Là où les athlètes français viennent s'entraîner à 1 850 m, au bout du petit Train jaune.",
+    },
+    description: [
+      {
+        en: "The centre was built to prepare French athletes for the 1968 Olympic Games in Mexico City, held at more than 2,000 m of altitude.",
+        fr: "Le centre a été construit pour préparer les athlètes français aux Jeux olympiques de 1968 à Mexico, disputés à plus de 2 000 m d'altitude.",
+      },
+      {
+        en: "Up here the air contains less oxygen, so the body produces more red blood cells. Runners, swimmers and skiers still come for training camps.",
+        fr: "En altitude, l'air contient moins d'oxygène : le corps fabrique alors plus de globules rouges. Coureurs, nageurs et skieurs y viennent encore en stage.",
+      },
+    ],
+    didYouKnow: {
+      en: "It is a good case study for biology lessons: why do athletes train in the mountains before a competition?",
+      fr: "Un bon sujet pour un cours de SVT : pourquoi les sportifs s'entraînent-ils en montagne avant une compétition ?",
+    },
+  },
+  {
+    id: "joutes-sete",
+    stationId: "87773200",
+    category: "sport",
+    lat: 43.4035,
+    lon: 3.6955,
+    title: { en: "Water jousting on the Canal Royal", fr: "Joutes nautiques du canal Royal" },
+    era: { en: "Since 1666", fr: "Depuis 1666" },
+    summary: {
+      en: "Two boats, two jousters with lances: Sète's most famous sport, right in the town centre.",
+      fr: "Deux barques, deux jouteurs armés d'une lance : le sport phare de Sète, en plein centre-ville.",
+    },
+    description: [
+      {
+        en: "Each boat is rowed by a crew while a jouster stands on a raised platform at the back. As the boats pass each other, each tries to push the other into the water with his lance, protected by a wooden shield.",
+        fr: "Chaque barque est menée par des rameurs, tandis qu'un jouteur se tient sur une plateforme surélevée à l'arrière. Quand les barques se croisent, chacun tente de faire tomber l'autre à l'eau avec sa lance, protégé par un pavois en bois.",
+      },
+      {
+        en: "The first jousts in Sète were held in 1666 to celebrate the founding of the port. The great tournament takes place every August for the Saint-Louis festival.",
+        fr: "Les premières joutes de Sète ont eu lieu en 1666 pour fêter la création du port. Le grand tournoi se tient chaque mois d'août pour la Saint-Louis.",
+      },
+    ],
+    didYouKnow: {
+      en: "A band of oboes and drums plays during every joust — the music is part of the sport.",
+      fr: "Un orchestre de hautbois et de tambours joue pendant chaque joute : la musique fait partie du sport.",
+    },
+  },
+  {
+    id: "cite-espace",
+    stationId: "87612010",
+    category: "science",
+    lat: 43.5866,
+    lon: 1.4934,
+    title: { en: "Cité de l'espace", fr: "Cité de l'espace" },
+    era: { en: "1997", fr: "1997" },
+    summary: {
+      en: "A space science park with a life-size Ariane 5 rocket, in the capital of European aerospace.",
+      fr: "Un parc consacré à l'espace, avec une fusée Ariane 5 grandeur nature, dans la capitale européenne de l'aéronautique.",
+    },
+    description: [
+      {
+        en: "Toulouse is home to the French space agency's main centre and to many satellite builders. The Cité de l'espace explains their work to the public with interactive exhibitions.",
+        fr: "Toulouse accueille le principal centre de l'agence spatiale française et de nombreux constructeurs de satellites. La Cité de l'espace explique leur travail au public avec des expositions interactives.",
+      },
+      {
+        en: "In the park stand a 53 m model of the Ariane 5 rocket and a copy of the Mir space station that visitors can walk through. A planetarium shows the night sky.",
+        fr: "Dans le parc se dressent une maquette de 53 m de la fusée Ariane 5 et une réplique de la station spatiale Mir que l'on peut visiter. Un planétarium montre le ciel étoilé.",
+      },
+    ],
+    didYouKnow: {
+      en: "Inside Mir, you can see how cosmonauts slept, ate and washed in weightlessness.",
+      fr: "Dans Mir, on découvre comment les cosmonautes dormaient, mangeaient et se lavaient en apesanteur.",
+    },
+  },
+  {
+    id: "four-solaire",
+    stationId: "87784819",
+    category: "science",
+    lat: 42.4936,
+    lon: 2.0353,
+    title: { en: "Odeillo Solar Furnace", fr: "Four solaire d'Odeillo" },
+    era: { en: "1970", fr: "1970" },
+    summary: {
+      en: "A giant curved mirror that concentrates sunlight to over 3,000 °C, a few minutes from the station.",
+      fr: "Un miroir géant qui concentre la lumière du soleil à plus de 3 000 °C, à quelques minutes de la gare.",
+    },
+    description: [
+      {
+        en: "On the hillside, dozens of flat mirrors follow the sun and send its light onto a huge parabolic mirror built into the laboratory. It focuses all that light onto a target barely larger than a saucepan.",
+        fr: "Sur la pente, des dizaines de miroirs plats suivent le soleil et renvoient sa lumière vers un immense miroir parabolique intégré au laboratoire. Celui-ci concentre toute cette lumière sur une cible à peine plus grande qu'une casserole.",
+      },
+      {
+        en: "The CNRS uses it to test materials at extreme temperatures, for example the heat shields of spacecraft. The site was chosen for its many sunny days and clear mountain air.",
+        fr: "Le CNRS l'utilise pour tester des matériaux à des températures extrêmes, comme les boucliers thermiques des engins spatiaux. Le site a été choisi pour son ensoleillement et son air pur de montagne.",
+      },
+    ],
+    didYouKnow: {
+      en: "The idea is the same as a magnifying glass burning a leaf — only the « lens » here is as tall as a building.",
+      fr: "Le principe est celui de la loupe qui brûle une feuille — sauf qu'ici la « loupe » est haute comme un immeuble.",
+    },
+  },
+  {
+    id: "museum-toulouse",
+    stationId: "87611301",
+    category: "science",
+    lat: 43.5937,
+    lon: 1.4495,
+    title: { en: "Muséum de Toulouse", fr: "Muséum de Toulouse" },
+    era: { en: "Founded in 1796", fr: "Fondé en 1796" },
+    summary: {
+      en: "One of France's great natural history museums: fossils, skeletons, minerals and a botanical garden.",
+      fr: "L'un des grands muséums d'histoire naturelle de France : fossiles, squelettes, minéraux et jardin botanique.",
+    },
+    description: [
+      {
+        en: "Its collections cover the history of life and of the Earth, from meteorites to dinosaurs and the first humans. The galleries are organised around big questions rather than lists of objects.",
+        fr: "Ses collections retracent l'histoire de la vie et de la Terre, des météorites aux dinosaures et aux premiers humains. Les salles sont organisées autour de grandes questions plutôt que de listes d'objets.",
+      },
+      {
+        en: "Right next door, the Henri-Gaussen botanical garden lets classes continue the visit outside.",
+        fr: "Juste à côté, le jardin botanique Henri-Gaussen permet aux classes de prolonger la visite en plein air.",
+      },
+    ],
+    didYouKnow: {
+      en: "The museum reopened in 2008 after more than ten years of renovation.",
+      fr: "Le muséum a rouvert en 2008, après plus de dix ans de travaux.",
+    },
+  },
+  {
+    id: "musee-millau",
+    stationId: "87783001",
+    category: "craft",
+    lat: 44.0989,
+    lon: 3.0777,
+    title: { en: "Millau and Grands Causses Museum", fr: "Musée de Millau et des Grands Causses" },
+    era: { en: "Gloves & pottery", fr: "Ganterie & céramique" },
+    summary: {
+      en: "Two Millau trades in one museum: Roman pottery and luxury leather gloves.",
+      fr: "Deux savoir-faire de Millau dans un même musée : la poterie romaine et le gant de luxe.",
+    },
+    description: [
+      {
+        en: "Two thousand years ago, the workshops of La Graufesenque, just outside Millau, made red glossy pottery called terra sigillata, sold all over the Roman Empire.",
+        fr: "Il y a deux mille ans, les ateliers de la Graufesenque, aux portes de Millau, fabriquaient une vaisselle rouge et brillante, la sigillée, vendue dans tout l'Empire romain.",
+      },
+      {
+        en: "Later, Millau became the capital of glove-making, using the soft skins of lambs from the local sheep farms — the same flocks whose milk makes Roquefort cheese.",
+        fr: "Plus tard, Millau est devenue la capitale du gant, grâce aux peaux souples des agneaux des élevages voisins — les mêmes troupeaux dont le lait donne le roquefort.",
+      },
+    ],
+    didYouKnow: {
+      en: "Millau gloves are still made by hand today for major fashion houses.",
+      fr: "Des gants sont encore cousus à la main à Millau aujourd'hui pour de grandes maisons de mode.",
+    },
+  },
+  {
+    id: "hotel-assezat",
+    stationId: "87611004",
+    category: "craft",
+    lat: 43.6005,
+    lon: 1.4413,
+    title: { en: "Hôtel d'Assézat", fr: "Hôtel d'Assézat" },
+    era: { en: "1555", fr: "1555" },
+    summary: {
+      en: "The palace of a merchant who grew rich on pastel, the blue dye that made Toulouse wealthy.",
+      fr: "Le palais d'un marchand enrichi par le pastel, la teinture bleue qui a fait la fortune de Toulouse.",
+    },
+    description: [
+      {
+        en: "In the 16th century, farmers around Toulouse grew woad, a plant whose leaves give a blue dye. Crushed and dried into balls called « cocagnes », it was exported all over Europe to dye cloth.",
+        fr: "Au XVIᵉ siècle, les paysans autour de Toulouse cultivaient le pastel, une plante dont les feuilles donnent une teinture bleue. Broyées et séchées en boules appelées « coques » ou « cocagnes », elles étaient exportées dans toute l'Europe pour teindre les tissus.",
+      },
+      {
+        en: "Pierre d'Assézat, one of the richest pastel merchants, built this Renaissance mansion. Today it houses the Fondation Bemberg's art collection.",
+        fr: "Pierre d'Assézat, l'un des plus riches marchands de pastel, fit bâtir cet hôtel Renaissance. Il abrite aujourd'hui les collections d'art de la Fondation Bemberg.",
+      },
+    ],
+    didYouKnow: {
+      en: "The expression « pays de cocagne » — a land of plenty — comes from these balls of pastel.",
+      fr: "L'expression « pays de cocagne » — un pays d'abondance — viendrait de ces boules de pastel.",
     },
   },
 ];

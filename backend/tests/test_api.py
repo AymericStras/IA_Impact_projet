@@ -147,3 +147,11 @@ def test_dijkstra_on_small_network(tmp_path):
     net.rides[("1", "3", "Train TER", "")][0] = 70
     r = net.route("A", "C", exclude={"INTERCITES"})
     assert r["transfers"] == 1 and r["minutes"] == 65 and r["legs"][1]["wait_minutes"] == 35
+
+
+def test_transcribe_rejects_before_paying():
+    # Format inconnu ou enregistrement vide : refusé avant tout appel à OpenAI
+    r = client.post("/transcribe", content=b"x" * 2000, headers={"Content-Type": "text/plain"})
+    assert r.status_code == 415 and r.json()["detail"]["code"] == "audio_format"
+    r = client.post("/transcribe", content=b"x", headers={"Content-Type": "audio/webm;codecs=opus"})
+    assert r.status_code == 400 and r.json()["detail"]["code"] == "audio_empty"

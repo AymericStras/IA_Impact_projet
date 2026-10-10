@@ -1,8 +1,8 @@
-import { LOCALES, useI18n, type Locale } from "../i18n";
+import { useI18n } from "../i18n";
 import Trame from "./Trame";
 
 export default function Header() {
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   return (
     <header className="header">
       <div className="brand">
@@ -19,16 +19,6 @@ export default function Header() {
         </div>
       </div>
       <Trame className="header-trame" rows={3} columns={26} palette={["var(--red)", "var(--yellow)", "var(--navy)"]} />
-      <label className="lang">
-        <span className="sr-only">{t.language}</span>
-        <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
-          {Object.keys(LOCALES).map((l) => (
-            <option key={l} value={l}>
-              {l.toUpperCase()}
-            </option>
-          ))}
-        </select>
-      </label>
     </header>
   );
 }

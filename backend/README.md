@@ -116,6 +116,8 @@ Les réseaux urbains (tram de Montpellier, métro de Toulouse…) ne sont pas in
 | GET | `/modes` | `[{"id": "Train TER", "links": 637, "missions": 403}, …]` |
 | GET | `/networks` | réseaux liO : `[{"id": "liO 34", "department": "Hérault", "missions": 614}, …]` |
 | GET | `/route?from=Montpellier&to=Rodez` | voir ci-dessous |
+| POST | `/chat` | assistant du site (voir « Assistant » plus bas) |
+| POST | `/transcribe` | dictée du chat : corps brut = l'enregistrement → `{"text"}` |
 
 Paramètres de `/route` :
 - `from`, `to` : nom de **ville** (toutes ses gares sont essayées ; « Toulouse » part de Matabiau plutôt
@@ -156,6 +158,33 @@ Erreurs — `{"detail": {"code", "message"}}` :
 | 400 | `same_place` | départ = destination |
 | 400 | `unknown_mode` | valeur de `exclude` absente de `/modes` |
 | 400 | `unknown_network` | valeur de `exclude_network` absente de `/networks` |
+
+## Assistant (`POST /chat`)
+
+`app/chat.py` : un modèle OpenAI (`OPENAI_MODEL`, défaut `gpt-4.1-mini`) qui répond en français et appelle le
+moteur d'itinéraire comme outil — il ne donne jamais une durée de mémoire. La clé `OPENAI_API_KEY` est lue dans
+l'environnement ou dans `backend/.env` (git-ignoré, jamais versionné).
+
+```json
+// requête : l'historique + le catalogue des lieux du site (envoyé par le front)
+{"messages": [{"role": "user", "content": "Une sortie science depuis Montpellier ?"}],
+ "catalog": [{"id": "cite-espace", "title": "Cité de l'espace", "category": "science", "station": "Montaudran", "summary": "…"}]}
+// réponse : le texte + ce que le site doit afficher
+{"reply": "…", "actions": [{"type": "route", "from": "Montpellier", "to": "Montaudran"},
+                           {"type": "places", "items": [{"id": "cite-espace", "reason": "…"}]}]}
+```
+
+Garde-fous (la clé est payante, le site public) : 30 messages / 10 min par IP (`429 chat_rate_limit`), 12 derniers
+messages envoyés au modèle, 5 tours d'outils au plus. Clé absente ou OpenAI en panne : `503 chat_unavailable`.
+
+### Dictée (`POST /transcribe`)
+
+Le bouton micro du chat enregistre (MediaRecorder, 2 min au plus) et envoie l'audio **brut** dans le corps, avec son
+type en `Content-Type` (`audio/webm`, `audio/ogg`, `audio/mp4`…) — pas de multipart, donc pas de dépendance de
+plus. Le serveur le passe à l'API de transcription d'OpenAI (`TRANSCRIPTION_MODEL`, défaut
+`gpt-4o-mini-transcribe`), en français, avec le vocabulaire du site en contexte, et renvoie `{"text": "…"}`. Le
+texte atterrit dans le champ du chat pour être relu avant envoi ; rien n'est conservé. Même quota que `/chat`.
+Erreurs : `415 audio_format`, `413 audio_too_large` (10 Mo), `400`/`422 audio_empty`, `503 chat_unavailable`.
 
 ## Tests
 

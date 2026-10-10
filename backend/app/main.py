@@ -13,6 +13,8 @@ trains TER liO seulement). IA_DATASET=full charge la base complète (data/ : car
     GET /networks                        réseaux liO départementaux
     GET /info                            source des horaires, validité, jour de référence
     GET /route?from=Toulouse&to=Perpignan[&exclude=Car TER&exclude=INTERCITES][&exclude_network=liO 34][&transfer_min=5]
+    POST /chat                           assistant du site (OpenAI, clé dans backend/.env), voir app/chat.py
+    POST /transcribe                     dictée du chat : corps = l'enregistrement (audio/webm, audio/mp4…) → {"text"}
 
 Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front traduit
 à partir de `code`, `message` (anglais) n'est là que pour le débogage.
@@ -20,13 +22,16 @@ Les erreurs renvoient {"detail": {"code": ..., "message": ...}} : le front tradu
 import json
 import os
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
+from . import chat
 from .routing import DATA_DIR, DEFAULT_TRANSFER_MIN, Network, SamePlace, UnknownPlace
 
 app = FastAPI(title="IA Impact — routing API", version="2.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["*"])
 
 DATASET = os.environ.get("IA_DATASET", "train_lio")
 data_dir = DATA_DIR if DATASET == "full" else DATA_DIR / DATASET
@@ -101,3 +106,63 @@ def route(departure: str = Query(..., alias="from", min_length=1),
     if r is None:
         error(404, "no_route", f"No route between {departure} and {destination}.")
     return r
+
+
+class ChatMessage(BaseModel):
+    role: str = Field(pattern="^(user|assistant)$")
+    content: str = Field(max_length=2000)
+
+
+class CatalogPlace(BaseModel):
+    id: str = Field(max_length=60)
+    title: str = Field(max_length=120)
+    category: str = Field(max_length=30)
+    station: str = Field(max_length=80)
+    summary: str = Field(max_length=300)
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage] = Field(min_length=1, max_length=30)
+    catalog: list[CatalogPlace] = Field([], max_length=120)
+
+
+def client_ip(request):
+    return request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() \
+        or (request.client.host if request.client else "")
+
+
+@app.post("/chat")
+def chat_reply(body: ChatRequest, request: Request):
+    """Réponse de l'assistant + actions pour le site : [{"type": "route", "from", "to"} | {"type": "places", "items"}]."""
+    if not chat.allow(client_ip(request)):
+        error(429, "chat_rate_limit", "Too many messages, try again in a few minutes.")
+    try:
+        return chat.reply(network, [m.model_dump() for m in body.messages[-12:]], [p.model_dump() for p in body.catalog])
+    except chat.ChatUnavailable as e:
+        print("chat unavailable:", e)
+        error(503, "chat_unavailable", "The assistant is not available.")
+
+
+@app.post("/transcribe")
+async def transcribe(request: Request):
+    """Dictée : le corps brut est l'enregistrement du navigateur (pas de multipart, donc pas de dépendance de plus).
+    Compte dans le même quota que /chat : chaque dictée est une transcription payante."""
+    content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if content_type not in chat.AUDIO_TYPES:
+        error(415, "audio_format", "Unsupported audio format.")
+    if int(request.headers.get("content-length") or 0) > chat.MAX_AUDIO_BYTES:
+        error(413, "audio_too_large", "Recording too large.")
+    audio = await request.body()
+    if len(audio) > chat.MAX_AUDIO_BYTES:
+        error(413, "audio_too_large", "Recording too large.")
+    if len(audio) < 1000:
+        error(400, "audio_empty", "Empty recording.")
+    if not chat.allow(client_ip(request)):
+        error(429, "chat_rate_limit", "Too many messages, try again in a few minutes.")
+    try:
+        return {"text": await run_in_threadpool(chat.transcribe, audio, content_type)}
+    except chat.EmptyTranscript:
+        error(422, "audio_empty", "Nothing was understood in the recording.")
+    except chat.ChatUnavailable as e:
+        print("transcription unavailable:", e)
+        error(503, "chat_unavailable", "The assistant is not available.")

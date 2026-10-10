@@ -48,12 +48,29 @@ ARTICLES = {
     "musee-champollion": "Musée Champollion",
     "musee-soulages": "Musée Soulages",
     "cathedrale-rodez": "Cathédrale Notre-Dame de Rodez",
+    "halle-aux-grains": "Halle aux grains (Toulouse)",
+    "corum": "Le Corum",
+    "espace-brassens": "Espace Georges-Brassens",
+    "stadium-toulouse": "Stadium de Toulouse",
+    "cnea-font-romeu": "Centre national d'entraînement en altitude",
+    "joutes-sete": "Joute nautique",
+    "cite-espace": "Cité de l'espace",
+    "four-solaire": "Four solaire d'Odeillo",
+    "museum-toulouse": "Muséum de Toulouse",
+    "musee-millau": "Musée de Millau et des Grands Causses",
+    "hotel-assezat": "Hôtel d'Assézat",
 }
 
 # Quand l'image de l'article n'est pas sur Commons (photo locale, souvent non libre), on impose un fichier Commons
 FILES = {
     "viaduc-millau": "Viaduc de Millau.jpg",
     "musee-champollion": "Facade musee champollion figeac.jpg",
+    "halle-aux-grains": "Halle aux grains Toulouse.jpg",
+    "cnea-font-romeu": "Stade d'athlétisme du CNEA de Font-Romeu.jpg",
+    "joutes-sete": "Sète water jousting joute nautique (52222049980).jpg",
+    "cite-espace": "France-Toulouse-Cite de l'espace-Ariane 5.jpg",
+    "museum-toulouse": "Grand carré MHNT.jpg",
+    "musee-millau": "Cup Drag 30 from Millau MDCL.jpg",
 }
 
 

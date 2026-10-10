@@ -158,5 +158,60 @@
     "author": "Thierry46",
     "license": "CC BY-SA 3.0",
     "source": "https://commons.wikimedia.org/wiki/File:Facade_musee_champollion_figeac.jpg"
+  },
+  "corum": {
+    "author": "Patrick Nouhailler's…",
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Montpellier,_France_-_panoramio_(164).jpg"
+  },
+  "espace-brassens": {
+    "author": "Fagairolles 34",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:S%C3%A8te_espace_Brassens_barque.JPG"
+  },
+  "stadium-toulouse": {
+    "author": "Laurie Laberinto",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Stadium-Lory.jpg"
+  },
+  "four-solaire": {
+    "author": "Rabatakeu",
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:FourSolaire2.JPG"
+  },
+  "hotel-assezat": {
+    "author": "Didier Descouens",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bachelier_-_H%C3%B4tel_d%27Ass%C3%A9zat_-_Toulouse.jpg"
+  },
+  "halle-aux-grains": {
+    "author": "Didier Descouens",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Halle_aux_grains_Toulouse.jpg"
+  },
+  "cnea-font-romeu": {
+    "author": "Lud Au43",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Stade_d%27athl%C3%A9tisme_du_CNEA_de_Font-Romeu.jpg"
+  },
+  "joutes-sete": {
+    "author": "Jorge Franganillo",
+    "license": "CC BY 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:S%C3%A8te_water_jousting_joute_nautique_(52222049980).jpg"
+  },
+  "cite-espace": {
+    "author": "Yoshi Canopus",
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:France-Toulouse-Cite_de_l%27espace-Ariane_5.jpg"
+  },
+  "museum-toulouse": {
+    "author": "Didier Descouens",
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Grand_carr%C3%A9_MHNT.jpg"
+  },
+  "musee-millau": {
+    "author": "Marie-Lan Nguyen",
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Cup_Drag_30_from_Millau_MDCL.jpg"
   }
 }
