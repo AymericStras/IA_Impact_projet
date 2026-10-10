@@ -1,0 +1,320 @@
+/*
+  Route-scoped layout of the voice flow (/vocal). Colours, type and radii are the frozen
+  tokens of docs/DESIGN.md (CSS variables of globals.css); this file only adds the shell,
+  the layout tiers and the motion tokens of this route.
+
+  Tiers are CONTAINER queries on the shell, in rem, like the classic chat: a narrow window,
+  a short window, browser zoom and a larger text size all land in the same tiers.
+
+    column   default           header / stage (scrolls) / dock at the bottom
+    low      <= 32.5rem high and >= 30rem wide (phone landscape, large text on a laptop):
+             the dock becomes a column on the right, the stage keeps the full height
+    tiny     < 17rem wide (very large text on a phone): the dock stacks its controls
+             and drops its idle hint
+*/
+
+.shell {
+  /* Motion tokens of this route (see VOICE_NOTES.md). */
+  --voice-stage-enter: 240ms;
+  --voice-surface: 320ms;
+  --voice-press: 120ms;
+  --voice-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* In px on purpose: a finger does not grow with the text size. 64 px on short screens. */
+  --talk-size: clamp(64px, 14vh, 88px);
+
+  container: voice / size;
+  /* Containing block of every absolutely positioned descendant (screen-reader-only text
+     included), so nothing can extend the document beyond the shell. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--background);
+  color: var(--foreground);
+  transition:
+    background-color var(--voice-surface) ease,
+    color var(--voice-surface) ease;
+}
+
+@supports (height: 100dvh) {
+  .shell {
+    /* --app-height is set by useKeyboardInset while an on-screen keyboard covers the page. */
+    height: var(--app-height, 100dvh);
+    --talk-size: clamp(64px, 14dvh, 88px);
+  }
+}
+
+/* The listen stage: full-bleed accent surface. */
+.shell[data-tone="accent"] {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* The global focus ring is the accent colour: on the accent surface it must invert. */
+.shell[data-tone="accent"] :focus-visible {
+  outline-color: var(--primary-foreground);
+}
+
+/* Stage headings take focus by script only (stage entry): no ring around a title. */
+.shell .stageHeading:focus-visible {
+  outline: none;
+}
+
+.safeX {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.header {
+  flex-shrink: 0;
+  padding-top: env(safe-area-inset-top);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.main {
+  /* Screen-reader-only text inside the stage scrolls with it instead of escaping it. */
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* A stage that fills the area and centres its content, yet scrolls when it is too tall. */
+.stage {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* Wrapper of the current stage: at least as tall as the stage area. */
+.stageSlot {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.dock {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  /* Bottom-anchored: the talk button is the last item, so it never moves between stages
+     (a finger holding it must stay on it when the screen changes). */
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.dockRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Bottom-aligned: a taller neighbour never pushes the talk button. */
+  align-items: end;
+  gap: 0.5rem;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 44rem;
+}
+
+.dockStart {
+  display: flex;
+  align-self: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.dockEnd {
+  display: flex;
+  align-self: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.dockTalk {
+  display: flex;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------------ talk button */
+
+.talk {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: calc(var(--radius) * 1.8);
+  padding: 2px;
+  cursor: pointer;
+  /* The gesture belongs to the page, not to the browser: no scroll, zoom, selection,
+     callout or tap flash while pressing. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.talk:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.talkCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--talk-size);
+  height: var(--talk-size);
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  transition:
+    background-color var(--voice-press) ease,
+    color var(--voice-surface) ease;
+}
+
+.talkCircle svg {
+  transition: transform var(--voice-press) var(--voice-ease);
+}
+
+/* Press feedback inside the disc: the disc itself never shrinks below its touch size and
+   never moves under the finger. */
+.talk[data-pressed="true"] .talkCircle {
+  background-color: color-mix(in srgb, var(--primary), var(--foreground) 28%);
+}
+
+.talk[data-pressed="true"] .talkCircle svg {
+  transform: scale(0.86);
+}
+
+.shell[data-tone="accent"] .talkCircle {
+  background-color: var(--primary-foreground);
+  color: var(--primary);
+}
+
+.shell[data-tone="accent"] .talk[data-pressed="true"] .talkCircle {
+  background-color: color-mix(in srgb, var(--primary-foreground), var(--primary) 16%);
+}
+
+.talkLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ listen stage */
+
+.listen {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  flex: 1 0 auto;
+}
+
+.listenText {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: center;
+}
+
+.listenVisual {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 7rem;
+}
+
+.listenVisual canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------------ tiers */
+
+@container voice (max-height: 32.5rem) and (min-width: 30rem) {
+  .body {
+    flex-direction: row;
+  }
+
+  .dock {
+    width: clamp(9rem, 26cqi, 13rem);
+    padding-top: 0.5rem;
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: 0.75rem;
+  }
+
+  .listen {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .listenText {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .listenVisual {
+    align-self: stretch;
+    min-height: 0;
+  }
+}
+
+/*
+  Compact dock (low and tiny tiers): the side controls share a wrapping row and the talk
+  button takes the last row alone, centred — still the last item, so still anchored.
+  Idle hints are kept for assistive technology only: the button's own label remains.
+*/
+@container voice ((max-height: 32.5rem) and (min-width: 30rem)) or (max-width: 16.999rem) {
+  .dockRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dockStart,
+  .dockEnd {
+    flex: 0 1 auto;
+    justify-content: center;
+  }
+
+  .dockStart:empty,
+  .dockEnd:empty {
+    display: none;
+  }
+
+  .dockTalk {
+    flex: 0 0 100%;
+    order: 3;
+  }
+
+  .compactHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

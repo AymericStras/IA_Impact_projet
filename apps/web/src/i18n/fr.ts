@@ -13,6 +13,8 @@ export const fr = {
     help: "Aide",
     skipToComposer: "Aller à la zone de saisie",
     newConversation: "Nouvelle conversation",
+    voiceLink: "Version vocale",
+    voiceLinkLabel: "Passer à la version vocale",
   },
   demo: {
     badge: "Mode démo",
@@ -46,6 +48,7 @@ export const fr = {
         hint: "par exemple « professeur d'histoire » ou « le Moyen Âge »",
       },
     ],
+    voiceLink: "Vous préférez parler ? Essayer la version vocale",
     privacy:
       "Aucune autre information n'est demandée ni conservée : ni budget, ni nom d'établissement.",
     example:

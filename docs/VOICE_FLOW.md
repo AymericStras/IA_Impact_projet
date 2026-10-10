@@ -1,6 +1,6 @@
 # Voice flow — a staged, voice-first experience (development plan)
 
-Status: **plan, not implemented**. Owner request of 2026-10-10: a second frontend that is not a chat box — a sequence of full-screen stages, each doing one thing, built around press-and-hold speaking. The classic chat (`/`) stays as it is and remains the tested, deployable default until the owner chooses.
+Status: **implemented** (2026-10-10) for the five stages below; see `apps/web/VOICE_NOTES.md` for what was built and verified. Not yet done: the stages after `done` (the simulated journey) and a visual direction chosen by the owner. Owner request of 2026-10-10: a second frontend that is not a chat box — a sequence of full-screen stages, each doing one thing, built around press-and-hold speaking. The classic chat (`/`) stays as it is and remains the tested, deployable default until the owner chooses.
 
 ## 1. Product intent
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { CircleHelpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,14 @@ export function HelpDialog() {
         <p className="text-xs text-muted-foreground">{fr.help.privacy}</p>
         {/* The badge tooltip needs hover: the same information is always readable here. */}
         {isDemoMode ? <p className="text-xs text-muted-foreground">{fr.demo.description}</p> : null}
+        <p className="text-sm">
+          <Link
+            href="/vocal"
+            className={cn("inline-flex items-center font-medium text-primary underline underline-offset-4", TOUCH_TARGET)}
+          >
+            {fr.help.voiceLink}
+          </Link>
+        </p>
         <DialogFooter>
           <DialogClose render={<Button variant="outline" className={cn(FLUID_BUTTON, TOUCH_TARGET)} />}>{fr.help.close}</DialogClose>
         </DialogFooter>

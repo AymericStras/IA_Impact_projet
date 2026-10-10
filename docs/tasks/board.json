@@ -34,9 +34,14 @@
       "evidence": "Chromium with a fake microphone fed synthesized French speech: transcript correct, 4 fields extracted in one turn. Synthetic audio only."
     },
     {
+      "id": "VOICE-FLOW",
+      "status": "done",
+      "title": "Staged voice-first flow at /vocal (ask, listen, think, sheet, done), five fields",
+      "evidence": "104 unit tests, 51 Playwright tests incl. responsive matrix and 48 baselines (demo mode); real-mode run with the live model and a fake microphone reached the sheet with the station question on its row"
+    },
+    {
       "id": "P6-GUARDRAILS",
-      "status": "ready",
-      "priority": 1,
+      "status": "done",
       "title": "Frontend freeze for handover: screenshot baselines, docs/DESIGN.md, apps/web/AGENTS.md, error codes, GET /config, sub-path build",
       "acceptance": "pnpm test:e2e green with committed baselines; DESIGN.md matches the code; standalone build serves under /sncf-chatbot"
     },

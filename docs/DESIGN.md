@@ -301,3 +301,12 @@ What the audit (`auditLayout`) reports:
 Further tests in the same file: long content (a 300-character theme, an 80-character station, a 4000-character message, a long unbroken string, the JSON block) at 320×568, 768×1024, 1440×900 and 390×844 at 200 %; reflow at 400 % zoom (320×256 and 320×180); and a self-test that injects each kind of breakage and requires the audit to report it — weakening the audit fails that test.
 
 These are Chromium viewport emulations. They do not cover real devices: browser toolbars, the on-screen keyboard, notches and safe-area insets, Safari and Firefox are not exercised (§5.5 is implemented but verified only by unit tests and by reading the CSS).
+
+### Cross-platform note on the conversation floor
+
+At root font 200 % on phone widths the conversation floor is 30 % (35 % everywhere else, 45–55 % in landscape). The first Linux CI run measured 32.1 % where macOS measured 36.7 % for the same build: font metrics differ by a few points, and a floor only one platform meets is not a guardrail. This was decided by the project lead with the owner informed; it is not a precedent for lowering thresholds to get a green run.
+
+### Link between the two experiences
+
+The classic top bar carries an icon link to `/vocal` (hidden on `narrow` shells, where four controls do not fit); the Help dialog always carries the same link as text with a 44 px target. `/vocal` links back from its own top bar.
+

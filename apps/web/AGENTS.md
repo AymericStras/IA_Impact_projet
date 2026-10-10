@@ -6,7 +6,8 @@ These rules apply to everything under `apps/web`. They complement the root `AGEN
 
 ## Scope
 
-- Only the teacher chatbot: one page, conversation + "Votre projet" panel + composer with voice input.
+- Two experiences on the same backend and the same conversation: the classic chat at `/` (conversation + "Votre projet" panel + composer with voice input) and the staged voice flow at `/vocal` (one full-screen stage at a time: ask, listen, think, sheet, done — plan in `docs/VOICE_FLOW.md`, notes in `apps/web/VOICE_NOTES.md`). The freeze below covers the classic chat; `/vocal` reuses the same tokens and may still receive a visual direction chosen by the owner.
+- `/vocal` code lives in `src/app/vocal/`, `src/components/voice/`, `src/hooks/useVoiceFlow.ts`, `useHoldToTalk.ts`, `useAudioCapture.ts`, `src/i18n/fr.voice.ts`; its e2e runs with `pnpm test:e2e:voice` (config `playwright.voice.config.ts`, port 3200, `.next-voice`). Run it after the classic suite, never at the same time.
 - Out of scope: new pages, navigation, authentication, dashboards, itinerary/train/destination features, analytics, any data beyond the five requirements (participants, departure station, departure, return, subject or theme).
 - Do not edit `services/api` or `packages/contracts` from a frontend task.
 
@@ -43,6 +44,7 @@ pnpm lint
 pnpm test -- --run
 pnpm build
 pnpm test:e2e
+pnpm test:e2e:voice   # when anything under the /vocal paths, a shared hook or lib/ui.ts changed
 ```
 
 - `pnpm test:e2e` builds the app in demo mode into `.next-e2e` and serves it on port **3100**; it does not touch a `pnpm dev` running on port 3000. It runs three specs: `demo-flow` (flows, on the `desktop`, `mobile`, `tablet` and `landscape` projects), `visual` (screenshots, same four projects, macOS baselines only) and `responsive` (programmatic layout audit over a viewport matrix).

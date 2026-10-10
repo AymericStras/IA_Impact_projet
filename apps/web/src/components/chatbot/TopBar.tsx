@@ -1,6 +1,7 @@
 "use client";
 
-import { RotateCcwIcon, TrainFrontIcon } from "lucide-react";
+import Link from "next/link";
+import { AudioLinesIcon, RotateCcwIcon, TrainFrontIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { fr } from "@/i18n/fr";
@@ -37,6 +38,16 @@ export function TopBar({ onRestart, disabled = false }: TopBarProps) {
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           {isDemoMode ? <DemoBadge /> : null}
+          {/* Same conversation, other experience: the staged voice flow. Hidden on narrow shells
+              (320 px phones, very large text), where the Help dialog carries the same link. */}
+          <Link
+            href="/vocal"
+            aria-label={fr.app.voiceLinkLabel}
+            title={fr.app.voiceLink}
+            className={`inline-flex size-8 items-center narrow:hidden justify-center rounded-md text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${TOUCH_TARGET}`}
+          >
+            <AudioLinesIcon className="size-4" aria-hidden="true" />
+          </Link>
           <Tooltip>
             <TooltipTrigger
               render={
