@@ -18,6 +18,7 @@ collection/query code. This branch contains only `event_catalog/`.
 | Railway stations | 260 |
 
 - [SQLite database](distribution/catalogue.sqlite3)
+- [Source registry: platforms and collection entry points](distribution/csv/sources.csv)
 - [CSV tables](distribution/csv/)
 - [Checksums and generation metadata](distribution/manifest.json)
 - [Data dictionary](distribution/schema.json)
@@ -63,7 +64,8 @@ python3 -m sncf_events serve
 
 Open http://127.0.0.1:8766. Collection requires source reviews and, for
 DATAtourisme/OpenAgenda, your own API keys in a private `.env` file. Use
-`.env.example` and [operations](docs/OPERATIONS.md). New sources and endpoints
+[the two-key setup guide](docs/API-KEYS.md), `.env.example` and
+[operations](docs/OPERATIONS.md). New sources and endpoints
 are disabled by default. No account or password is needed for the published
 read-only viewer at https://zhaoyang.fr/sncf-events/.
 
