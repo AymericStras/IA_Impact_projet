@@ -16,6 +16,8 @@ from .policy import require_read_permission, strip_secrets_from_url, timestamp, 
 
 CONNECTORS = {'datatourisme_events','datatourisme_places','openagenda_events','openagenda_agendas','jsonld','occitanie_region_events','fabre_school_offers'}
 REGION_DATASET = 'https://data.laregion.fr/api/explore/v2.1/catalog/datasets/agendas-participatif-des-sorties-en-occitanie'
+# Upstream candidate radius around a station; slightly wider than rail.RADIUS, never used to accept a route.
+NEAR_METRES = 1400
 
 
 def install_default_endpoints(conn):
@@ -110,6 +112,9 @@ def initial_url(endpoint):
             where.append("date_fin >= date'"+config['from_date']+"'")
         if config.get('to_date'):
             where.append("date_debut <= date'"+config['to_date']+"'")
+        if config.get('near'):
+            lat,lon = config['near']
+            where.append(f"within_distance(geo_point_2d, geom'POINT({lon} {lat})', {NEAR_METRES}m)")
         if where:
             params.append(('where',' AND '.join(where)))
     elif name.startswith('datatourisme_'):
@@ -122,6 +127,8 @@ def initial_url(endpoint):
                         ' OR takesPlaceAt.startDate[gte]='+config['from_date']+')')
         fields = 'uuid,uri,label,type,isLocatedAt.address,isLocatedAt.geo,isLocatedAt.openingHoursSpecification,hasDescription,lastUpdate,hasBeenCreatedBy.legalName,takesPlaceAt'
         params = [('page_size','50'),('lang','fr'),('fields',fields),('filters',filters)]
+        if config.get('near'):
+            params.append(('geo_distance','%s,%s,%dm' % (*config['near'],NEAR_METRES)))
     elif name.startswith('openagenda_'):
         params = [('size','50')]
         if name=='openagenda_events':
@@ -137,6 +144,12 @@ def initial_url(endpoint):
             params.append(('timings[gte]',config['starts_after']))
         if config.get('ends_before'):
             params.append(('timings[lte]',config['ends_before']))
+        if config.get('near') and name=='openagenda_events':
+            lat,lon = config['near']
+            dlat = NEAR_METRES/111320
+            dlon = dlat/math.cos(math.radians(lat))
+            params += [('geo[northEast][lat]',round(lat+dlat,6)),('geo[northEast][lng]',round(lon+dlon,6)),
+                       ('geo[southWest][lat]',round(lat-dlat,6)),('geo[southWest][lng]',round(lon-dlon,6))]
     if config.get('search'):
         params.append(('search',config['search']))
     return endpoint['url']+('?' + urlencode(params) if params else '')
@@ -166,8 +179,14 @@ def next_url(endpoint, current_url, document):
         return urlunsplit((p.scheme,p.netloc,p.path,urlencode(params),''))
     if name.startswith('datatourisme_'):
         meta = document.get('meta')
-        if not isinstance(meta,dict) or 'next' not in meta:
+        if not isinstance(meta,dict):
             raise ValueError('missing_pagination_metadata')
+        if 'next' not in meta:
+            # Observed 2026-10-10: the last page omits `next`; accept only an explicit final page number.
+            page,pages = meta.get('page'),meta.get('total_pages')
+            if type(page) is not int or type(pages) is not int or page<max(1,pages):
+                raise ValueError('missing_pagination_metadata')
+            return None
         target = meta['next']
         if target is None:
             return None
@@ -215,7 +234,7 @@ def sanitize_payload(body, secret):
     return dumps(doc)
 
 
-def scoped_endpoint(endpoint, window_dates=None, delta_since=None):
+def scoped_endpoint(endpoint, window_dates=None, delta_since=None, near=None):
     """Job-local scope; never edits an operator's enabled endpoint configuration."""
     endpoint = dict(endpoint)
     config = json.loads(endpoint['config_json'])
@@ -231,6 +250,13 @@ def scoped_endpoint(endpoint, window_dates=None, delta_since=None):
             config.update(from_date=first,to_date=last)
         else:
             raise ValueError('endpoint_does_not_support_date_window')
+    if near is not None:
+        # Station scope narrows a dated window; it never replaces the local distance and route checks.
+        if not window_dates or not isinstance(near,(list,tuple)) or len(near)!=2 or any(
+                isinstance(x,bool) or not isinstance(x,(int,float)) or not math.isfinite(x) for x in near) \
+                or not -90<=near[0]<=90 or not -180<=near[1]<=180:
+            raise ValueError('invalid_station_scope')
+        config['near'] = [round(float(near[0]),6),round(float(near[1]),6)]
     if delta_since:
         if endpoint['connector']!='openagenda_events' or window_dates:
             raise ValueError('invalid_delta_scope')
@@ -241,14 +267,14 @@ def scoped_endpoint(endpoint, window_dates=None, delta_since=None):
     return endpoint
 
 
-def run_endpoint(conn, endpoint_id, *, max_pages=3, resume=None, client_factory=Client, window_dates=None, delta_since=None, on_run=None):
+def run_endpoint(conn, endpoint_id, *, max_pages=3, resume=None, client_factory=Client, window_dates=None, delta_since=None, near=None, on_run=None):
     if not 1<=max_pages<=10:
         raise ValueError('max_pages_must_be_1_to_10')
     endpoint = conn.execute('SELECT * FROM endpoints WHERE id=?',(endpoint_id,)).fetchone()
     if not endpoint or not endpoint['enabled']:
         raise ValueError('endpoint_disabled')
     require_read_permission(conn,endpoint['source_id'])
-    endpoint = scoped_endpoint(endpoint,window_dates,delta_since)
+    endpoint = scoped_endpoint(endpoint,window_dates,delta_since,near)
     name = endpoint['connector']
     secret = ''
     headers = {}

@@ -1,9 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "sncf-events"
-version = "0.6.0"
-description = "Occitanie educational travel source registry and evidence store"
+version = "0.7.0"
+description = "Occitanie educational travel source registry, evidence store and station activity lookup"
 requires-python = ">=3.11"
 dependencies = []
+
+[project.scripts]
+sncf-events = "sncf_events.cli:main"
+
+[tool.setuptools]
+packages = ["sncf_events"]
+
+[tool.setuptools.package-data]
+sncf_events = ["migrations/*.sql", "web/*"]
 
 [tool.ruff]
 line-length = 100

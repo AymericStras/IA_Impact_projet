@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, urlsplit
 from . import __version__
 from .credentials import credential_status
 from .db import DEPARTMENTS, connect, loads, now, writer_lock
-from . import refresh, rail
+from . import nearby, refresh, rail
 from .search import PARIS, csv_export, detail, search
 
 ASSETS = Path(__file__).parent/'web'
@@ -245,6 +245,15 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(200,self.server.app.metadata(conn))
                 if path=='/api/search':
                     return self.send(200,search(conn,**filters(query)))
+                if path=='/api/stations':
+                    if set(query)-{'q','limit'}:
+                        raise ValueError('unknown_query_parameter')
+                    return self.send(200,{'stations':nearby.stations(conn,query.get('q',[''])[0],int(query.get('limit',['20'])[0]))})
+                if path=='/api/near':
+                    # Stored evidence only: this viewer never collects on a read request.
+                    if set(query)!={'stations','date'} or len(query['stations'])!=1 or len(query['date'])!=1:
+                        raise ValueError('stations_and_date_required')
+                    return self.send(200,nearby.lookup(conn,[s for s in query['stations'][0].split(',') if s.strip()],query['date'][0]))
                 if path=='/api/detail':
                     if set(query)!={'id'} or len(query['id'])!=1:
                         raise ValueError('id_required')

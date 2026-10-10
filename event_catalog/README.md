@@ -6,6 +6,39 @@ Find activity sources, use the collected dates and locations, or run the crawler
 for school trips within a 20-minute walk of a railway station. This branch
 contains only the standalone `event_catalog/` project.
 
+**New in 0.7.0 — station lookup.** Give one or more railway stations and a date; receive structured data for that day's activities within a checked 20-minute walk, collected live around those stations only.
+
+## Integrate with one prompt
+
+Paste this into an AI coding assistant opened at the root of `IA_Impact_projet`. It adds one backend endpoint that
+returns structured data only — time, place, basic information, walking time and source link — for activities near
+one station or every station of a journey. Details are in [INTEGRATION.md](INTEGRATION.md).
+
+```text
+Integrate the activity crawler and its source data from event_catalog/ into this project's backend.
+
+1. If event_catalog/ is missing on this branch, bring it in without merging anything else:
+   git fetch origin feature/activities-database-crawler
+   git checkout origin/feature/activities-database-crawler -- event_catalog
+2. Read event_catalog/INTEGRATION.md completely and follow its section
+   "Adding it to the IA_Impact_projet backend".
+3. Add GET /activities to backend/app. It accepts date=YYYY-MM-DD and either stations=UIC,UIC,...
+   or from=...&to=... (use network.route and pass every identifier of every legs[].stops).
+   Return the dictionary of sncf_events.nearby.Service.activities unchanged. Structured data only:
+   no frontend, no page, no change to existing endpoints.
+4. Keys: I was sent a private file containing DATATOURISME_API_KEY and OPENAGENDA_PUBLIC_KEY.
+   Ask me for its path, append its two lines to backend/.env (git-ignored), and never print,
+   log or commit the values. If I do not have the file yet, finish everything else and tell me
+   where the two lines go.
+5. Apply the same per-IP rate limit pattern as /chat to /activities.
+6. Add tests with Service(..., live=False) and a temporary database; tests must not use the network.
+   Add /activities to the endpoint table of backend/README.md.
+7. Leave event_catalog/distribution (portable SQLite and CSV snapshot, 144 registered sources) as
+   offline reference data; do not import it into the live database.
+8. Start the server, request /activities?stations=87773002&date=<a date within the next week>,
+   poll every few seconds until "pending" is false, and show me the JSON and the test results.
+```
+
 ## Start here: the most important files
 
 **Start with [sources.csv](distribution/csv/sources.csv) to understand which

@@ -18,4 +18,6 @@ python3 -m sncf_events walk-check --from-date 2026-10-12 --to-date 2026-10-12 --
 python3 -m sncf_events walk-check --resume JOB_ID
 ```
 
+Station-first lookups (`near`, `collect-near`, `sncf_events.nearby`) evaluate the route from each requested station rather than the best station per activity, with the same model and limit; see [INTEGRATION.md](../INTEGRATION.md). They pace IGN requests at one per second and count them in their own hourly budget.
+
 GET `/api/search` accepts `rail_filter=within_20_min|all|unknown|outside` and returns rail_counts. Prefix hosted routes with `/sncf-events`. Local writes require Origin and CSRF checks; hosted writes are denied. Historical `records`/`export` commands return source archives without the walking filter; use search or the viewer for trip selection.

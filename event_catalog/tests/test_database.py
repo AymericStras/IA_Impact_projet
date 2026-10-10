@@ -73,7 +73,7 @@ class RegistryTests(DatabaseCase):
 
     def test_migrations_are_repeatable_and_foreign_keys_active(self):
         migrate(self.conn)
-        self.assertEqual(self.scalar('SELECT count(*) FROM schema_migrations'),6)
+        self.assertEqual(self.scalar('SELECT count(*) FROM schema_migrations'),7)
         with self.assertRaises(sqlite3.IntegrityError):
             self.conn.execute("INSERT INTO source_aliases VALUES ('missing','https://example.org')")
         self.conn.rollback()

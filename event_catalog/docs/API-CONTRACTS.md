@@ -26,6 +26,18 @@ Reviewed source: https://www.museefabre.fr/offre-de-visites-et-ateliers
 
 The fixed school parser checks robots and reviewed content blocks. Seven educational offers were verified. Teacher meetings are excluded; separate venues and evidence for booking, grades and durations are preserved. Unknown exhibitions or changed layout fail for review instead of inheriting old dates or locations.
 
+## Station scope
+
+Verified live on 2026-10-10 for Montpellier Saint-Roch and 2026-10-12. Each filter only narrows candidates; the local straight-line distance and the checked pedestrian route decide.
+
+| Source | Filter | Observed |
+|---|---|---|
+| DATAtourisme | `geo_distance=lat,lon,1400m` beside the date filters | 49 events, against 571 for the whole department |
+| Région Occitanie | `within_distance(geo_point_2d, geom'POINT(lon lat)', 1400m)` | 5 records, against 84 for the region |
+| OpenAgenda | `geo[northEast]`/`geo[southWest]` box per selected calendar | a box around another city returns 0 |
+
+The last DATAtourisme page omits `meta.next`. It is accepted as final only when `meta.page` equals `meta.total_pages`; any other missing link still fails the run.
+
 ## IGN
 
 See [WALKING-ACCESS.md](WALKING-ACCESS.md). Pedestrian routing is not a timetable or group inventory API. Raw responses and endpoint validation provide route evidence, with expiry-aware decisions.

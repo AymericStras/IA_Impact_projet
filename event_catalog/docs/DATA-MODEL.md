@@ -1,6 +1,6 @@
 # Operational data model
 
-The operational SQLite database stores source registration separately from collected facts. Six immutable migrations define 35 tables plus query views; use `migrate` for upgrades and `database/bootstrap.sql` only for a new database.
+The operational SQLite database stores source registration separately from collected facts. Seven immutable migrations define 38 tables plus query views; use `migrate` for upgrades and `database/bootstrap.sql` only for a new database.
 
 Sources carry geographic scope, role, aliases, upstream relationships, access method and research status. Source reviews separately track reading, factual reuse, description reuse, attribution and expiry. Registered URLs do not imply implemented connectors.
 

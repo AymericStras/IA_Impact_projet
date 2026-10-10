@@ -7,7 +7,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qs,urlsplit
 
 from sncf_events.connectors import configure_endpoint,enable_endpoint,initial_url,run_endpoint,scoped_endpoint
-from sncf_events.db import dumps,migrate
+from sncf_events.db import dumps,migrate,now
 from sncf_events.ingest import start_run,finish_run,ingest_page
 from sncf_events.search import csv_export,detail,search,window
 from sncf_events import refresh
@@ -229,7 +229,7 @@ class RefreshTests(DatabaseCase):
             self.conn.execute("DELETE FROM schema_migrations WHERE version='005_local_app'")
         migrate(self.conn)
         self.assertEqual(before,[tuple(r) for r in self.conn.execute('SELECT * FROM observations')])
-        self.assertEqual(self.scalar('SELECT count(*) FROM schema_migrations'),6)
+        self.assertEqual(self.scalar('SELECT count(*) FROM schema_migrations'),7)
         self.assertEqual(self.scalar('SELECT enabled FROM local_settings'),0)
 
     def test_duplicate_calendar_profiles_only_fetch_once(self):
@@ -323,6 +323,20 @@ class LocalHTTPTests(DatabaseCase):
         status,header,body=self.request('/api/export.csv?from_date=2026-10-12&to_date=2026-10-12')
         self.assertEqual(status,200);self.assertIn('attachment',header);self.assertTrue(body.startswith(b'\xef\xbb\xbf'))
         self.assertEqual(self.request('/api/status?from_date=2026-10-12&to_date=2026-10-12')[0],200)
+
+    def test_station_lookup_routes_read_stored_evidence_only(self):
+        with self.conn:
+            self.conn.execute('INSERT INTO rail_datasets VALUES (?,?,?,1)',('TEST',dumps({'synthetic':True}),now()))
+            self.conn.execute('INSERT INTO rail_stations VALUES (?,?,?,?,?,?,?,?)',('TEST','87611004','TEST Station',43.6,1.44,'31','Toulouse','["Train TER"]'))
+        status,_,body=self.request('/api/stations?q=test')
+        self.assertEqual((status,json.loads(body)['stations'][0]['id']),(200,'87611004'))
+        status,_,body=self.request('/api/near?stations=87611004,Paris&date=2026-10-12')
+        result=json.loads(body)
+        self.assertEqual((status,result['total'],result['stations'][0]['coverage']['state']),(200,0,'not_requested'))
+        self.assertEqual(result['unknown_stations'][0]['reference'],'Paris')
+        self.assertEqual(self.scalar('SELECT count(*) FROM station_lookups'),0)
+        for path in ('/api/near?stations=87611004','/api/near?stations=&date=2026-10-12','/api/near?stations=87611004&date=12-10-2026','/api/stations?limit=0'):
+            self.assertEqual(self.request(path)[0],400)
 
     def test_prefixed_deployment_assets_api_redirect_and_writes(self):
         self.app=App(self.path,base_path='/sncf-events/')

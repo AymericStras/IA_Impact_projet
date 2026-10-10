@@ -45,6 +45,18 @@ def parser():
     walking.add_argument('--department')
     walking.add_argument('--resume')
     walking.add_argument('--budget',type=int,default=10)
+    live = sub.add_parser('setup-live',help='idempotent live profile: schema, registry, recorded reviews, endpoints, stations; no network')
+    live.add_argument('--stations-dir',help='backend/data directory from the pinned upstream commit')
+    found = sub.add_parser('stations',help='search railway stations by name or UIC identifier')
+    found.add_argument('query',nargs='?',default='')
+    found.add_argument('--limit',type=int,default=20)
+    for name,text in (('near','stored activities within a checked 20-minute walk of the given stations; no network'),
+                      ('collect-near','bounded live collection around the given stations, then the same answer')):
+        near = sub.add_parser(name,help=text)
+        near.add_argument('--station',action='append',required=True,help='UIC identifier or exact name; repeat for stations along a route')
+        near.add_argument('--date',required=True,help='Occitanie civil date YYYY-MM-DD')
+        if name=='collect-near':
+            near.add_argument('--seconds',type=int,default=300,help='foreground time budget, at most 1800')
     seed = sub.add_parser('import-sources')
     seed.add_argument('path')
     sources = sub.add_parser('sources')
@@ -135,6 +147,29 @@ def dispatch(conn,args):
         from .rail import import_stations
         conn.execute('PRAGMA max_page_count='+str(16*1024**2//conn.execute('PRAGMA page_size').fetchone()[0]))
         return import_stations(conn,args.directory)
+    if command=='setup-live':
+        from .nearby import setup
+        return setup(conn,args.stations_dir)
+    if command=='stations':
+        from .nearby import stations
+        return stations(conn,args.query,args.limit)
+    if command=='near':
+        from .nearby import lookup
+        return lookup(conn,args.station,args.date)
+    if command=='collect-near':
+        import time
+        from . import nearby
+        if not 1<=args.seconds<=1800:
+            raise ValueError('invalid_collection_time_budget')
+        nearby.request(conn,args.station,args.date)
+        deadline = time.monotonic()+args.seconds
+        throttled = None
+        while time.monotonic()<deadline and nearby.lookup(conn,args.station,args.date)['pending']:
+            step = nearby.process_one(conn)
+            if step and 'throttled' in step:
+                throttled = step['throttled']
+                break
+        return {**nearby.lookup(conn,args.station,args.date),'throttled':throttled}
     if command=='walk-check':
         from . import rail
         conn.execute('PRAGMA max_page_count='+str(16*1024**2//conn.execute('PRAGMA page_size').fetchone()[0]))
@@ -239,13 +274,13 @@ def dispatch(conn,args):
 def main(argv=None):
     args = parser().parse_args(argv)
     os.umask(0o077)
-    readonly = args.command in {'sources','report','search','check','doctor','audit-data','endpoints','plan','records','export','backup','issues','quarantine','runs','agendas','duplicates'}
+    readonly = args.command in {'sources','report','search','check','doctor','audit-data','endpoints','plan','records','export','backup','issues','quarantine','runs','agendas','duplicates','stations','near'}
     try:
         if args.command=='viewer-access':
             from .access import create_access
             print(json.dumps(create_access(args.directory,args.username),ensure_ascii=False))
             return 0
-        if args.command not in {'init','migrate'} and not Path(args.db).is_file():
+        if args.command not in {'init','migrate','setup-live'} and not Path(args.db).is_file():
             raise ValueError('database_not_initialized: run init in an admitted environment')
         if args.command=='serve':
             from .server import serve
@@ -253,7 +288,7 @@ def main(argv=None):
                 serve(args.db,port=args.port,seconds=args.seconds,readonly=args.read_only,base_path=args.base_path)
             return 0
         with contextlib.ExitStack() as stack:
-            if args.command in {'sync','doctor'}:
+            if args.command in {'sync','doctor','collect-near'}:
                 stack.enter_context(credential_environment(args.env_file or ROOT/'.env',required=bool(args.env_file)))
             if not readonly:
                 stack.enter_context(writer_lock(args.db))

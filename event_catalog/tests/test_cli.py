@@ -4,7 +4,7 @@ import os
 import sqlite3
 import runpy
 import tomllib
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import closing, redirect_stdout, redirect_stderr
 from unittest.mock import patch
 
 from sncf_events.cli import main
@@ -80,7 +80,7 @@ class CLITests(DatabaseCase):
         self.assertEqual(json.loads(exported.read_text())['school_conditions']['languages'],[])
         self.cli('export',exported,expected=2)
         backup=self.path.parent/'saved.sqlite3';self.cli('backup',backup)
-        with sqlite3.connect(backup) as restored:
+        with closing(sqlite3.connect(backup)) as restored:
             self.assertEqual(restored.execute('SELECT count(*) FROM events').fetchone()[0],1)
         self.cli('backup',backup,expected=2)
 

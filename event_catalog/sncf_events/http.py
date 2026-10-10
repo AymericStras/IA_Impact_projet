@@ -49,13 +49,14 @@ class PinnedHTTPS(http.client.HTTPSConnection):
 
 
 class Client:
-    def __init__(self, origin_url, allowed_paths, *, headers=None, seconds=60, max_requests=10):
+    def __init__(self, origin_url, allowed_paths, *, headers=None, seconds=60, max_requests=10, interval=4.0):
         p = validate_public_url(origin_url, https_only=True)
         self.host = p.hostname
         self.paths = set(allowed_paths)
         self.headers = headers or {}
         self.deadline = time.monotonic() + min(seconds,120)
         self.remaining = min(max_requests,20)
+        self.interval = min(4.0,max(1.0,interval))
         self.next_at = 0.0
         self.byte_count = 0
 
@@ -105,7 +106,7 @@ class Client:
             raise FetchError('transport_error') from exc
         finally:
             connection.close()
-            self.next_at = time.monotonic()+4.0
+            self.next_at = time.monotonic()+self.interval
             _next_request_by_host[self.host] = self.next_at
 
     def check_robots(self, url):

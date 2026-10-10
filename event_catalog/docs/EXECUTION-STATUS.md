@@ -1,5 +1,26 @@
 # Contribution verification
 
+## Version 0.7.0 — station lookup, 2026-10-10
+
+Adds the station-first lookup described in [INTEGRATION.md](../INTEGRATION.md):
+`sncf_events.nearby`, the `near`, `collect-near` and `setup-live` commands,
+station-scoped collection on DATAtourisme, Région Occitanie and OpenAgenda, and
+migration `007_station_lookups`. The package passes 217 Python tests and 12
+interface logic checks without network access or credentials.
+
+Live checks with real keys, each on a new database: Montpellier Saint-Roch for
+2026-10-12 completed in 41 seconds with 22 venues routed and 20 activities
+within 1,200 seconds; Toulouse Matabiau, Carcassonne and Narbonne for 2026-10-14
+completed together in 86 seconds with 18 activities. Unknown and ambiguous
+station names were reported, not guessed.
+
+The portable snapshot in `distribution/` is unchanged from version 0.6.0 and
+does not contain these live results. The integration into `backend/` described
+in INTEGRATION.md has not been applied or run in this repository. Recorded
+source reviews expire on 2026-11-10; collection for a source stops at expiry.
+
+## Version 0.6.0 — portable snapshot
+
 Version 0.6.0, prepared on 2026-10-10. The copied standalone package passes
 194 Python tests and 12 interface logic checks. SQLite integrity and foreign
 keys, CSV/table counts, UTF-8 text, stable IDs, explicit timezones, route expiry,
