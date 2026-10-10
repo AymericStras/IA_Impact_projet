@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.errors import AppError
 from app.db.models import ConversationRow, MessageRow, ProcessedMessageRow, SnapshotRow
 from app.domain import dialogue
 from app.domain.clock import PARIS, Clock, today
+from app.domain.patch_merger import InvalidPatchError
 from app.domain.pipeline import TurnResult, process_turn
 from app.domain.state_machine import Action, decide_explicit_confirmation
 from app.domain.validators import validate
@@ -36,7 +40,7 @@ from app.schemas.requirements import (
     PartialRequirements,
 )
 from app.services.extraction import ExtractionService
-from app.services.providers.base import TranscriptionProvider
+from app.services.providers.base import ProviderError, TranscriptionProvider
 
 
 class NotFoundError(Exception):
@@ -51,6 +55,18 @@ class VersionConflictError(Exception):
 
 class InvalidStateError(Exception):
     pass
+
+
+class ConcurrentUpdateError(Exception):
+    """The conversation changed while the model was working on this message."""
+
+
+class IdempotencyConflictError(Exception):
+    """A `client_message_id` was reused with different content."""
+
+
+def _fingerprint(source: str, content: str) -> str:
+    return hashlib.sha256(f"{source}\n{content}".encode()).hexdigest()
 
 
 def _iso_paris(value: datetime) -> str:
@@ -78,8 +94,9 @@ class ConversationService:
 
     # ----- read ----------------------------------------------------------------------------
 
-    def _load(self, conversation_id: str) -> ConversationRow:
-        row = self._session.get(ConversationRow, conversation_id)
+    def _load(self, conversation_id: str, *, lock: bool = False) -> ConversationRow:
+        # FOR UPDATE serialises writers on PostgreSQL; SQLite ignores it (single writer anyway).
+        row = self._session.get(ConversationRow, conversation_id, with_for_update=lock or None)
         if row is None:
             raise NotFoundError(conversation_id)
         return row
@@ -188,24 +205,45 @@ class ConversationService:
             return PendingClarification(field=action.field, kind=action.detail or action.kind.value)
         return None
 
-    def handle_message(
-        self, conversation_id: str, *, content: str, client_message_id: str, source: str = "text"
-    ) -> ConversationResponse:
-        row = self._load(conversation_id)
-        processed = self._session.scalar(
+    def _processed(self, conversation_id: str, client_message_id: str) -> ProcessedMessageRow | None:
+        return self._session.scalar(
             select(ProcessedMessageRow).where(
-                ProcessedMessageRow.conversation_id == row.id,
+                ProcessedMessageRow.conversation_id == conversation_id,
                 ProcessedMessageRow.client_message_id == client_message_id,
             )
         )
-        if processed is not None:
-            return ConversationResponse.model_validate(processed.response)
 
-        # The model call happens BEFORE any write: on failure, nothing is modified.
-        patch = self._extraction.extract(content, self._requirements(row), self._messages(row))
-        result = process_turn(
-            ConversationState(row.state), self._requirements(row), patch, today(self._clock)
-        )
+    def _replay(self, processed: ProcessedMessageRow, fingerprint: str) -> ConversationResponse:
+        if processed.fingerprint is not None and processed.fingerprint != fingerprint:
+            raise IdempotencyConflictError(processed.client_message_id)
+        return ConversationResponse.model_validate(processed.response)
+
+    def handle_message(
+        self, conversation_id: str, *, content: str, client_message_id: str, source: str = "text"
+    ) -> ConversationResponse:
+        fingerprint = _fingerprint(source, content)
+        row = self._load(conversation_id)
+        processed = self._processed(row.id, client_message_id)
+        if processed is not None:
+            return self._replay(processed, fingerprint)
+
+        requirements = self._requirements(row)
+        recent = self._messages(row)
+        marker = (row.version, len(row.messages), row.state)
+        # Release the read transaction: no database transaction is held while the model works,
+        # and nothing has been written, so a provider failure leaves the conversation untouched.
+        self._session.rollback()
+
+        patch = self._extraction.extract(content, requirements, recent)
+
+        row = self._load(conversation_id, lock=True)
+        if (row.version, len(row.messages), row.state) != marker:
+            raise ConcurrentUpdateError(conversation_id)
+        try:
+            result = process_turn(ConversationState(row.state), requirements, patch, today(self._clock))
+        except InvalidPatchError as exc:
+            self._session.rollback()
+            raise ProviderError("Extraction invalide.", code="INVALID_EXTRACTION") from exc
         self._apply_turn(row, result, source=source, user_text=content)
         response = self._response(
             row, assistant_message=result.assistant_message, pending=self._pending(result.decision.action)
@@ -214,10 +252,19 @@ class ConversationService:
             ProcessedMessageRow(
                 conversation_id=row.id,
                 client_message_id=client_message_id,
+                fingerprint=fingerprint,
                 response=response.model_dump(mode="json", by_alias=True),
             )
         )
-        self._session.commit()
+        try:
+            self._session.commit()
+        except IntegrityError:
+            # The same client_message_id was committed by a concurrent request: return its response.
+            self._session.rollback()
+            duplicate = self._processed(conversation_id, client_message_id)
+            if duplicate is None:
+                raise
+            return self._replay(duplicate, fingerprint)
         return response
 
     def transcribe(
@@ -253,9 +300,12 @@ class ConversationService:
             ambiguities=[],
             conflicts=[],
         )
-        result = process_turn(
-            ConversationState(row.state), self._requirements(row), patch, today(self._clock)
-        )
+        try:
+            result = process_turn(
+                ConversationState(row.state), self._requirements(row), patch, today(self._clock)
+            )
+        except InvalidPatchError as exc:
+            raise AppError(422, "INVALID_VALUE", "La valeur saisie est invalide.") from exc
         label = dialogue.FIELD_LABELS[field]
         self._apply_turn(row, result, source="edit", user_text=f"Modification de {label}.")
         self._session.commit()

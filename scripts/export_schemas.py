@@ -50,12 +50,26 @@ def build(model: type, mode: str, description: str, filename: str) -> dict[str, 
     return ordered
 
 
+def openapi_document() -> dict[str, Any]:
+    """HTTP contract snapshot: lets the web app generate types and CI detect API drift offline."""
+    from app.core.config import Settings
+    from app.main import create_app
+
+    app = create_app(Settings(_env_file=None, database_url="sqlite:///:memory:"))
+    return app.openapi()
+
+
 def main() -> int:
     check = "--check" in sys.argv
     drift = False
-    for filename, (model, mode, description) in EXPORTS.items():
+    documents = {
+        filename: build(model, mode, description, filename)
+        for filename, (model, mode, description) in EXPORTS.items()
+    }
+    documents["openapi.json"] = openapi_document()
+    for filename, document in documents.items():
         path = CONTRACTS / filename
-        content = json.dumps(build(model, mode, description, filename), ensure_ascii=False, indent=2) + "\n"
+        content = json.dumps(document, ensure_ascii=False, indent=2) + "\n"
         if check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 print(f"DRIFT {filename}: regenerate with scripts/export_schemas.py", file=sys.stderr)

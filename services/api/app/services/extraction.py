@@ -1,8 +1,11 @@
-"""Builds the extraction prompt and calls the provider."""
+"""Builds the extraction prompt, calls the provider and verifies the evidence of every operation."""
 
 from __future__ import annotations
 
 import json
+import logging
+import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,10 +13,16 @@ from app.domain.clock import PARIS, Clock, weekday_fr
 from app.schemas.conversation import Message
 from app.schemas.patch import RequirementPatch
 from app.schemas.requirements import PartialRequirements
-from app.services.providers.base import ExtractionProvider
+from app.services.providers.base import ExtractionProvider, ProviderError
+
+log = logging.getLogger(__name__)
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 RECENT_MESSAGES = 8
+
+_APOSTROPHES = str.maketrans({"’": "'", "‘": "'", "ʼ": "'", "`": "'", " ": " ", " ": " "})
+_EDGE = " \t\n«»\"“”'.,;:!?()"
+_ELLIPSIS = re.compile(r"\s*(?:…|\.{3})\s*")
 
 
 @lru_cache
@@ -24,6 +33,29 @@ def load_system_prompt(name: str = "extract_requirements.md") -> str:
     if len(parts) < 3:
         raise ValueError(f"{name}: '---' separators expected around the system prompt")
     return parts[1].strip()
+
+
+@lru_cache
+def load_transcription_context() -> str:
+    return (PROMPTS_DIR / "transcription_context.txt").read_text(encoding="utf-8").strip()
+
+
+def _normalize(text: str) -> str:
+    """Typography-insensitive form: transcripts use curly apostrophes and non-breaking spaces."""
+    text = unicodedata.normalize("NFKC", text).translate(_APOSTROPHES).casefold()
+    return " ".join(text.split())
+
+
+def evidence_supported(evidence: str, message: str) -> bool:
+    """True when every fragment of `evidence` is a verbatim quote of the teacher's message."""
+    haystack = _normalize(message)
+    fragments = [_normalize(part).strip(_EDGE) for part in _ELLIPSIS.split(evidence)]
+    fragments = [fragment for fragment in fragments if fragment]
+    return bool(fragments) and all(fragment in haystack for fragment in fragments)
+
+
+def unsupported_operations(patch: RequirementPatch, message: str) -> list[str]:
+    return [op.field for op in patch.operations if not evidence_supported(op.evidence, message)]
 
 
 def build_user_content(message: str, requirements: PartialRequirements, recent: list[Message]) -> str:
@@ -48,7 +80,18 @@ class ExtractionService:
     def extract(
         self, message: str, requirements: PartialRequirements, recent: list[Message]
     ) -> RequirementPatch:
-        return self._provider.extract(
-            system_prompt=self.system_prompt(),
-            user_content=build_user_content(message, requirements, recent),
+        """An operation whose evidence is not a quote of the message is an unsupported fill (AGENTS.md §3.3).
+
+        The model gets one more attempt; a second failure is a provider error and nothing is applied.
+        """
+        system_prompt = self.system_prompt()
+        user_content = build_user_content(message, requirements, recent)
+        for attempt in (1, 2):
+            patch = self._provider.extract(system_prompt=system_prompt, user_content=user_content)
+            unsupported = unsupported_operations(patch, message)
+            if not unsupported:
+                return patch
+            log.warning("extraction evidence rejected attempt=%s fields=%s", attempt, unsupported)
+        raise ProviderError(
+            "Une modification proposée ne peut pas être reliée au message.", code="INVALID_EVIDENCE"
         )

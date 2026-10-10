@@ -11,10 +11,12 @@ from datetime import date
 from app.domain import dialogue
 from app.domain.patch_merger import MergeResult, apply_patch
 from app.domain.state_machine import Action, ActionKind, Decision, decide
-from app.domain.validators import IssueKind, ValidationResult, validate
+from app.domain.validators import IssueKind, ValidationResult, is_field_complete, validate
 from app.schemas.conversation import ConversationState as State
 from app.schemas.patch import FieldName, RequirementPatch
 from app.schemas.requirements import PartialRequirements
+
+_ANNOUNCE_REPLACEMENT_BEFORE = (ActionKind.ASK_MISSING, ActionKind.CLARIFY, ActionKind.SUMMARIZE_AND_CONFIRM)
 
 
 @dataclass
@@ -81,6 +83,17 @@ def process_turn(
         decision.action.params["old"] = dialogue.describe_field(merge.previous, decision.action.field)
 
     message = dialogue.render(decision.action, merge.requirements)
+    if decision.action.kind in _ANNOUNCE_REPLACEMENT_BEFORE:
+        # A known value was overwritten this turn: say so, whether or not the model flagged a correction.
+        replaced = [
+            name
+            for name in merge.changed_fields
+            if is_field_complete(merge.previous, name) and is_field_complete(merge.requirements, name)
+        ]
+        if replaced:
+            message = (
+                dialogue.acknowledge_replacements(merge.previous, merge.requirements, replaced) + message
+            )
     return TurnResult(
         patch=patch, merge=merge, validation=validation, decision=decision, assistant_message=message
     )

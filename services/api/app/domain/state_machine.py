@@ -75,7 +75,13 @@ def decide(
             State.ASKING_USER, Action(ActionKind.INVALID, field=issue.field, detail=issue.kind.value)
         )
 
-    blocking = [a for a in ambiguities if a.field in missing]
+    # A vague value blocks when its field is still missing, or when the teacher is correcting a known
+    # field without giving an exact value (« finalement, environ 35 »): the old value may be stale.
+    blocking = [
+        a
+        for a in ambiguities
+        if a.field in missing or (intent == UserIntent.CORRECT_INFORMATION and a.field not in changed_fields)
+    ]
     if blocking:
         amb = blocking[0]
         return Decision(State.ASKING_USER, Action(ActionKind.CLARIFY, field=amb.field, detail=amb.kind.value))

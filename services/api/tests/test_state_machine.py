@@ -107,3 +107,21 @@ def test_explicit_button_confirmation_rules() -> None:
     assert decide_explicit_confirmation(S.AWAITING_CONFIRMATION, complete=True) is not None
     assert decide_explicit_confirmation(S.COLLECTING, complete=True) is None
     assert decide_explicit_confirmation(S.AWAITING_CONFIRMATION, complete=False) is None
+
+
+def test_vague_correction_of_known_field_is_clarified() -> None:
+    amb = [Ambiguity(field="participants_count", kind=AmbiguityKind.VAGUE_QUANTITY, detail="")]
+    state, kind, field = _decide(
+        S.AWAITING_CONFIRMATION, intent=UserIntent.CORRECT_INFORMATION, ambiguities=amb
+    )
+    assert (state, kind, field) == (S.ASKING_USER, ActionKind.CLARIFY, "participants_count")
+    # Same message that also gives an exact value for that field: nothing left to clarify.
+    assert (
+        _decide(
+            S.AWAITING_CONFIRMATION,
+            intent=UserIntent.CORRECT_INFORMATION,
+            ambiguities=amb,
+            changed_fields=["participants_count"],
+        )[1]
+        == ActionKind.SUMMARIZE_AND_CONFIRM
+    )

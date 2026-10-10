@@ -49,6 +49,7 @@ Keep responses concise and conversational: one or two sentences.
 | invalid(return_before_departure) | L'heure de retour ({return}) est antérieure au départ ({departure}). Pouvez-vous corriger ? |
 | summarize_and_confirm | J'ai bien compris votre projet : {participants} participants, départ le {dep}, retour le {ret}, thème : {theme}. Pouvez-vous vérifier ces informations avant de continuer ? |
 | acknowledge_confirmation | Merci, votre projet est confirmé. Je transmets ces informations pour la préparation de l'itinéraire. |
+| (prefix) replacement of a known value | C'est noté, j'ai mis à jour {label} : {new} (au lieu de {old}). |
 | reopen_edit | Très bien, j'ai mis à jour {label}. Pouvez-vous confirmer à nouveau le récapitulatif ? |
 | provider_error | Désolé, je n'ai pas pu traiter votre message. Pouvez-vous réessayer ? |
 | transcription_error | Je n'ai pas réussi à comprendre l'enregistrement. Pouvez-vous réessayer ou écrire votre message ? |

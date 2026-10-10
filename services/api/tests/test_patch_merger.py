@@ -123,3 +123,46 @@ def test_empty_patch_changes_nothing() -> None:
     result = apply_patch(state, mk_patch())
     assert result.requirements == state
     assert result.changed_fields == []
+
+
+def test_invalid_merged_state_is_rejected() -> None:
+    import pytest
+
+    from app.domain.patch_merger import InvalidPatchError
+
+    with pytest.raises(InvalidPatchError):
+        apply_patch(PartialRequirements(), mk_patch(op("departure", dt("2026-02-30", "08:00", "exact"))))
+    with pytest.raises(InvalidPatchError):
+        apply_patch(PartialRequirements(), mk_patch(op("participants_count", 0)))
+    # A stated total of zero is simply not applied (no operation, nothing stored).
+    assert apply_patch(PartialRequirements(), mk_patch(total=0)).requirements.participants_count is None
+
+
+def test_approximate_count_is_never_stored_as_exact() -> None:
+    known = PartialRequirements(participants_count=30)
+    # The model flags the vagueness but still proposes a value.
+    flagged = mk_patch(
+        op("participants_count", 35, "replace"),
+        intent=UserIntent.CORRECT_INFORMATION,
+        total=35,
+        ambiguities=[("participants_count", AmbiguityKind.VAGUE_QUANTITY)],
+    )
+    assert apply_patch(known, flagged).requirements.participants_count == 30
+    # The model does not flag it, but its own quote is approximate.
+    unflagged = mk_patch(op("participants_count", 35, "replace", evidence="environ 35"), total=35)
+    result = apply_patch(known, unflagged)
+    assert result.requirements.participants_count == 30
+    assert [a.kind for a in result.ambiguities] == [AmbiguityKind.VAGUE_QUANTITY]
+    assert (
+        apply_patch(
+            PartialRequirements(), mk_patch(op("participants_count", 30, evidence="une trentaine"))
+        ).requirements.participants_count
+        is None
+    )
+    # An exact statement is unaffected.
+    assert (
+        apply_patch(
+            known, mk_patch(op("participants_count", 35, "replace", evidence="nous serons 35"))
+        ).requirements.participants_count
+        == 35
+    )

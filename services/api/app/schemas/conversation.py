@@ -77,4 +77,12 @@ class ProblemDetails(ContractModel):
     type: str = "about:blank"
     title: str
     status: int
+    code: str = Field(description="Stable machine-readable error code")
     detail: str
+
+
+class ClientConfig(ContractModel):
+    max_audio_seconds: int
+    max_audio_bytes: int
+    max_message_chars: int
+    timezone: str

@@ -58,7 +58,7 @@ def test_french_formatting() -> None:
 def test_summary_mentions_all_four_fields() -> None:
     text = dialogue.summary(_complete())
     assert "30 participants" in text
-    assert "jeudi 12 novembre vers 8 h 00" in text
+    assert "jeudi 12 novembre 2026 vers 8 h 00" in text
     assert "au plus tard à 17 h 00" in text
     assert "Histoire (Moyen Âge)" in text
     assert text.endswith("Pouvez-vous vérifier ces informations avant de continuer ?")

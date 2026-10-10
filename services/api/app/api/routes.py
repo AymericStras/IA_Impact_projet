@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 
 from app.api.deps import RateLimiter, get_rate_limiter, get_service
 from app.core.config import Settings, get_settings
+from app.core.errors import AppError
 from app.schemas.conversation import (
+    ClientConfig,
     ConfirmRequest,
     ConversationResponse,
     CreateConversationRequest,
@@ -14,28 +17,17 @@ from app.schemas.conversation import (
     SendMessageRequest,
 )
 from app.schemas.requirements import ConfirmedRequirements
+from app.services.audio import inspect_audio, suffix_for
 from app.services.conversation import ConversationService
 
 router = APIRouter(prefix="/api/v1", tags=["conversations"])
 
-ALLOWED_AUDIO = {
-    "audio/webm",
-    "audio/ogg",
-    "audio/wav",
-    "audio/x-wav",
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/x-m4a",
-    "audio/m4a",
-    "audio/flac",
-}
+MAX_MESSAGE_CHARS = 4000
 
 
 def _check_rate(limiter: RateLimiter, key: str) -> None:
     if not limiter.allow(key):
-        raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUESTS, detail="Trop de messages envoyés. Patientez quelques instants."
-        )
+        raise AppError(429, "RATE_LIMITED", "Trop de messages envoyés. Patientez quelques instants.")
 
 
 @router.get("/health")
@@ -45,6 +37,17 @@ def health(settings: Settings = Depends(get_settings)) -> dict[str, object]:
         "extraction_model": settings.extraction_model,
         "transcription_model": settings.transcription_model,
     }
+
+
+@router.get("/config", response_model=ClientConfig)
+def client_config(settings: Settings = Depends(get_settings)) -> ClientConfig:
+    """Limits the client needs to mirror (recording length, upload size). No secrets."""
+    return ClientConfig(
+        max_audio_seconds=settings.max_audio_seconds,
+        max_audio_bytes=settings.max_audio_bytes,
+        max_message_chars=MAX_MESSAGE_CHARS,
+        timezone=settings.app_timezone,
+    )
 
 
 @router.post("/conversations", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -70,7 +73,7 @@ def send_message(
     limiter: RateLimiter = Depends(get_rate_limiter),
 ) -> ConversationResponse:
     if not body.content.strip():
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Le message est vide.")
+        raise AppError(400, "EMPTY_MESSAGE", "Le message est vide.")
     _check_rate(limiter, conversation_id)
     return service.handle_message(
         conversation_id,
@@ -89,16 +92,21 @@ async def transcribe_audio(
     limiter: RateLimiter = Depends(get_rate_limiter),
 ) -> ConversationResponse:
     content_type = (file.content_type or "").split(";")[0].strip().lower()
-    if content_type not in ALLOWED_AUDIO:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Format audio non pris en charge.")
+    suffix = suffix_for(content_type)  # 400 before reading anything
     data = await file.read(settings.max_audio_bytes + 1)
+    await file.close()
     if len(data) > settings.max_audio_bytes:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, detail="Enregistrement trop volumineux.")
+        raise AppError(413, "AUDIO_TOO_LARGE", "Enregistrement trop volumineux.")
     if not data:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Enregistrement vide.")
+        raise AppError(400, "AUDIO_EMPTY", "Enregistrement vide.")
     _check_rate(limiter, conversation_id)
-    return service.transcribe(
-        conversation_id, audio=data, filename=file.filename or "audio.webm", content_type=content_type
+    # Unknown conversation → 404 before spending a probe or a paid transcription.
+    await run_in_threadpool(service.get, conversation_id)
+    await run_in_threadpool(inspect_audio, data, content_type, settings.max_audio_seconds)
+    return await run_in_threadpool(
+        lambda: service.transcribe(
+            conversation_id, audio=data, filename=f"recording{suffix}", content_type=content_type
+        )
     )
 
 

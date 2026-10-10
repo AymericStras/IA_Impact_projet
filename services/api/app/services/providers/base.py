@@ -10,9 +10,10 @@ from app.schemas.patch import RequirementPatch
 class ProviderError(Exception):
     """Provider failure (network, quota, refusal, invalid output). The state is not modified."""
 
-    def __init__(self, message: str, *, timeout: bool = False) -> None:
+    def __init__(self, message: str, *, timeout: bool = False, code: str | None = None) -> None:
         super().__init__(message)
         self.timeout = timeout
+        self.code = code or ("PROVIDER_TIMEOUT" if timeout else "PROVIDER_ERROR")
 
 
 class ExtractionProvider(Protocol):

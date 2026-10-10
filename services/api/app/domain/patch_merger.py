@@ -10,7 +10,10 @@ The model proposes; this module decides. Main rules (AGENTS.md §3):
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+
+from pydantic import ValidationError
 
 from app.schemas.patch import (
     Ambiguity,
@@ -30,6 +33,10 @@ from app.schemas.requirements import (
 )
 
 
+class InvalidPatchError(ValueError):
+    """The patch would produce an invalid state (impossible calendar date, count below 1...)."""
+
+
 @dataclass
 class MergeResult:
     requirements: PartialRequirements
@@ -37,6 +44,25 @@ class MergeResult:
     changed_fields: list[FieldName] = field(default_factory=list)
     conflicts: list[FieldName] = field(default_factory=list)
     ambiguities: list[Ambiguity] = field(default_factory=list)
+
+
+_APPROXIMATION = re.compile(
+    r"\b(environ|à peu près|a peu pres|approximativement|presque|autour de|dans les|quelque|une \w+aine)\b"
+)
+_VAGUE_COUNT_KINDS = {AmbiguityKind.VAGUE_QUANTITY, AmbiguityKind.MULTIPLE_CANDIDATES}
+
+
+def _vague_participants(patch: RequirementPatch) -> bool:
+    """Deterministic backstop: « environ 35 », « une trentaine », « 28 ou 30 » are not exact totals,
+
+    even if the model also proposed a value. Either the model says so, or the quote it gives does.
+    """
+    if any(a.field == "participants_count" and a.kind in _VAGUE_COUNT_KINDS for a in patch.ambiguities):
+        return True
+    return any(
+        op.field == "participants_count" and _APPROXIMATION.search(op.evidence.casefold())
+        for op in patch.operations
+    )
 
 
 def _is_correction(op: Operation, intent: UserIntent) -> bool:
@@ -172,12 +198,24 @@ def _infer_return_date(reqs: PartialRequirements, result: MergeResult) -> None:
             result.changed_fields.append("departure")
 
 
-def apply_patch(current: PartialRequirements, patch: RequirementPatch) -> MergeResult:
+def _apply_patch(current: PartialRequirements, patch: RequirementPatch) -> MergeResult:
     reqs = current.model_copy(deep=True)
     result = MergeResult(requirements=reqs, previous=current, ambiguities=list(patch.ambiguities))
     result.conflicts.extend(c.field for c in patch.conflicts)
 
+    vague_count = _vague_participants(patch)
+    if vague_count and not any(a.field == "participants_count" for a in result.ambiguities):
+        result.ambiguities.append(
+            Ambiguity(
+                field="participants_count",
+                kind=AmbiguityKind.VAGUE_QUANTITY,
+                detail="approximate count in the quoted evidence",
+            )
+        )
+
     for op in patch.operations:
+        if vague_count and op.field == "participants_count" and op.operation != "clear":
+            continue  # an approximate count is never stored as an exact value
         correction = _is_correction(op, patch.user_intent)
         before = _get(reqs, op.field)
 
@@ -211,11 +249,24 @@ def apply_patch(current: PartialRequirements, patch: RequirementPatch) -> MergeR
         if _get(reqs, op.field) != before and op.field not in result.changed_fields:
             result.changed_fields.append(op.field)
 
-    _apply_participants(reqs, patch, result)
+    if not vague_count:
+        _apply_participants(reqs, patch, result)
     _infer_return_date(reqs, result)
 
     # De-duplicate while preserving order.
     result.conflicts = list(dict.fromkeys(result.conflicts))
     # A conflict cancels the corresponding change.
     result.changed_fields = [f for f in result.changed_fields if f not in result.conflicts]
+    return result
+
+
+def apply_patch(current: PartialRequirements, patch: RequirementPatch) -> MergeResult:
+    """Merge, then re-validate the whole state: nothing invalid is ever stored."""
+    try:
+        result = _apply_patch(current, patch)
+        result.requirements = PartialRequirements.model_validate(
+            result.requirements.model_dump(mode="json", by_alias=True)
+        )
+    except ValidationError as exc:
+        raise InvalidPatchError(str(exc.errors(include_input=False, include_url=False)[:1])) from exc
     return result

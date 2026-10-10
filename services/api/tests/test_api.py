@@ -2,16 +2,24 @@
 
 from __future__ import annotations
 
+import io
 import json
+import shutil
+import wave
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.api.deps import get_clock, get_extraction_provider, get_transcription_provider
+from app.core.config import Settings
+from app.main import create_app
 from app.schemas.patch import AmbiguityKind, UserIntent
 from app.services.providers.base import ProviderError
 from app.services.providers.fake_provider import FakeProvider
 from tests.conftest import COMPLETE_PATCH, dt, mk_patch, op, tt
 
+FULL = "27 élèves et 3 accompagnateurs, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge"
 CONTRACTS = Path(__file__).resolve().parents[3] / "packages" / "contracts"
 
 
@@ -95,7 +103,7 @@ def test_students_only_asks_for_accompanying(client: TestClient, provider: FakeP
 def test_correction_replaces_and_never_re_asks(client: TestClient, provider: FakeProvider) -> None:
     conv = _create(client)
     provider.queue(COMPLETE_PATCH)
-    _send(client, conv["conversation_id"], "…")
+    _send(client, conv["conversation_id"], FULL)
     provider.queue(
         mk_patch(op("participants_count", 32, "replace"), intent=UserIntent.CORRECT_INFORMATION, total=32)
     )
@@ -125,7 +133,7 @@ def test_return_before_departure_is_rejected_and_state_kept(
 ) -> None:
     conv = _create(client)
     provider.queue(mk_patch(op("departure", dt("2026-11-12", "14:00", "exact")), total=30))
-    _send(client, conv["conversation_id"], "…")
+    _send(client, conv["conversation_id"], FULL)
     provider.queue(mk_patch(op("return", dt("2026-11-12", "10:00", "exact"))))
     body = _send(client, conv["conversation_id"], "Retour à 10 h.", cid="m2")
     assert body["state"] == "ASKING_USER"
@@ -160,7 +168,7 @@ def test_duplicate_submission_is_idempotent(client: TestClient, provider: FakePr
 def test_session_restore_returns_same_state(client: TestClient, provider: FakeProvider) -> None:
     conv = _create(client)
     provider.queue(COMPLETE_PATCH)
-    sent = _send(client, conv["conversation_id"], "…")
+    sent = _send(client, conv["conversation_id"], FULL)
     restored = client.get(f"/api/v1/conversations/{conv['conversation_id']}").json()
     for key in ("state", "version", "requirements", "missing_fields", "ready_for_confirmation", "messages"):
         assert restored[key] == sent[key]
@@ -170,7 +178,7 @@ def test_session_restore_returns_same_state(client: TestClient, provider: FakePr
 def test_confirm_edit_reconfirm_export(client: TestClient, provider: FakeProvider) -> None:
     conv = _create(client)
     provider.queue(COMPLETE_PATCH)
-    body = _send(client, conv["conversation_id"], "…")
+    body = _send(client, conv["conversation_id"], FULL)
     cid = conv["conversation_id"]
 
     # Export impossible before confirmation.
@@ -219,7 +227,7 @@ def test_confirm_requires_complete_state_and_fresh_version(
         client.post(f"/api/v1/conversations/{cid}/confirm", json={"expected_version": 0}).status_code == 409
     )
     provider.queue(COMPLETE_PATCH)
-    _send(client, cid, "…")
+    _send(client, cid, FULL)
     stale = client.post(f"/api/v1/conversations/{cid}/confirm", json={"expected_version": 0})
     assert stale.status_code == 409
     assert stale.headers["content-type"].startswith("application/problem+json")
@@ -273,21 +281,72 @@ def test_provider_failure_keeps_state_and_is_retryable(client: TestClient, provi
     assert retried["requirements"]["participants_count"] == 30
 
 
+def wav_bytes(seconds: float = 0.3) -> bytes:
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(8000)
+        out.writeframes(b"\x00\x00" * int(seconds * 8000))
+    return buffer.getvalue()
+
+
+needs_ffprobe = pytest.mark.skipif(shutil.which("ffprobe") is None, reason="ffprobe not installed")
+
+
+@needs_ffprobe
 def test_audio_returns_transcript_without_extracting(client: TestClient, provider: FakeProvider) -> None:
     conv = _create(client)
     cid = conv["conversation_id"]
     response = client.post(
-        f"/api/v1/conversations/{cid}/audio",
-        files={"file": ("voix.webm", b"\x1aE\xdf\xa3fake", "audio/webm")},
+        f"/api/v1/conversations/{cid}/audio", files={"file": ("voix.wav", wav_bytes(), "audio/wav")}
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     body = response.json()
     assert body["transcript"] == provider.transcript
     assert body["assistant_message"] is None
     assert body["version"] == 0 and provider.calls == []
 
-    bad = client.post(f"/api/v1/conversations/{cid}/audio", files={"file": ("x.txt", b"abc", "text/plain")})
-    assert bad.status_code == 400
+
+@needs_ffprobe
+def test_audio_that_is_not_audio_never_reaches_the_provider(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    cid = _create(client)["conversation_id"]
+    transcribed: list[bytes] = []
+    provider.transcribe = lambda **kwargs: transcribed.append(kwargs["audio"]) or "x"  # type: ignore[method-assign]
+    fake = client.post(
+        f"/api/v1/conversations/{cid}/audio", files={"file": ("v.webm", b"<script>x</script>", "audio/webm")}
+    )
+    assert fake.status_code == 400 and fake.json()["code"] == "AUDIO_INVALID"
+    wrong_type = client.post(
+        f"/api/v1/conversations/{cid}/audio", files={"file": ("x.txt", b"abc", "text/plain")}
+    )
+    assert wrong_type.status_code == 400 and wrong_type.json()["code"] == "AUDIO_FORMAT"
+    assert transcribed == []
+
+
+@needs_ffprobe
+def test_audio_longer_than_the_limit_is_rejected(tmp_path, clock, provider) -> None:  # type: ignore[no-untyped-def]
+    app = create_app(
+        Settings(_env_file=None, database_url=f"sqlite:///{tmp_path / 'long.db'}", max_audio_seconds=1)
+    )
+    app.dependency_overrides[get_clock] = lambda: clock
+    app.dependency_overrides[get_extraction_provider] = lambda: provider
+    app.dependency_overrides[get_transcription_provider] = lambda: provider
+    with TestClient(app) as long_client:
+        cid = _create(long_client)["conversation_id"]
+        response = long_client.post(
+            f"/api/v1/conversations/{cid}/audio", files={"file": ("v.wav", wav_bytes(2.0), "audio/wav")}
+        )
+        assert response.status_code == 413 and response.json()["code"] == "AUDIO_TOO_LONG"
+
+
+def test_audio_for_unknown_conversation_is_404_before_any_work(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/conversations/conv_nope/audio", files={"file": ("v.wav", wav_bytes(), "audio/wav")}
+    )
+    assert response.status_code == 404
 
 
 def test_audio_too_large_is_rejected(tmp_path, clock, provider) -> None:  # type: ignore[no-untyped-def]
@@ -325,7 +384,7 @@ def test_responses_match_published_contract(client: TestClient, provider: FakePr
     conv = _create(client)
     cid = conv["conversation_id"]
     provider.queue(COMPLETE_PATCH)
-    body = _send(client, cid, "…")
+    body = _send(client, cid, FULL)
     Draft202012Validator(response_schema, format_checker=FormatChecker()).validate(body)
     confirmed = client.post(
         f"/api/v1/conversations/{cid}/confirm", json={"expected_version": body["version"]}
@@ -334,3 +393,150 @@ def test_responses_match_published_contract(client: TestClient, provider: FakePr
     Draft202012Validator(confirmed_schema, format_checker=FormatChecker()).validate(
         confirmed["confirmed_requirements"]
     )
+
+
+def test_reused_message_id_with_other_content_is_a_conflict(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    cid = _create(client)["conversation_id"]
+    provider.queue(mk_patch(total=30))
+    _send(client, cid, "Nous sommes 30.", cid="same")
+    again = client.post(
+        f"/api/v1/conversations/{cid}/messages",
+        json={"content": "Nous sommes 32.", "client_message_id": "same"},
+    )
+    assert again.status_code == 409 and again.json()["code"] == "IDEMPOTENCY_CONFLICT"
+    assert client.get(f"/api/v1/conversations/{cid}").json()["requirements"]["participants_count"] == 30
+
+
+def test_change_during_model_call_is_rejected_not_overwritten(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    """A panel edit lands while the model is still working on a chat message."""
+    cid = _create(client)["conversation_id"]
+
+    def extract_while_someone_edits(**_: object):  # type: ignore[no-untyped-def]
+        edited = client.patch(
+            f"/api/v1/conversations/{cid}/requirements",
+            json={"field": "participants_count", "value": 40, "expected_version": 0},
+        )
+        assert edited.status_code == 200
+        return mk_patch(op("teaching_type", tt("Histoire"), evidence="prof d'histoire"))
+
+    provider.extract = extract_while_someone_edits  # type: ignore[method-assign]
+    stale = client.post(
+        f"/api/v1/conversations/{cid}/messages",
+        json={"content": "Je suis prof d'histoire.", "client_message_id": "c1"},
+    )
+    assert stale.status_code == 409 and stale.json()["code"] == "CONCURRENT_UPDATE"
+    state = client.get(f"/api/v1/conversations/{cid}").json()
+    assert state["requirements"]["participants_count"] == 40
+    assert state["requirements"]["teaching_type"] is None
+
+
+def test_evidence_must_quote_the_message(client: TestClient, provider: FakeProvider) -> None:
+    cid = _create(client)["conversation_id"]
+    invented = mk_patch(op("participants_count", 500, evidence="500 participants"), total=500)
+    provider.queue(invented, invented)  # first attempt and the single retry
+    rejected = client.post(
+        f"/api/v1/conversations/{cid}/messages", json={"content": "Bonjour.", "client_message_id": "e1"}
+    )
+    assert rejected.status_code == 502 and rejected.json()["code"] == "INVALID_EVIDENCE"
+    assert len(provider.calls) == 2
+    assert client.get(f"/api/v1/conversations/{cid}").json()["version"] == 0
+
+    provider.queue(invented, mk_patch(op("participants_count", 30, evidence="Nous sommes 30"), total=30))
+    recovered = _send(client, cid, "Nous sommes 30.", cid="e2")  # the retry produced a supported patch
+    assert recovered["requirements"]["participants_count"] == 30
+
+
+def test_impossible_date_from_the_model_is_a_provider_error_not_a_500(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    cid = _create(client)["conversation_id"]
+    provider.queue(mk_patch(op("departure", dt("2026-02-30", "08:00", "exact"), evidence="30 février")))
+    response = client.post(
+        f"/api/v1/conversations/{cid}/messages",
+        json={"content": "Départ le 30 février à 8 h.", "client_message_id": "d1"},
+    )
+    assert response.status_code == 502 and response.json()["code"] == "INVALID_EXTRACTION"
+    assert client.get(f"/api/v1/conversations/{cid}").json()["version"] == 0
+
+
+def test_invalid_panel_value_is_422(client: TestClient) -> None:
+    cid = _create(client)["conversation_id"]
+    zero = client.patch(
+        f"/api/v1/conversations/{cid}/requirements",
+        json={"field": "participants_count", "value": 0, "expected_version": 0},
+    )
+    assert zero.status_code == 422 and zero.json()["code"] == "INVALID_VALUE"
+    bad_date = client.patch(
+        f"/api/v1/conversations/{cid}/requirements",
+        json={
+            "field": "departure",
+            "value": {"date": "2026-13-40", "time": "08:00", "constraint": "exact"},
+            "expected_version": 0,
+        },
+    )
+    assert bad_date.status_code == 422
+
+
+def test_vague_correction_of_a_known_value_asks_instead_of_confirming(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    cid = _create(client)["conversation_id"]
+    provider.queue(COMPLETE_PATCH)
+    _send(
+        client,
+        cid,
+        "27 élèves et 3 accompagnateurs, le 12 novembre 2026 vers 8 h, retour avant 17 h, histoire, Moyen Âge",
+    )
+    provider.queue(
+        mk_patch(
+            intent=UserIntent.CORRECT_INFORMATION,
+            ambiguities=[("participants_count", AmbiguityKind.VAGUE_QUANTITY)],
+        )
+    )
+    body = _send(client, cid, "Finalement, environ 35.", cid="m2")
+    assert body["state"] == "ASKING_USER"
+    assert body["ready_for_confirmation"] is False
+    assert body["requirements"]["participants_count"] == 30
+    assert body["assistant_message"] == "Pouvez-vous me donner le nombre exact de participants ?"
+
+
+def test_security_headers_error_codes_and_client_config(client: TestClient) -> None:
+    missing = client.get("/api/v1/conversations/conv_nope")
+    assert missing.json()["code"] == "CONVERSATION_NOT_FOUND"
+    assert missing.headers["x-content-type-options"] == "nosniff"
+    assert missing.headers["cache-control"] == "no-store"
+    assert len(missing.headers["x-request-id"]) == 32
+    config = client.get("/api/v1/config").json()
+    assert config == {
+        "max_audio_seconds": 120,
+        "max_audio_bytes": 10485760,
+        "max_message_chars": 4000,
+        "timezone": "Europe/Paris",
+    }
+    huge = client.post(
+        "/api/v1/conversations",
+        content=b"{}",
+        headers={"content-length": str(50 * 1024 * 1024), "content-type": "application/json"},
+    )
+    assert huge.status_code == 413 and huge.json()["code"] == "BODY_TOO_LARGE"
+
+
+def test_overwriting_a_known_value_is_always_announced(client: TestClient, provider: FakeProvider) -> None:
+    """Whether or not the model flags a correction, the teacher is told that a value changed."""
+    cid = _create(client)["conversation_id"]
+    provider.queue(mk_patch(total=30))
+    first = _send(client, cid, "Nous sommes 30.")
+    assert "au lieu de" not in first["assistant_message"]  # first value: nothing was replaced
+    provider.queue(
+        mk_patch(op("participants_count", 28, "replace"), intent=UserIntent.CORRECT_INFORMATION, total=28)
+    )
+    body = _send(client, cid, "Nous sommes 28 personnes.", cid="m2")
+    assert body["requirements"]["participants_count"] == 28
+    assert body["assistant_message"].startswith(
+        "C'est noté, j'ai mis à jour le nombre de participants : 28 participants (au lieu de 30 participants). "
+    )
+    assert body["assistant_message"].endswith("Quel jour et à quelle heure souhaitez-vous partir ?")

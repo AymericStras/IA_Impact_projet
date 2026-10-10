@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.domain.clock import Clock, SystemClock
 from app.services.conversation import ConversationService
-from app.services.extraction import ExtractionService
+from app.services.extraction import ExtractionService, load_transcription_context
 from app.services.providers.base import ExtractionProvider, TranscriptionProvider
 from app.services.providers.openai_provider import OpenAIProvider
 
@@ -32,6 +32,7 @@ def _openai_provider(
         transcription_model=transcription_model,
         timeout_seconds=timeout,
         reasoning_effort=effort,
+        transcription_prompt=load_transcription_context(),
     )
 
 

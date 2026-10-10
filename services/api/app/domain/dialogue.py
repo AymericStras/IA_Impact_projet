@@ -29,12 +29,12 @@ FIELD_LABELS: dict[FieldName, str] = {
 }
 
 
-def describe_datetime(value: PartialDateTime | None) -> str:
+def describe_datetime(value: PartialDateTime | None, with_year: bool = False) -> str:
     if value is None:
         return "à préciser"
     parts: list[str] = []
     if value.date is not None:
-        parts.append(format_date_fr(value.date, with_year=False))
+        parts.append(format_date_fr(value.date, with_year=with_year))
     if value.time is not None:
         parts.append(format_constraint_fr(value.constraint, value.time))
     return " ".join(parts) if parts else "à préciser"
@@ -120,10 +120,20 @@ def _invalid(reqs: PartialRequirements, action: Action) -> str:
     return "Le nombre de participants doit être d'au moins une personne. Pouvez-vous le préciser ?"
 
 
+def acknowledge_replacements(
+    previous: PartialRequirements, current: PartialRequirements, fields: list[FieldName]
+) -> str:
+    changes = [
+        f"{FIELD_LABELS[name]} : {describe_field(current, name)} (au lieu de {describe_field(previous, name)})"
+        for name in fields
+    ]
+    return "C'est noté, j'ai mis à jour " + " ; ".join(changes) + ". "
+
+
 def summary(reqs: PartialRequirements) -> str:
     return (
         f"J'ai bien compris votre projet : {describe_field(reqs, 'participants_count')}, "
-        f"départ le {describe_field(reqs, 'departure')}, retour le {describe_field(reqs, 'return')}, "
+        f"départ le {describe_datetime(reqs.departure, with_year=True)}, retour le {describe_datetime(reqs.return_, with_year=True)}, "
         f"thème : {describe_field(reqs, 'teaching_type')}. "
         "Pouvez-vous vérifier ces informations avant de continuer ?"
     )
