@@ -2,9 +2,35 @@
 
 Catalogue d’activités et collecte pour les sorties scolaires en Occitanie.
 
-This standalone project includes an English interface, English/French source
-metadata, a portable SQLite database, six CSV tables, and the Python
-collection/query code. This branch contains only `event_catalog/`.
+Find activity sources, use the collected dates and locations, or run the crawler
+for school trips within a 20-minute walk of a railway station. This branch
+contains only the standalone `event_catalog/` project.
+
+## Start here: the most important files
+
+**Start with [sources.csv](distribution/csv/sources.csv) to understand which
+platforms and websites have been identified for collection.** It lists 144
+research entries, including access methods and review status. Four sources
+have been collected; the list is not a guarantee that every entry can be crawled.
+
+| What you need | Open this file | What it contains |
+|---|---|---|
+| **Find platforms and websites** | **[sources.csv](distribution/csv/sources.csv)** | Source names, entry URLs, proposed connectors, priorities and access/reuse status. |
+| **Use the collected activities** | **[activities.csv](distribution/csv/activities.csv)** | Titles, locations, addresses, descriptions where available, and original source links. Includes events, school services and venues. |
+| **Find activities for a date** | **[occurrences.csv](distribution/csv/occurrences.csv)** | Published dates, times and sessions. Join `activity_id` to `activities.csv`'s `id`. |
+| **Query all the data together** | **[catalogue.sqlite3](distribution/catalogue.sqlite3)** | The portable database combining the six exported tables. |
+| **Set up the two API keys** | **[API-KEYS.md](docs/API-KEYS.md)** | DATAtourisme and OpenAgenda registration links and local configuration. Actual keys are not included. |
+| **Run or extend collection** | **[OPERATIONS.md](docs/OPERATIONS.md)** and **[connectors.py](sncf_events/connectors.py)** | Collection commands and implemented API connectors. School HTML parsing is in [html_rules.py](sncf_events/html_rules.py). |
+
+For the **20-minute walk rule**, use
+[walking_assessments.csv](distribution/csv/walking_assessments.csv) and
+[stations.csv](distribution/csv/stations.csv). The
+[dated query example](docs/SHARING.md#example-12-october-2026-within-20-minutes)
+combines activities, sessions and valid walking estimates.
+
+To browse without downloading files, open the
+[published activity viewer](https://zhaoyang.fr/sncf-events/) — no account is
+required. It displays saved data; automatic server collection is not enabled.
 
 ## Data included
 
@@ -17,9 +43,7 @@ collection/query code. This branch contains only `event_catalog/`.
 | Registered sources | 144 |
 | Railway stations | 260 |
 
-- [SQLite database](distribution/catalogue.sqlite3)
-- [Source registry: platforms and collection entry points](distribution/csv/sources.csv)
-- [CSV tables](distribution/csv/)
+- [All six CSV tables](distribution/csv/)
 - [Checksums and generation metadata](distribution/manifest.json)
 - [Data dictionary](distribution/schema.json)
 - [Query examples, CSV conventions and source rights](docs/SHARING.md)
@@ -68,6 +92,13 @@ DATAtourisme/OpenAgenda, your own API keys in a private `.env` file. Use
 [operations](docs/OPERATIONS.md). New sources and endpoints
 are disabled by default. No account or password is needed for the published
 read-only viewer at https://zhaoyang.fr/sncf-events/.
+
+For development, [cli.py](sncf_events/cli.py) defines the commands,
+[normalize.py](sncf_events/normalize.py) maps source data to catalogue fields,
+and [rail.py](sncf_events/rail.py) handles station access and walking estimates.
+The crawler imports the [source seed](data/seeds/sources-2026-10-10.json) into
+its operational database. Editing the exported `sources.csv` alone does not
+configure or enable a collector.
 
 ```sh
 python3 -m unittest discover -s tests -v
