@@ -39,10 +39,14 @@ OPENAGENDA_PUBLIC_KEY=oa_pk_...
 ```
 
 Without a key, that source's step fails and is reported in `coverage.sources`; the other sources still work.
-Région Occitanie and IGN need no key. Optional limits: `SNCF_EVENTS_HOURLY_REQUESTS` (default 300 outbound
-requests per hour, all sources and routes together) and `SNCF_EVENTS_STORAGE_MB` (default 512).
+Région Occitanie and IGN need no key. The station lookup has no application-imposed hourly request quota.
+`SNCF_EVENTS_HOURLY_REQUESTS` is no longer used, including when present in an existing environment.
+The optional storage limit remains `SNCF_EVENTS_STORAGE_MB` (default 512).
 
-On a public site every new station/date pair spends this quota. Rate-limit the endpoint per client as well.
+Collection remains serial and pauses for ten minutes after a provider returns HTTP 429. Provider-side
+limits still apply. Results and routes remain cached, and request attempts are recorded for diagnostics.
+On a public site every uncached station/date pair can trigger external requests; rate-limit the endpoint
+per client as well.
 
 ## Response
 

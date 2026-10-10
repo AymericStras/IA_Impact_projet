@@ -38,10 +38,6 @@ def _limit(name, default):
         return default
 
 
-def hourly_requests():
-    return _limit('SNCF_EVENTS_HOURLY_REQUESTS',300)
-
-
 def storage_bytes():
     return _limit('SNCF_EVENTS_STORAGE_MB',512)*1024**2
 
@@ -173,9 +169,9 @@ def usage(conn):
 
 
 def throttle(conn):
-    used,limited = usage(conn)
+    _,limited = usage(conn)
     size = conn.execute('PRAGMA page_count').fetchone()[0]*conn.execute('PRAGMA page_size').fetchone()[0]
-    return ('provider_rate_limit_cooldown' if limited else 'hourly_request_budget_reached' if used>=hourly_requests() else
+    return ('provider_rate_limit_cooldown' if limited else
             'storage_budget_reached' if size>=storage_bytes() else None)
 
 

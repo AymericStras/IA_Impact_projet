@@ -1,5 +1,19 @@
 # Contribution verification
 
+## Version 0.7.1 — hourly quota removal, 2026-10-10
+
+Removed the station lookup's application-imposed hourly request quota. The former
+`SNCF_EVENTS_HOURLY_REQUESTS` setting is ignored, including in existing environments.
+Serial collection, caching, provider HTTP 429 cooldowns, queue bounds, storage limits
+and attempt accounting remain in effect.
+
+All 26 station-lookup tests passed in a read-only, network-disabled sandbox with a
+128 MiB memory ceiling. The copied implementation and tests match the verified files.
+Regressions cover collection and routes after 300 attempts, the obsolete setting,
+HTTP 429 pause and recovery, and storage protection. No live API calls or backend
+deployment were performed for this patch. The portable database and CSV snapshot
+are unchanged. Existing integrations must update their `event_catalog/` code.
+
 ## Version 0.7.0 — station lookup, 2026-10-10
 
 Adds the station-first lookup described in [INTEGRATION.md](../INTEGRATION.md):

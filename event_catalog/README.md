@@ -8,6 +8,8 @@ contains only the standalone `event_catalog/` project.
 
 **New in 0.7.0 — station lookup.** Give one or more railway stations and a date; receive structured data for that day's activities within a checked 20-minute walk, collected live around those stations only.
 
+Version 0.7.1 removes the station lookup's application-imposed hourly request quota. Provider HTTP 429 cooldowns, serial collection, caching and storage limits remain in effect. Update your `event_catalog/` code to use this version; `SNCF_EVENTS_HOURLY_REQUESTS` is no longer used.
+
 ## Integrate with one prompt
 
 Paste this into an AI coding assistant opened at the root of `IA_Impact_projet`. It adds one backend endpoint that

@@ -201,14 +201,43 @@ class QueueTests(NearbyCase):
         self.assertEqual(len(Pages.urls),requests)
         self.assertEqual(nearby.lookup(self.conn,['87000001'],DAY)['stations'][0]['coverage']['routes_verified'],1)
 
-    def test_hourly_budget_and_rate_limit_stop_requests(self):
-        nearby.request(self.conn,['87000001'],DAY)
+    def test_collection_and_routes_continue_after_300_attempts(self):
+        with self.conn:
+            self.conn.executemany("INSERT INTO station_lookup_attempts(started_at,kind) VALUES (?,?)",
+                                  [(now(),'collect' if i%2 else 'route') for i in range(300)])
+        result=self.collect(['87000001'],[dated(1,43.6005,1.44)])
+        self.assertTrue(result['complete']);self.assertEqual(result['total'],1)
+        self.assertEqual((len(Pages.urls),len(Routes.calls)),(1,1))
+        self.assertEqual(nearby.usage(self.conn),(302,False))
+
+    def test_legacy_hourly_limit_setting_does_not_stop_collection(self):
+        with self.conn:
+            self.conn.execute("INSERT INTO station_lookup_attempts(started_at,kind) VALUES (?,'collect')",(now(),))
         with patch.dict(os.environ,{'SNCF_EVENTS_HOURLY_REQUESTS':'1'}):
-            with self.conn:self.conn.execute("INSERT INTO station_lookup_attempts(started_at,kind) VALUES (?,'collect')",(now(),))
-            self.assertEqual(self.step(),{'throttled':'hourly_request_budget_reached'})
-        with self.conn:self.conn.execute("UPDATE station_lookup_attempts SET error='http_429'")
+            result=self.collect(['87000001'],[dated(1,43.6005,1.44)])
+        self.assertTrue(result['complete']);self.assertEqual(result['total'],1)
+        self.assertEqual((len(Pages.urls),len(Routes.calls)),(1,1))
+
+    def test_provider_rate_limit_stops_requests_and_keeps_work_pending(self):
+        nearby.request(self.conn,['87000001'],DAY)
+        with self.conn:
+            self.conn.execute("INSERT INTO station_lookup_attempts(started_at,kind,error) VALUES (?,'collect','http_429')",(now(),))
         self.assertEqual(self.step(),{'throttled':'provider_rate_limit_cooldown'})
-        self.assertEqual(Pages.urls,[])
+        self.assertEqual(Pages.urls+Routes.calls,[])
+        self.assertTrue(nearby.lookup(self.conn,['87000001'],DAY)['pending'])
+
+    def test_collection_resumes_after_provider_cooldown(self):
+        earlier=(datetime.fromisoformat(now())-timedelta(minutes=11)).isoformat(timespec='seconds')
+        with self.conn:
+            self.conn.execute("INSERT INTO station_lookup_attempts(started_at,kind,error) VALUES (?,'route','http_429')",(earlier,))
+        result=self.collect(['87000001'],[dated(1,43.6005,1.44)])
+        self.assertTrue(result['complete']);self.assertEqual(result['total'],1)
+
+    def test_storage_limit_still_stops_requests(self):
+        nearby.request(self.conn,['87000001'],DAY)
+        with patch.object(nearby,'storage_bytes',return_value=0):
+            self.assertEqual(self.step(),{'throttled':'storage_budget_reached'})
+        self.assertEqual(Pages.urls+Routes.calls,[])
         self.assertTrue(nearby.lookup(self.conn,['87000001'],DAY)['pending'])
 
     def test_queue_is_bounded(self):
