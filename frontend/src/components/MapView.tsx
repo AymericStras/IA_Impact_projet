@@ -75,15 +75,15 @@ const BADGE_PX: Record<Tier | "important", number> = { important: 30, major: 26,
 const TEXT_PX: Record<Tier | "important", number> = { important: 14, major: 13.5, medium: 12, minor: 11 };
 // Échelle des pastilles selon le zoom : minuscules sur la vue de toute la région, pleine taille à partir du zoom 12
 const SHRINK: [zoom: number, scale: number][] = [[6, 0.38], [9, 0.65], [12, 1]];
-// Même idée pour le train 3D, plus marquée : c'est l'objet le plus gros de la carte
-const TRAIN_SHRINK: [zoom: number, scale: number][] = [[6, 0.42], [9, 0.72], [12, 1]];
-const zoomScale = (z: number, steps: [number, number][]) => {
-  if (z <= steps[0][0]) return steps[0][1];
-  for (let i = 1; i < steps.length; i++) {
-    const [z1, k1] = steps[i], [z0, k0] = steps[i - 1];
-    if (z <= z1) return k0 + ((k1 - k0) * (z - z0)) / (z1 - z0);
-  }
-  return steps[steps.length - 1][1];
+// Train 3D : rétrécit à chaque cran de dézoom, de TRAIN_MAX (zoom ≥ 14, en ville) à TRAIN_MIN (zoom 6, toute la
+// région) — bornes qui gardent la rame lisible sans qu'elle mange l'écran
+const TRAIN_ZOOM_OUT = 6;
+const TRAIN_ZOOM_IN = 14;
+const TRAIN_MIN = 1.4;
+const TRAIN_MAX = 2;
+const trainScale = (z: number, base: number) => {
+  const t = Math.min(1, Math.max(0, (z - TRAIN_ZOOM_OUT) / (TRAIN_ZOOM_IN - TRAIN_ZOOM_OUT)));
+  return base * (TRAIN_MIN + (TRAIN_MAX - TRAIN_MIN) * t);
 };
 
 // Pastilles de gare : dessinées une fois sur un canvas, une par état
@@ -615,12 +615,9 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
   // chaque image ; la caméra le suit jusqu'à ce qu'on fasse glisser la carte
   useEffect(() => {
     if (!map || !sim) return;
-    // Sur téléphone, une rame un peu plus petite : à pleine taille elle couvre une bonne part de la carte. Elle
-    // rétrécit aussi quand on dézoome (taille fixe à l'écran = géante face à la carte de toute la région)
-    const mobile = window.matchMedia(MOBILE_QUERY).matches;
-    const base = mobile ? 0.8 : 1.2;
-    const scaleAt = () => base * zoomScale(map.getZoom(), TRAIN_SHRINK);
-    let scale = scaleAt();
+    // Rame qui suit le zoom entre deux bornes, un peu plus petite sur téléphone (elle y couvre vite la carte)
+    const base = window.matchMedia(MOBILE_QUERY).matches ? 0.8 : 1;
+    let scale = trainScale(map.getZoom(), base);
     const train = createTrain3D(scale);
     const marker = new maplibregl.Marker({ element: train.el }).setLngLat(sim.position()).addTo(map);
     map.flyTo({ center: sim.position(), zoom: Math.max(map.getZoom(), 10), offset: offset(), duration: 900 });
@@ -643,10 +640,10 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
     map.on("zoomstart", stopFollow);
     let lastFollow = 0;
     let lastPos: [number, number] | null = null;
-    const unsubscribe = sim.subscribe(() => {
+    const draw = () => {
       const pos = sim.position();
       marker.setLngLat(pos);
-      scale = scaleAt();
+      scale = trainScale(map.getZoom(), base);
       train.setScale(scale);
       const reach = 400 * scale; // bord du canvas affiché, en pixels écran
       // Voie parcourue projetée à l'écran, relative au train : la rame s'y plie voiture par voiture.
@@ -671,6 +668,12 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
       const { state } = sim.getSnapshot();
       train.setMode(state.kind === "moving" && sim.playing ? "moving" : state.kind === "arrived" ? "arrived" : "stopped", sim.speed);
       train.frame(performance.now());
+      return pos;
+    };
+    // Train à l'arrêt : le simulateur ne notifie plus, c'est le zoom qui redessine la rame à sa nouvelle taille
+    map.on("zoom", draw);
+    const unsubscribe = sim.subscribe(() => {
+      const pos = draw();
       // Recentrer ~10 fois par seconde suffit et laisse la carte respirer. Train immobile (pause, quai,
       // arrivée) : on ne recentre plus, sinon chaque easeTo couperait le glisser et le zoom de l'utilisateur
       const now = performance.now();
@@ -683,6 +686,7 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
     });
     return () => {
       unsubscribe();
+      map.off("zoom", draw);
       map.off("dragstart", stopFollow);
       map.off("zoomstart", stopFollow);
       canvas.removeEventListener("pointerdown", hold);
