@@ -4,6 +4,8 @@
 #   deploy/deploy.sh preflight          read-only: is the host healthy enough to accept the stack?
 #   deploy/deploy.sh build              build both linux/amd64 images locally (never on the server)
 #   deploy/deploy.sh ship               upload + docker load the images (no service is started)
+#   deploy/deploy.sh remote [commit]    build ON the server from a pushed commit, inside a memory/CPU
+#                                       budget (preferred: no large upload). Default: local HEAD
 #   deploy/deploy.sh up --yes           start/replace the two containers (loopback ports only)
 #                                       add --owner-approved when the owner has reviewed a host-guard
 #                                       refusal that is not about resources (see docs/DEPLOYMENT.md)
@@ -100,6 +102,14 @@ ship() {
   say "shipped. Activate with: deploy/deploy.sh up --yes"
 }
 
+remote_build() {
+  local commit; commit="${1:-$(git -C "$ROOT" rev-parse HEAD)}"
+  git -C "$ROOT" branch -r --contains "$commit" 2>/dev/null | grep -q . || fail "commit $commit is not pushed: the server builds from GitHub"
+  preflight >/dev/null || [ "${OWNER_APPROVED:-no}" = yes ] || { preflight || true; fail "preflight refused: no build started."; }
+  say "building $commit on $HOST (bounded: one build at a time, running version untouched)"
+  ssh -o BatchMode=yes "$HOST" "WEB_PORT=$WEB_PORT API_PORT=$API_PORT bash -s -- $commit" < "$ROOT/deploy/remote-build.sh"
+}
+
 up() {
   confirm "${1:-}"
   [ "${2:-}" = "--owner-approved" ] && OWNER_APPROVED=yes
@@ -172,6 +182,7 @@ case "${1:-}" in
   preflight) preflight ;;
   build) build ;;
   ship) ship ;;
+  remote) [ "${3:-}" = "--owner-approved" ] && OWNER_APPROVED=yes; [ "${2:-}" = "--owner-approved" ] && { OWNER_APPROVED=yes; remote_build; exit; }; remote_build "${2:-}" ;;
   up) up "${2:-}" "${3:-}" ;;
   route) route "${2:-}" ;;
   status) status ;;
