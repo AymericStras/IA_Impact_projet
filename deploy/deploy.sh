@@ -5,6 +5,8 @@
 #   deploy/deploy.sh build              build both linux/amd64 images locally (never on the server)
 #   deploy/deploy.sh ship               upload + docker load the images (no service is started)
 #   deploy/deploy.sh up --yes           start/replace the two containers (loopback ports only)
+#                                       add --owner-approved when the owner has reviewed a host-guard
+#                                       refusal that is not about resources (see docs/DEPLOYMENT.md)
 #   deploy/deploy.sh route --yes        add/refresh the gateway block and reload nginx (graceful)
 #   deploy/deploy.sh status             containers, memory use, public smoke test
 #   deploy/deploy.sh down --yes         stop this stack and remove its gateway block
@@ -12,7 +14,9 @@
 # The server hosts production services. This script follows its host rules
 # (~/AGENTS.md, ~/Developer/host-guard): nothing is built or tested there, only this stack's own
 # containers are touched, the stack is hard-capped, and `up` refuses to add load while the host
-# is under memory pressure. There is deliberately no flag to skip the preflight.
+# is under memory pressure, short of memory or short of disk. Those resource checks cannot be
+# skipped. A refusal coming only from host-guard's own health bookkeeping can be overridden with
+# --owner-approved, which the owner must ask for explicitly each time.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,10 +38,10 @@ confirm() { [ "${1:-}" = "--yes" ] || fail "this changes the server: re-run with
 preflight() {
   # Thresholds from host-guard/PRODUCTION-SAFETY-PLAN.md (admission): memory PSI full avg10 < 1 %,
   # at least 6 GiB available after our 0.75 GiB budget, root filesystem >= 25 GiB and >= 10 % free.
-  remote 'python3 - "$@"' "$WEB_PORT" "$API_PORT" <<'PY'
+  remote 'python3 - "$@"' "$WEB_PORT" "$API_PORT" "${OWNER_APPROVED:-no}" <<'PY'
 import json, os, shutil, socket, subprocess, sys
-web_port, api_port = int(sys.argv[1]), int(sys.argv[2])
-reasons = []
+web_port, api_port, owner_approved = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3] == "yes"
+reasons, advisory = [], []  # reasons always block; advisory blocks unless the owner approved
 psi = dict(line.split(None, 1) for line in open("/proc/pressure/memory"))
 full10 = float(psi["full"].split("avg10=")[1].split()[0])
 full60 = float(psi["full"].split("avg60=")[1].split()[0])
@@ -64,9 +68,13 @@ if shutil.which("host-guard"):
     except Exception as exc:  # report, do not guess
         guard = {"error": type(exc).__name__}
     blocking = {"resource_pressure", "production_health_unavailable_or_failed"} & set((guard or {}).get("reasons", []))
-    if blocking:
-        reasons.append("host-guard reports: " + ", ".join(sorted(blocking)))
-print(json.dumps({"allowed": not reasons, "reasons": reasons, "psi_full_avg10": full10, "psi_full_avg60": full60,
+    if "resource_pressure" in blocking:
+        reasons.append("host-guard reports: resource_pressure")
+    elif blocking:
+        advisory.append("host-guard reports: " + ", ".join(sorted(blocking)))
+if not owner_approved:
+    reasons += advisory
+print(json.dumps({"allowed": not reasons, "reasons": reasons, "overridden_by_owner": advisory if owner_approved else [], "psi_full_avg10": full10, "psi_full_avg60": full60,
                   "available_gib": round(available_gib, 1), "root_free_gib": round(free_gib, 1),
                   "host_guard": (guard or {}).get("reasons", guard)}, indent=2))
 sys.exit(0 if not reasons else 3)
@@ -94,6 +102,7 @@ ship() {
 
 up() {
   confirm "${1:-}"
+  [ "${2:-}" = "--owner-approved" ] && OWNER_APPROVED=yes
   preflight || fail "preflight refused: the host is not in a state to accept new load. Nothing was started."
   say "starting sncf-chatbot $RELEASE on 127.0.0.1:$WEB_PORT (web) and :$API_PORT (api)"
   remote "cd $REMOTE_DIR && cp -f .env .env.previous 2>/dev/null; mv .env.next .env && docker compose up -d --no-build --remove-orphans && sleep 6 && docker compose ps --format '{{.Service}} {{.State}} {{.Health}}'"
@@ -163,7 +172,7 @@ case "${1:-}" in
   preflight) preflight ;;
   build) build ;;
   ship) ship ;;
-  up) up "${2:-}" ;;
+  up) up "${2:-}" "${3:-}" ;;
   route) route "${2:-}" ;;
   status) status ;;
   down) down "${2:-}" ;;
