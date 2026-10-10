@@ -370,7 +370,7 @@ At root font 200 % on phone widths the conversation floor is 30 % (35 % everywhe
 
 ### Link between the two experiences
 
-The classic top bar carries an icon link to `/vocal` (hidden on `narrow` shells, where four controls do not fit); the Help dialog always carries the same link as text with a 44 px target. `/vocal` links back from its own top bar.
+The classic top bar carries a link to `/vocal` as an outlined pill with a visible label (« Vocal » below `roomy`, « Version vocale » from `roomy`; the demo badge reads « Démo » on single-column shells to leave room; hidden on `narrow` shells, where four controls do not fit); the Help dialog always carries the same link as text with a 44 px target. `/vocal` links back from its own top bar, with the visible short label « Classique » between 22.5rem and 42rem (icon alone below, « Discussion classique » above). An icon alone was not recognised as a mode switch on phones (owner feedback, 2026-10-10).
 
 ## 14. Journey after confirmation
 
