@@ -1,18 +1,18 @@
 ---
 name: integration-check
-description: Verify compatibility between apps/web, services/api and the shared contracts (JSON Schema ↔ Pydantic ↔ TypeScript ↔ OpenAPI), and that the confirmed payload is consumable by the other team's planning module.
+description: Vérifier la compatibilité entre apps/web, services/api et les contrats partagés (Pydantic ↔ JSON Schema ↔ TypeScript ↔ OpenAPI), et que la charge utile confirmée est consommable par le module de planification de l'autre équipe.
 ---
 
-# Integration check
+# Vérification d'intégration
 
-## Checklist
-1. **Contracts valid**: `uv run --with jsonschema python scripts/validate_contracts.py`.
-2. **Pydantic ↔ JSON Schema**: `cd services/api && uv run python ../../scripts/export_schemas.py --check` (P1+) — no diff allowed.
-3. **OpenAPI ↔ TypeScript**: `cd apps/web && pnpm gen:types && git diff --exit-code src/types/contracts.ts` (P3+).
-4. **Endpoints ↔ docs/API.md**: every route in `/openapi.json` is listed with the same method/path/status codes.
-5. **Flow**: `./scripts/dev.sh`, then with `curl`: create → message → requirements → patch → confirm → export; the export validates against `requirements.schema.json`.
-6. **Demo parity**: mock service in `apps/web` returns objects valid against `conversation_response.schema.json` (unit test).
-7. **Downstream**: share `packages/contracts/requirements.schema.json` + example with the planner team; confirm transport (pull `GET /export` by default). Note any agreement in `docs/DECISIONS.md`.
-8. **Security**: `grep -r "NEXT_PUBLIC_.*KEY" apps/web` returns nothing; `git log -p | grep -i "sk-"` returns nothing; audio not persisted.
+## Liste de contrôle
+1. **Contrats valides** : `uv run --with jsonschema python scripts/validate_contracts.py`.
+2. **Pydantic ↔ JSON Schema** : `cd services/api && uv run python ../../scripts/export_schemas.py --check` — aucune dérive.
+3. **OpenAPI ↔ TypeScript** : API lancée, puis `cd apps/web && pnpm gen:types` et comparer avec `src/types/contracts.ts`.
+4. **Endpoints ↔ docs/API.md** : chaque route de `/openapi.json` y figure avec les mêmes méthode/chemin/codes.
+5. **Parcours** : `./scripts/dev.sh`, puis avec `curl` : créer → message → requirements → patch → confirm → export ; l'export valide contre `requirements.schema.json`.
+6. **Parité démo** : le service simulé d'`apps/web` renvoie des objets valides contre `conversation_response.schema.json` (test unitaire ajv).
+7. **Aval** : partager `packages/contracts/requirements.schema.json` + exemple avec l'équipe planification ; convenir du transport (`GET /export` par défaut). Consigner l'accord dans `docs/DECISIONS.md`.
+8. **Sécurité** : `grep -r "NEXT_PUBLIC_.*KEY" apps/web` vide ; `git log -p | grep -i "sk-"` vide ; audio non persisté ; aucun contenu de message dans les logs INFO.
 
-Report findings in `docs/HANDOFF.md`; fix contract drift before anything else.
+Consigner les constats dans `docs/HANDOFF.md` ; corriger toute dérive de contrat avant le reste.

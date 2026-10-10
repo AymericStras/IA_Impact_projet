@@ -1,37 +1,37 @@
 # SNCF liO — Assistant de voyage pédagogique
 
-A French-language AI chatbot (voice + text) that helps teachers describe an educational trip and extracts four confirmed requirements — participants, departure, return, teaching subject/theme — as a versioned JSON contract for the travel-planning module built by other teammates.
+Chatbot IA en français (voix + texte) qui aide les enseignants à décrire une sortie pédagogique et en extrait quatre informations confirmées — participants, départ, retour, matière/thème — sous forme d'un contrat JSON versionné destiné au module de planification d'itinéraire développé par d'autres membres de l'équipe.
 
-Hackathon project. Designed as an **AI-native repository**: OpenAI Codex and Claude Code can take over development at any point by reading `AGENTS.md` / `CLAUDE.md` and `docs/HANDOFF.md`.
+Projet de hackathon, conçu comme un **dépôt « AI-native »** : OpenAI Codex et Claude Code peuvent reprendre le développement à tout moment à partir de `AGENTS.md` / `CLAUDE.md` et `docs/HANDOFF.md`.
 
-## Quick start
+## Démarrage rapide
 
 ```sh
-./scripts/bootstrap.sh   # toolchain check + dependency install + .env
-./scripts/demo.sh        # mock demo, no API key → http://localhost:3000
-./scripts/dev.sh         # real AI mode: FastAPI :8000 + Next.js :3000
+./scripts/bootstrap.sh   # outillage + dépendances + .env
+./scripts/demo.sh        # démo simulée, sans clé → http://localhost:3000
+./scripts/dev.sh         # mode IA réel : FastAPI :8000 + Next.js :3000
 ./scripts/test.sh
 ./scripts/check.sh
 ```
 
-Requirements: Node ≥ 20 + pnpm, Python ≥ 3.12 + [uv](https://docs.astral.sh/uv/), optionally Docker (Postgres on port 5433). On this development Mac, API keys are read from the macOS Keychain by `./tools/with-api-env`; elsewhere set `OPENAI_API_KEY` in `.env` (see `.env.example`).
+Prérequis : Node ≥ 20 + pnpm, Python ≥ 3.12 + [uv](https://docs.astral.sh/uv/), Docker optionnel (Postgres sur 5433). Sur le Mac de développement, la clé OpenAI est lue dans le trousseau macOS par `./tools/with-api-env` ; ailleurs, définir `OPENAI_API_KEY` dans l'environnement (voir `.env.example`).
 
-## Layout
+## Organisation
 
-| Path | Content |
+| Chemin | Contenu |
 |---|---|
-| `apps/web` | Next.js chatbot UI (French) |
-| `services/api` | FastAPI: transcription, structured extraction, state machine, validation |
-| `packages/contracts` | JSON Schemas + examples shared with other modules |
+| `apps/web` | Interface du chatbot Next.js (français) |
+| `services/api` | FastAPI : transcription, extraction structurée, machine à états, validation |
+| `packages/contracts` | JSON Schema (générés depuis Pydantic) + exemples partagés avec les autres modules |
 | `docs/` | PRODUCT, ARCHITECTURE, API, DECISIONS, HANDOFF, DEVELOPMENT, DEMO |
-| `evals/` | French extraction test set and evaluation script |
-| `scripts/` | bootstrap / dev / test / check / demo |
-| `.agents/skills`, `.claude/` | shared agent skills and role agents |
+| `evals/` | jeu de cas français et script d'évaluation |
+| `scripts/` | bootstrap / dev / test / check / demo / validate_contracts / export_schemas |
+| `.agents/skills`, `.claude/` | skills partagées, agents de rôle, hooks |
 
-## Status
+## État
 
-See `docs/HANDOFF.md`. Current phase: **P0 — framework package** complete; next is **P1 — FastAPI + text extraction**.
+Voir `docs/HANDOFF.md`.
 
-## For teammates integrating with the planner
+## Pour l'équipe qui intègre le planificateur
 
-Consume only `POST /api/v1/conversations/{id}/confirm` output, which conforms to `packages/contracts/requirements.schema.json` (`schema_version` `1.0`). Example: `packages/contracts/examples/confirmed_requirements.json`. OpenAPI is served at `http://localhost:8000/docs` when the API runs.
+Ne consommer que la sortie de `GET /api/v1/conversations/{id}/export` (ou le champ `confirmed_requirements` de la réponse de `POST …/confirm`), conforme à `packages/contracts/requirements.schema.json` (`schema_version` `1.0`). Exemple : `packages/contracts/examples/confirmed_requirements.json`. OpenAPI servi sur `http://localhost:8000/docs` quand l'API tourne.

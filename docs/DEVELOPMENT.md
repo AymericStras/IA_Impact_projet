@@ -1,43 +1,47 @@
-# Development guide
+# Guide de développement
 
-## Prerequisites
+## Prérequis
 
-Node ≥ 20 and `pnpm`; Python ≥ 3.12 and `uv`; Docker optional (Postgres). On the dev Mac the OpenAI key is read from the Keychain by `./tools/with-api-env` (see `TOOLS.md`); never put it in `.env` there.
+Node ≥ 20 et `pnpm` ; Python ≥ 3.12 et `uv` ; Docker optionnel (Postgres). Sur le Mac de développement, la clé OpenAI est lue dans le trousseau par `./tools/with-api-env` (voir `TOOLS.md`) ; ne jamais la mettre dans `.env` ici.
 
-## Commands
+## Commandes
 
-| Command | Does |
+| Commande | Effet |
 |---|---|
-| `./scripts/bootstrap.sh` | Verifies toolchain, `uv sync` in `services/api`, `pnpm install` in `apps/web`, creates `.env` from `.env.example`, checks Keychain credential (non-fatal) |
-| `./scripts/dev.sh` | API via `with-api-env gpt -- uv run uvicorn …` on :8000 and web `pnpm dev` on :3000; Ctrl‑C stops both |
-| `./scripts/demo.sh` | Web only with `NEXT_PUBLIC_DEMO_MODE=true` (no key, no backend) |
-| `./scripts/test.sh` | Contract validation, `pytest`, `vitest` |
-| `./scripts/check.sh` | `test.sh` + `ruff`, `mypy`, `tsc`, `eslint`, `next build` — identical to CI |
-| `./tools/with-api-env gpt -- python evals/evaluate.py` | Extraction evals against the real model |
+| `./scripts/bootstrap.sh` | Vérifie l'outillage, `uv sync` dans `services/api`, `pnpm install` dans `apps/web`, crée `.env` depuis `.env.example`, vérifie le trousseau (non bloquant) |
+| `./scripts/dev.sh` | API via `with-api-env gpt -- uv run uvicorn …` sur :8000 et web `pnpm dev` sur :3000 ; Ctrl‑C arrête les deux |
+| `./scripts/demo.sh` | Web seul avec `NEXT_PUBLIC_DEMO_MODE=true` (sans clé, sans backend) |
+| `./scripts/test.sh` | Validation des contrats, `pytest`, `vitest` |
+| `./scripts/check.sh` | `test.sh` + `ruff`, `mypy`, dérive des schémas, `tsc`, `eslint`, `next build` — identique à la CI |
+| `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` | Évaluations d'extraction contre le vrai modèle |
+| `cd services/api && uv run python ../../scripts/export_schemas.py` | Régénère les JSON Schema après un changement de modèle Pydantic |
 
-Scripts skip components that do not exist yet and say so; they never fail because a phase is not started.
+Les scripts ignorent les composants absents et le disent ; ils n'échouent jamais parce qu'une phase n'a pas commencé.
 
-## Environments
+## Environnements
 
-- `DATABASE_URL` defaults to SQLite in `.local/` (git-ignored). `docker compose up -d db` gives Postgres on `localhost:5433` (`sncf`/`sncf`, db `sncf_chatbot`); set `DATABASE_URL` accordingly. Alembic migrations run on API start in dev.
-- `NEXT_PUBLIC_DEMO_MODE=true` switches the web app to the mock conversation service with a visible « Mode démo » badge.
+- `DATABASE_URL` : SQLite dans `.local/` par défaut (ignoré par Git). `docker compose up -d db` fournit Postgres sur `localhost:5433` (`sncf`/`sncf`, base `sncf_chatbot`) : `DATABASE_URL=postgresql+psycopg://sncf:sncf@localhost:5433/sncf_chatbot`.
+- `NEXT_PUBLIC_DEMO_MODE=true` bascule le web sur le service de conversation simulé avec un badge « Mode démo » visible.
 
-## Adding a feature
+## Ajouter une fonctionnalité
 
-1. Branch `feature/<topic>`.
-2. If it touches the contract: update `packages/contracts`, bump version, update examples, `docs/API.md`, `DECISIONS.md` — first.
-3. Backend: schema → domain (pure + tests) → service → route → API test.
-4. Frontend: component in `src/components/chatbot/`, typed against `src/types/contracts.ts` (generated from OpenAPI in P3), tests with Vitest/Testing Library; Playwright for the full flow in demo mode.
-5. Prompt change: edit `services/api/app/prompts/*.md`, add eval cases, run evals, record results in `HANDOFF.md`.
-6. `./scripts/check.sh` green → Conventional Commit → PR → CI → merge.
+1. Branche `feature/<sujet>`.
+2. Si le contrat change : modifier les modèles Pydantic, régénérer `packages/contracts`, incrémenter la version, mettre à jour exemples, `docs/API.md`, `DECISIONS.md` — en premier.
+3. Backend : schéma → domaine (pur + tests) → service → route → test API.
+4. Frontend : composant dans `src/components/chatbot/`, typé contre `src/types/contracts.ts`, tests Vitest/Testing Library ; Playwright pour le parcours complet en mode démo.
+5. Changement de prompt : éditer `services/api/app/prompts/*.md` (incrémenter la version), ajouter des cas d'évaluation, lancer les évaluations, consigner les résultats dans `HANDOFF.md`.
+6. `./scripts/check.sh` vert → commit Conventional → PR → CI → fusion.
 
-## Testing strategy
+## Stratégie de test
 
-- `domain/`: unit tests, table-driven from French phrasings (merge, validation, state transitions, date resolution with a frozen Paris clock).
-- API: `httpx.AsyncClient` tests with `FakeProvider`; idempotency, 409 on stale version, provider failure keeps state.
-- Evals (`evals/`): real model, metrics in `evals/README.md`; blocking issues = unsupported fills, false confirmations.
-- Web: component tests; Playwright flow in demo mode (text → question → edit → confirm → JSON shown).
+- `domain/` : tests unitaires pilotés par des formulations françaises (fusion, validation, transitions, formatage des dates avec horloge figée).
+- API : `TestClient` + `FakeProvider` ; idempotence, 409 sur version obsolète, échec du fournisseur sans modification d'état, conformité des réponses au contrat publié.
+- Évaluations (`evals/`) : vrai modèle, métriques dans `evals/README.md` ; bloquants = remplissages non fondés, fausses confirmations, champs perdus.
+- Web : tests de composants ; parcours Playwright en mode démo (texte → question → modification → confirmation → JSON affiché).
 
-## Design workflow (Stitch)
+## Outils d'IA pour le développement
 
-`./tools/stitch tools` lists tools; `./tools/stitch call <tool> @args.json` generates/edits screens with the design prompt in `docs/DEMO.md`. Save references under `artifacts/` (git-ignored). Re-implement as React components — never paste generated HTML into the app.
+- **Agents de rôle** (`.claude/agents/`) : `frontend`, `backend`, `ai`, `qa` ; **skills** (`.agents/skills/`) partagées Codex/Claude.
+- **Hooks** (`.claude/settings.json`) : formatage et correction `ruff` automatiques à chaque édition d'un `.py` du backend.
+- **Évaluations** comme test de régression des prompts : toute modification de prompt = nouveau passage et résultats consignés.
+- **Stitch** : `./tools/stitch tools` liste les outils ; `./tools/stitch call <outil> @args.json` génère/édite des écrans avec le prompt de `docs/DEMO.md`. Références sous `artifacts/` (ignoré par Git). Réimplémenter en composants React — jamais coller le HTML généré.

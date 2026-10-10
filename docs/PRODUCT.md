@@ -1,45 +1,46 @@
-# Product definition
+# Définition produit
 
-## Users and goal
+## Utilisateurs et objectif
 
-French teachers (primary/secondary) planning an educational day trip using liO regional trains in Occitanie. They describe the trip in natural French, by voice or text. The assistant extracts, clarifies and confirms **four requirements**, then hands them to the travel-planning module.
+Enseignants (primaire/secondaire) en France préparant une sortie pédagogique à la journée avec les trains régionaux liO en Occitanie. Ils décrivent la sortie en français naturel, à la voix ou au clavier. L'assistant extrait, clarifie et confirme **quatre informations**, puis les transmet au module de planification.
 
-## The four requirements
+## Les quatre informations
 
-| # | Field | Accept as complete when | Examples of teacher phrasing |
+| # | Champ | Complète lorsque | Formulations typiques |
 |---|---|---|---|
-| 1 | `participants_count` | A total is known: stated total, or students + accompanying both known | « Nous sommes 30 », « 27 élèves et 3 accompagnateurs », « deux classes de 25 et 4 adultes » |
-| 2 | `departure` | date + time + constraint | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (only if resolvable) |
-| 3 | `return` | date + time + constraint | « retour avant 17 h », « rentrés vers seize heures » |
-| 4 | `teaching_type` | subject **or** theme | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
+| 1 | `participants_count` | Un total est connu : total énoncé, ou élèves + accompagnateurs connus | « Nous sommes 30 », « 27 élèves et 3 accompagnateurs », « deux classes de 25 et 4 adultes » |
+| 2 | `departure` | date + heure + contrainte | « le 12 novembre vers 8 h », « jeudi prochain à 7 h 45 » (si résoluble) |
+| 3 | `return` | date + heure + contrainte | « retour avant 17 h », « rentrés vers seize heures » |
+| 4 | `teaching_type` | matière **ou** thème | « professeur d'histoire », « le Moyen Âge », « un cours de SVT », « autour de l'architecture » |
 
-Ambiguity → ask, never guess:
+Ambiguïté → on demande, on ne devine jamais :
 
-- « J'ai 25 élèves » → ask for accompanying adults (students ≠ participants).
-- « Le mois prochain », « bientôt », « une trentaine » → ask for the exact value.
-- Return before departure → ask the teacher to correct.
-- Return without a date → assume the departure date **only if** the teacher's wording implies the same day (« partir à 8 h et rentrer à 17 h »); otherwise ask. Record the decision in `DECISIONS.md` when the rule is implemented.
+- « J'ai 25 élèves » → demander le nombre d'accompagnateurs (élèves ≠ participants).
+- « Le mois prochain », « bientôt », « une trentaine » → demander la valeur exacte.
+- Retour avant le départ → demander une correction (la valeur incohérente n'est pas conservée).
+- Heure de retour sans date → hérite de la date de départ (sortie à la journée, ADR-011) ; l'enseignant peut corriger.
+- Nouvelle valeur contradictoire sans formule de correction (« finalement », « en fait ») → demander laquelle retenir.
 
-Time constraints are preserved: `exact` (à), `approximate` (vers), `earliest` (après / pas avant), `latest` (avant / au plus tard).
+Les contraintes horaires sont conservées : `exact` (à), `approximate` (vers), `earliest` (après / pas avant), `latest` (avant / au plus tard).
 
-## Not collected
+## Non collecté
 
-Budget, departure station, student ages, class level, school name, contact details, names. If a teacher volunteers them, they are ignored (not stored in requirements) and never requested.
+Budget, gare de départ, âge des élèves, niveau, établissement, coordonnées, noms. Si l'enseignant les mentionne, elles sont ignorées (jamais stockées dans les informations) et jamais demandées.
 
-## Conversation flow
+## Déroulé de la conversation
 
-1. Welcome message with an example of what to say.
-2. Teacher speaks or types. Audio → transcription shown for correction → submitted as text.
-3. Extraction → patch merge → validation → state machine chooses: targeted question (missing), clarification (ambiguous/conflict), or summary + confirmation request (complete).
-4. Teacher can edit any field at any time, in chat or via the requirements panel.
-5. Explicit confirmation (« Confirmer et continuer ») → `CONFIRMED` → versioned JSON exported.
-6. After confirmation, a new correction reopens editing (`EDITING` → re-confirm).
+1. Message d'accueil avec un exemple de ce qu'on peut dire.
+2. L'enseignant parle ou écrit. Audio → transcription affichée pour correction → envoyée comme texte.
+3. Extraction → fusion du patch → validation → la machine à états choisit : question ciblée (manque), clarification (ambiguïté/conflit/incohérence) ou récapitulatif + demande de confirmation (complet).
+4. L'enseignant peut modifier n'importe quel champ à tout moment, par le chat ou dans le panneau.
+5. Confirmation explicite (« Confirmer et continuer ») → `CONFIRMED` → JSON versionné exporté.
+6. Après confirmation, une correction rouvre l'édition (nouvelle confirmation requise, export invalidé entre-temps).
 
-Principles: never re-ask a known field; one question at a time; concise, polite French; no promises about trains, destinations or availability.
+Principes : ne jamais redemander un champ connu ; une question à la fois ; français concis et poli ; aucune promesse sur les trains, destinations ou disponibilités.
 
-## Success criteria (hackathon)
+## Critères de réussite (hackathon)
 
-- Minimum demo: text → extraction → follow-up → correction → confirmation → JSON.
-- Voice uses the same pipeline (no second dialogue logic).
-- Target ≥ 95 % field-extraction accuracy on unambiguous eval cases; zero unsupported fills / false confirmations (blocking).
-- Works offline in mock demo mode for the pitch.
+- Démonstration minimale : texte → extraction → relance → correction → confirmation → JSON.
+- La voix utilise le même pipeline (pas de seconde logique de dialogue).
+- Cible ≥ 95 % d'exactitude d'extraction sur les cas non ambigus ; zéro remplissage non fondé / fausse confirmation (bloquant). Résultat actuel : voir `docs/HANDOFF.md`.
+- Fonctionne hors ligne en mode démo pour la présentation.

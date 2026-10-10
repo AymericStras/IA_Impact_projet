@@ -1,40 +1,40 @@
 # API — `/api/v1`
 
-Contract version: `schema_version 1.0`. Live OpenAPI at `http://localhost:8000/docs` (when P1 is implemented). Every conversation endpoint returns a `ConversationResponse` (`packages/contracts/conversation_response.schema.json`). All text is French; errors use RFC 9457 problem details with a French `detail`.
+Version du contrat : `schema_version 1.0`. OpenAPI en direct sur `http://localhost:8000/docs`. Tous les endpoints de conversation renvoient une `ConversationResponse` (`packages/contracts/conversation_response.schema.json`). Les erreurs suivent la RFC 9457 (`application/problem+json`, `{type, title, status, detail}`) avec un `detail` en français.
 
-| Method | Path | Body | Notes |
+| Méthode | Chemin | Corps | Notes |
 |---|---|---|---|
-| POST | `/conversations` | `{}` | Creates a conversation in `COLLECTING` with the welcome message |
-| GET | `/conversations/{id}` | — | Full state for page reload / session restore |
-| POST | `/conversations/{id}/messages` | `{ "content": str, "client_message_id": str }` | Text input. Idempotent on `client_message_id` |
-| POST | `/conversations/{id}/audio` | multipart `file` (webm/ogg/wav/m4a, ≤ `MAX_AUDIO_BYTES`) | Returns `transcript`; **does not extract**. Client submits corrected text via `/messages` with `source: "audio"` |
-| GET | `/conversations/{id}/requirements` | — | Current `PartialRequirements` + `missing_fields` + `version` |
-| PATCH | `/conversations/{id}/requirements` | `{ "field": FieldName, "value": …, "expected_version": int }` | Panel edit; 409 on version mismatch |
-| POST | `/conversations/{id}/confirm` | `{ "expected_version": int }` | Only in `AWAITING_CONFIRMATION`; returns `ConversationResponse` + `confirmed_requirements` (`requirements.schema.json`) |
-| GET | `/conversations/{id}/export` | — | The confirmed payload for the planner; 409 if not confirmed |
-| GET | `/health` | — | `{ "status": "ok", "demo": bool }` |
+| POST | `/conversations` | `{}` | 201 ; conversation en `COLLECTING` avec le message d'accueil |
+| GET | `/conversations/{id}` | — | État complet pour rechargement / restauration de session |
+| POST | `/conversations/{id}/messages` | `{ "content": str, "client_message_id": str, "source": "text"\|"audio" }` | Entrée texte. Idempotent sur `client_message_id` |
+| POST | `/conversations/{id}/audio` | multipart `file` (webm/ogg/wav/mp4/m4a/mpeg/flac, ≤ `MAX_AUDIO_BYTES`) | Renvoie `transcript` ; **n'extrait pas**. Le client envoie le texte corrigé via `/messages` |
+| GET | `/conversations/{id}/requirements` | — | Même réponse que GET conversation (état courant) |
+| PATCH | `/conversations/{id}/requirements` | `{ "field": FieldName, "value": …, "expected_version": int }` | Modification depuis le panneau ; 409 si version obsolète. `value` : entier, `{date,time,constraint}`, `{subject,theme}` ou `null` (effacer) |
+| POST | `/conversations/{id}/confirm` | `{ "expected_version": int }` | Seulement si l'état est complet et en attente de confirmation ; la réponse porte `confirmed_requirements` |
+| GET | `/conversations/{id}/export` | — | Charge utile confirmée (`requirements.schema.json`) ; 409 si non confirmée |
+| GET | `/health` | — | `{ "status": "ok", "extraction_model", "transcription_model" }` |
 
-## Response example
+## Exemple de réponse
 
-See `packages/contracts/examples/conversation_response.json`.
+Voir `packages/contracts/examples/conversation_response.json`.
 
-## Error codes
+## Codes d'erreur
 
-| Status | When |
+| Statut | Quand |
 |---|---|
-| 400 | Empty message, unsupported audio type |
-| 404 | Unknown conversation |
-| 409 | `expected_version` mismatch; confirm outside `AWAITING_CONFIRMATION`; export before confirmation |
-| 413 | Audio too large / too long |
-| 422 | Body validation (FastAPI default, French `detail` added) |
-| 429 | Rate limit per conversation |
-| 502 | Provider (OpenAI) failure — state unchanged, client may retry |
-| 504 | Provider timeout — state unchanged |
+| 400 | Message vide, type audio non pris en charge, enregistrement vide |
+| 404 | Conversation inconnue |
+| 409 | `expected_version` obsolète ; confirmation hors `AWAITING_CONFIRMATION` ; export avant confirmation |
+| 413 | Audio trop volumineux |
+| 422 | Corps invalide |
+| 429 | Limite de débit par conversation |
+| 502 | Échec du fournisseur (OpenAI) — état inchangé, réessai possible |
+| 504 | Délai dépassé côté fournisseur — état inchangé |
 
-## Downstream handoff
+## Transmission au module aval
 
-Other teams read `GET /conversations/{id}/export` or receive the same JSON via whatever transport we agree on (webhook/file). They must only depend on `requirements.schema.json`.
+L'autre équipe lit `GET /conversations/{id}/export` (ou reçoit le même JSON par le transport convenu : webhook/fichier). Elle ne doit dépendre que de `requirements.schema.json`. Sémantique du temps : `constraint: "latest"` est une borne supérieure, pas une cible.
 
-## Change log
+## Journal des changements
 
-- 1.0 (2026-10-10): initial contract.
+- 1.0 (2026-10-10) : contrat initial. `confirmed_requirements` ajouté à `ConversationResponse` avant toute publication (toujours 1.0).

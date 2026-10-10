@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Everything CI runs: contracts, lint, types, tests, build. Must pass before merging.
+# Tout ce que fait la CI : contrats, lint, types, tests, build. Doit passer avant fusion.
 . "$(dirname "$0")/_lib.sh"
 
 "$ROOT/scripts/test.sh"
@@ -8,7 +8,7 @@ if has_api; then
   info "ruff + mypy (services/api)"
   (cd "$API_DIR" && uv run ruff check . && uv run ruff format --check . && uv run mypy app)
   if [ -f "$ROOT/scripts/export_schemas.py" ]; then
-    info "Pydantic ↔ JSON Schema drift check"
+    info "dérive Pydantic ↔ JSON Schema"
     (cd "$API_DIR" && uv run python "$ROOT/scripts/export_schemas.py" --check)
   fi
 fi
@@ -18,4 +18,4 @@ if has_web; then
   (cd "$WEB_DIR" && pnpm tsc --noEmit && pnpm lint && NEXT_PUBLIC_DEMO_MODE=true pnpm build)
 fi
 
-info "all checks passed"
+info "toutes les vérifications sont passées"

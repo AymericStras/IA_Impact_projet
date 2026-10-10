@@ -1,14 +1,14 @@
-# Contracts
+# Contrats
 
-The shared data contract between the chatbot, its frontend, and the other teams' modules.
+Le contrat de données partagé entre le chatbot, son frontend et les modules des autres équipes.
 
-| File | Consumer | Purpose |
+| Fichier | Consommateur | Rôle |
 |---|---|---|
-| `requirements.schema.json` | Travel-planning module (other team) | Final confirmed payload. **This is the only thing other teams depend on.** |
-| `conversation_response.schema.json` | `apps/web` | Response shape of every conversation endpoint |
-| `requirement_patch.schema.json` | `services/api` extraction | What the LLM returns for one message (Structured Outputs) |
-| `examples/` | everyone + CI | Valid instances; `scripts/validate_contracts.py` checks them |
+| `requirements.schema.json` | Module de planification (autre équipe) | Charge utile finale confirmée. **La seule chose dont dépendent les autres équipes.** |
+| `conversation_response.schema.json` | `apps/web` | Forme de la réponse de tous les endpoints de conversation |
+| `requirement_patch.schema.json` | extraction `services/api` | Ce que le LLM renvoie pour un message (Structured Outputs) |
+| `examples/` | tous + CI | Instances valides ; `scripts/validate_contracts.py` les vérifie |
 
-Rules (see `AGENTS.md` §3.7): Pydantic models in `services/api/app/schemas/` are the authoritative definitions; these JSON Schemas must stay equivalent (P1 adds an automated export + diff check in `scripts/check.sh`). Changing anything here requires a `schema_version` bump, updated examples, `docs/API.md`, and a `docs/DECISIONS.md` entry.
+Règles (`AGENTS.md` §3.7, ADR-014) : les modèles Pydantic de `services/api/app/schemas/` sont la source de vérité ; ces fichiers sont **générés** par `scripts/export_schemas.py` (ne pas les éditer à la main ; `--check` échoue en CI en cas de dérive). Tout changement exige un incrément de `schema_version`, des exemples à jour, `docs/API.md` et une entrée dans `docs/DECISIONS.md`.
 
-Time semantics: `constraint` distinguishes *"retour à 17 h"* (`exact`) from *"retour avant 17 h"* (`latest`) — planners must treat `latest` as an upper bound, not a target. All dates/times are `Europe/Paris` local.
+Sémantique du temps : `constraint` distingue « retour à 17 h » (`exact`) de « retour avant 17 h » (`latest`) — les planificateurs doivent traiter `latest` comme une borne supérieure, pas une cible. Toutes les dates/heures sont locales `Europe/Paris`.

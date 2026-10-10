@@ -1,38 +1,41 @@
-# Evals — French extraction test set
+# Évaluations — jeu de cas français
 
-`french_cases.jsonl`: one case per line. Single-turn cases give `message` + `state` (current requirements, may be `{}`) and `expect`. Multi-turn cases give `turns: [{message, expect}]`.
+`french_cases.jsonl` : un cas par ligne. Un cas à un tour donne `message` + `state` (informations courantes, peut être `{}`), un `history` optionnel (messages précédents, dont la dernière question de l'assistant) et `expect`. Un cas multi-tours donne `turns: [{message, expect}]` ; l'historique est propagé automatiquement d'un tour à l'autre.
 
-`expect` keys (all optional, each asserted when present):
+Clés d'`expect` (toutes optionnelles, chacune vérifiée si présente) :
 
-| Key | Meaning |
+| Clé | Signification |
 |---|---|
-| `operations` | list of `{field, operation, value?}` that must appear (value compared when given; `date`/`time`/`constraint` subset-compared) |
-| `no_operations_on` | fields that must have **no** operation (regression guard against invented data) |
-| `participants_mentioned` | subset of `{students, accompanying, total_stated}` |
-| `ambiguity_kinds` | list of `kind`s that must appear |
-| `conflicts_on` | fields that must appear in `conflicts` |
-| `user_intent` | expected intent |
-| `merged` | after `patch_merger` — expected subset of `PartialRequirements` (needs services/api) |
-| `missing_fields` | expected list after merge + validate (needs services/api) |
+| `operations` | liste de `{field, operation, value?}` devant apparaître (`value` comparée en sous-ensemble : omettre `constraint` accepte toute contrainte) |
+| `no_operations_on` | champs qui ne doivent avoir **aucune** opération (garde contre les données inventées) |
+| `participants_mentioned` | sous-ensemble de `{students, accompanying, total_stated}` |
+| `ambiguity_kinds` | `kind`s devant apparaître (`[]` = aucune ambiguïté attendue) |
+| `conflicts_on` | champs devant apparaître dans `conflicts` |
+| `user_intent` | intention attendue |
+| `merged` | sous-ensemble attendu de `PartialRequirements` après fusion |
+| `missing_fields` | liste attendue après fusion + validation |
+| `state` | état décidé par la machine à états |
 
-`today` fixes the Paris clock for relative dates (`2026-10-10`, a Saturday, unless the case says otherwise).
+`today` fige l'horloge de Paris pour les dates relatives (`2026-10-10`, un samedi, sauf indication).
 
-## Run
+## Lancer
 
 ```sh
-python evals/evaluate.py --list                     # show cases (no API)
-./tools/with-api-env gpt -- python evals/evaluate.py [--model gpt-5.4-mini] [--tag correction]
+python evals/evaluate.py --list                     # liste des cas (sans API)
+cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py [--model gpt-5.4-mini] [--tag correction] [--id <cas>]
 ```
 
-Requires `services/api` (P1) for the extraction adapter and merge. Results go to `evals/results/<timestamp>.json` (git-ignored); summarise the table in `docs/HANDOFF.md`.
+Résultats dans `evals/results/<horodatage>.json` (ignoré par Git) ; résumé à consigner dans `docs/HANDOFF.md`.
 
-## Metrics
+## Métriques
 
-1. Field extraction accuracy (per field, unambiguous cases) — target ≥ 95 %.
-2. Participants total accuracy.
-3. Date/time/constraint accuracy.
-4. Missing-field detection accuracy.
-5. State preservation on corrections (no dropped fields).
-6. **Unsupported fills** (operation without evidence / invented value) — must be 0, blocking.
-7. **False confirmations** (`confirm` intent without explicit agreement) — must be 0, blocking.
-8. Multi-turn completion rate.
+1. Exactitude d'extraction par champ (cas non ambigus) — cible ≥ 95 %.
+2. Exactitude du total de participants.
+3. Exactitude date/heure/contrainte.
+4. Détection des champs manquants.
+5. Préservation de l'état lors des corrections (aucun champ perdu).
+6. **Remplissages non fondés** (opération sans `evidence` / valeur inventée) — doit être 0, bloquant.
+7. **Fausses confirmations** (intention `confirm` sans accord explicite) — doit être 0, bloquant.
+8. Taux de complétion multi-tours.
+
+Le script renvoie 1 si un bloquant est non nul ou si le taux de réussite est < 95 %.

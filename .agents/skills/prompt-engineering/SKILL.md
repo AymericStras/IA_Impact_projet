@@ -1,23 +1,24 @@
 ---
 name: prompt-engineering
-description: Modify, version and validate the extraction and dialogue prompts in services/api/app/prompts, and the RequirementPatch schema the model fills. Always paired with running the French evals in evals/.
+description: Modifier, versionner et valider les prompts d'extraction et de dialogue de services/api/app/prompts, ainsi que le schéma RequirementPatch que remplit le modèle. Toujours accompagné d'un passage des évaluations françaises de evals/.
 ---
 
-# Prompt engineering
+# Ingénierie des prompts
 
-## Read first
-`AGENTS.md` §3 (invariants 1–6), `services/api/app/prompts/*.md`, `packages/contracts/requirement_patch.schema.json`, `evals/README.md`.
+## Lire d'abord
+`AGENTS.md` §3 (invariants 1–6), `services/api/app/prompts/*.md`, `services/api/app/schemas/patch.py`, `evals/README.md`, dernière section « Évaluations » de `docs/HANDOFF.md`.
 
-## Rules
-- Prompts are versioned files with a header (`vX.Y`, date). Bump the version on every semantic change and note it in `docs/HANDOFF.md` with eval results.
-- The prompt never decides control flow, never writes chatbot text, never confirms. If a behaviour belongs to code (totals, state, re-asking), fix the code, not the prompt.
-- Reliability comes from the schema + code validation; the prompt improves recall and ambiguity reporting. Prefer adding an `Ambiguity.kind` over asking the model to "be careful".
-- Keep the system prompt in English; examples inside it may be French.
-- Blocking regressions: any unsupported fill (value with no evidence), any `confirm` intent without an explicit agreement phrase, any dropped existing field.
+## Règles
+- Les prompts sont des fichiers versionnés avec en-tête (`vX.Y`, date). Incrémenter à chaque changement sémantique et consigner les résultats d'évaluation dans `docs/HANDOFF.md`.
+- Le prompt ne décide jamais du flux, n'écrit jamais de texte pour l'utilisateur, ne confirme jamais. Si un comportement relève du code (totaux, état, redemande), corriger le code, pas le prompt.
+- La fiabilité vient du schéma + de la validation par le code ; le prompt améliore le rappel et le signalement des ambiguïtés. Préférer ajouter un `AmbiguityKind` plutôt que demander au modèle « d'être prudent ».
+- Le prompt système reste en anglais (ADR-010) ; les exemples qu'il contient peuvent être en français.
+- Régressions bloquantes : remplissage non fondé (valeur sans `evidence`), intention `confirm` sans accord explicite, champ existant perdu.
+- Le modèle reçoit les 8 derniers messages (ADR-015) : les cas d'évaluation à un tour qui répondent à une question doivent fournir `history`.
 
-## Procedure
-1. Add or adjust cases in `evals/french_cases.jsonl` that capture the target behaviour **before** editing the prompt (include spoken forms: « on serait une trentaine », « deux classes de vingt-cinq », « rentrés vers seize heures », « finalement plutôt jeudi »).
-2. Edit the prompt; if a new ambiguity kind or field shape is needed, update the Pydantic patch model and JSON Schema (contract procedure).
-3. Run `./tools/with-api-env gpt -- python evals/evaluate.py --model $EXTRACTION_MODEL` (and optionally a second model for comparison).
-4. Accept only if field accuracy ≥ previous and blocking metrics are 0. Record the table in `docs/HANDOFF.md`.
-5. Commit prompt + cases + results together (`feat(prompt): …` / `fix(prompt): …`).
+## Procédure
+1. Ajouter ou ajuster des cas dans `evals/french_cases.jsonl` capturant le comportement visé **avant** d'éditer le prompt (inclure l'oral : « on serait une trentaine », « deux classes de vingt-cinq », « rentrés vers seize heures », « finalement plutôt jeudi »).
+2. Éditer le prompt ; si un nouveau type d'ambiguïté ou une forme de champ est nécessaire, modifier le modèle Pydantic du patch et régénérer le JSON Schema (procédure contrat).
+3. Lancer `cd services/api && ../../tools/with-api-env gpt -- uv run python ../../evals/evaluate.py` (et éventuellement `--model` pour comparer).
+4. N'accepter que si l'exactitude est ≥ à la précédente et que les bloquants sont à 0. Un cas peut être non déterministe : relancer avec `--id` avant de conclure. Consigner le tableau dans `docs/HANDOFF.md`.
+5. Committer prompt + cas + résultats ensemble (`feat(prompt): …` / `fix(prompt): …`).
