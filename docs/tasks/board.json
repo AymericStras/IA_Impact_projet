@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "rule": "Mark a task done only with evidence (a command actually run and its result). One owner per file. Blocked tasks state what they need; do not fake it.",
+  "updated": "2026-10-10",
+  "tasks": [
+    {
+      "id": "P0-FRAMEWORK",
+      "status": "done",
+      "title": "AI-native repository: AGENTS/CLAUDE, skills, role agents, contracts, scripts, CI",
+      "evidence": "python3 scripts/sync_skills.py --check; scripts/validate_contracts.py; commits bc913b4, a5ce9f9"
+    },
+    {
+      "id": "P1-P2-BACKEND",
+      "status": "done",
+      "title": "FastAPI: structured extraction, patch merge, validation, state machine, dialogue, confirmation, export",
+      "evidence": "services/api: 81 pytest, ruff, mypy --strict; live two-turn conversation 10/10 against gpt-5.4-mini"
+    },
+    {
+      "id": "P2-EVALS",
+      "status": "done",
+      "title": "French extraction evals (36 synthetic cases) with blocking metrics",
+      "evidence": "reports/evals-latest.json: 36/36, unsupported fills 0, false confirmations 0, dropped fields 0 (prompt v1.4)"
+    },
+    {
+      "id": "P3-FRONTEND",
+      "status": "done",
+      "title": "French chatbot UI (Next.js, shadcn): chat, requirements panel, inline edit, confirmation, JSON block, demo mode",
+      "evidence": "apps/web: tsc, eslint, vitest, build, Playwright; real-mode browser run with screenshots, no console errors"
+    },
+    {
+      "id": "P4-VOICE",
+      "status": "done",
+      "title": "Voice input: MediaRecorder, server media check, gpt-transcribe, editable transcript",
+      "evidence": "Chromium with a fake microphone fed synthesized French speech: transcript correct, 4 fields extracted in one turn. Synthetic audio only."
+    },
+    {
+      "id": "P6-GUARDRAILS",
+      "status": "ready",
+      "priority": 1,
+      "title": "Frontend freeze for handover: screenshot baselines, docs/DESIGN.md, apps/web/AGENTS.md, error codes, GET /config, sub-path build",
+      "acceptance": "pnpm test:e2e green with committed baselines; DESIGN.md matches the code; standalone build serves under /sncf-chatbot"
+    },
+    {
+      "id": "DEPLOY-001",
+      "status": "blocked",
+      "priority": 2,
+      "title": "Run the stack at https://zhaoyang.fr/sncf-chatbot/",
+      "requires": [
+        "deploy/deploy.sh preflight returning allowed=true (host memory PSI full < 1 %, host-guard without resource_pressure / production_health failure)",
+        "web image built (needs P6-GUARDRAILS sub-path support)"
+      ],
+      "acceptance": "deploy.sh status shows both containers healthy under their caps; public web and API health return 200; one real conversation completed on the public URL; other services on the host unchanged"
+    },
+    {
+      "id": "QA-REAL-VOICE",
+      "status": "blocked",
+      "priority": 3,
+      "title": "Real teacher recordings and real devices",
+      "requires": ["authorised French recordings (accents, noise, numbers, dates)", "a phone and a laptop over HTTPS"],
+      "acceptance": "Recorded results for permission denied, interruption, noisy room, long message; error rate on numbers/dates/times"
+    },
+    {
+      "id": "INTEGRATION-PLANNER",
+      "status": "blocked",
+      "priority": 4,
+      "title": "Hand the confirmed JSON to the teammates' planning module",
+      "requires": ["their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"],
+      "acceptance": "Their module consumes packages/contracts/examples/confirmed_requirements.json and one live export"
+    },
+    {
+      "id": "CI-HOSTED",
+      "status": "ready",
+      "priority": 5,
+      "title": "First green run of .github/workflows/ci.yml on GitHub",
+      "acceptance": "All three jobs green on main; fix whatever differs from local"
+    },
+    {
+      "id": "MODEL-COMPARE",
+      "status": "ready",
+      "priority": 6,
+      "title": "Compare extraction models on the eval set (latency, cost, pass rate)",
+      "acceptance": "Table in docs/HANDOFF.md for gpt-5.4-mini vs gpt-5.4 vs gpt-4.1-mini, three runs each; default changed only with evidence"
+    },
+    {
+      "id": "PROD-GATE",
+      "status": "blocked",
+      "priority": 7,
+      "title": "Items of docs/PRODUCTION.md (identity, retention, Postgres path, device and assistive-technology passes)",
+      "requires": ["deployment and privacy requirements from the owner"],
+      "acceptance": "Each item implemented and tested; none ticked from code inspection"
+    }
+  ]
+}

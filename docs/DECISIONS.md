@@ -49,3 +49,22 @@ The last 8 messages (including the assistant's last question) accompany every ex
 
 ## ADR-016 — 2026-10-10 — Chat confirmation strictly bounded
 The model's `confirm` intent only leads to `CONFIRMED` if the previous state is `AWAITING_CONFIRMATION`, everything is complete and the message modifies nothing. The « Confirmer et continuer » button (`POST /confirm`, with `expected_version`) remains the main path. Protects against a false confirmation by the model.
+
+## ADR-017 — 2026-10-10 — Evidence is verified by code, with deterministic backstops
+Every model operation must quote the teacher's latest message (typography-insensitive match; one retry, then `INVALID_EVIDENCE`). The quote also feeds two backstops that do not depend on the model behaving: an approximate count in the quote ("environ 35") is never stored, and a clock time dropped by the model is read back from the quote when it contains exactly one time expression. Reason: in the live service the model dropped the time of "Avant 17 h." about once in six runs, and once stored an approximate count. Adopted from a reviewed reference kit (evidence check) and extended.
+
+## ADR-018 — 2026-10-10 — Restated values: conflict question or announced replacement
+For "Nous sommes 28" after 30 was stored, the model reports a conflict in some runs and a replacement in others. Both are accepted: a conflict asks which value to keep; a replacement is always announced ("C'est noté, j'ai mis à jour … (au lieu de …)"). A known value is never overwritten silently. A breakdown (students/accompanying) that no longer adds up to the total is dropped.
+
+## ADR-019 — 2026-10-10 — No model call inside a transaction; optimistic re-check
+`handle_message` loads the state, releases the transaction, calls the model, reloads and compares (version, message count, state) before writing: a concurrent change is `409 CONCURRENT_UPDATE`. A reused `client_message_id` with different content is `409 IDEMPOTENCY_CONFLICT`. A session lease (as in the reference kit) was judged unnecessary at this scale.
+
+## ADR-020 — 2026-10-10 — Scope stays at confirmed requirements
+The reference kit also implements recommendation selection, schedule-adjustment consent and a booking handoff. Not adopted: recommendation and itinerary belong to teammates' modules; our boundary is the confirmed JSON (`GET /export`). Also not adopted: treating "vers 8 h" as ambiguous (the product keeps `approximate`), a `flexible` flag, and a native Web Component frontend.
+
+## ADR-021 — 2026-10-10 — Skills are mirrored by copy, not symlinked
+`.agents/skills` is canonical; `scripts/sync_skills.py` copies to `.claude/skills` and `--check` fails on drift (pre-commit hook, CI). Symlinks break on Windows checkouts.
+
+## ADR-022 — 2026-10-10 — Deployment by prebuilt images; no rate limiting
+Images are built on the developer machine and loaded on zhao-zenbook; the stack is hard-capped (2 × 384 MiB, no swap) and `deploy.sh up` refuses while the host is under memory pressure, following the host's own safety plan. At the owner's request there is no rate limiting and no cap on model calls; the risk (a public URL spending the key's quota) is recorded in `docs/DEPLOYMENT.md`.
+
