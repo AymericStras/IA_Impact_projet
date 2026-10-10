@@ -2,9 +2,9 @@
 
 Catalogue d’activités et collecte pour les sorties scolaires en Occitanie.
 
-This contribution adds an English interface, English/French source metadata,
-a portable SQLite database, six CSV tables, and the Python collection/query code.
-It is independent of the existing journey planner and frontend.
+This standalone project includes an English interface, English/French source
+metadata, a portable SQLite database, six CSV tables, and the Python
+collection/query code. This branch contains only `event_catalog/`.
 
 ## Data included
 
@@ -43,8 +43,9 @@ sqlite3 -header -csv distribution/catalogue.sqlite3 \
 See [the dated SQL example](docs/SHARING.md) for session-aware queries within a
 20-minute walk of a station. The default website filter accepts only verified,
 unexpired pedestrian estimates of at most 1,200 seconds. Unknown routes do not
-qualify. The station subset comes from this repository's pinned multimodal
-dataset; railway-only filtering is documented in [walking access](docs/WALKING-ACCESS.md).
+qualify. The station subset comes from the upstream multimodal dataset at
+[commit 5029e9d](https://github.com/AymericStras/IA_Impact_projet/tree/5029e9d0b5f64c12e2b01e931f4ab63ef887d747/backend/data);
+railway-only filtering is documented in [walking access](docs/WALKING-ACCESS.md).
 
 ## Run the crawler and local interface
 
@@ -90,4 +91,4 @@ remain in French; one multilingual title uses its supplied French subtitle.
 
 Code version: 0.6.0. Validation: 194 Python tests and 12 interface logic checks,
 plus SQLite integrity, foreign keys, CSV round trips, file hashes and language/
-credential scans. This package preserves the existing backend and frontend.
+credential scans. The software license is included in [LICENSE](LICENSE).
