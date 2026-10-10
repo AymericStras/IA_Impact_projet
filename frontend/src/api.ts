@@ -50,13 +50,22 @@ export class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, params?: URLSearchParams): Promise<T> {
+async function get<T>(path: string, params?: URLSearchParams, signal?: AbortSignal): Promise<T> {
   const qs = params ? "?" + params : "";
   let res: Response;
+  const timeout = new AbortController();
+  const abort = () => timeout.abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  if (signal?.aborted) timeout.abort();
+  const timer = window.setTimeout(abort, 20000);
   try {
-    res = await fetch(BASE + path + qs);
-  } catch {
+    res = await fetch(BASE + path + qs, { signal: timeout.signal });
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new ApiError("network");
+  } finally {
+    window.clearTimeout(timer);
+    signal?.removeEventListener("abort", abort);
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(body?.detail?.code ?? "network");
@@ -67,4 +76,14 @@ export const api = {
   places: () => get<{ places: Place[] }>("/places").then((r) => r.places),
   network: () => get<{ edges: Edge[] }>("/network").then((r) => r.edges),
   route: (from: string, to: string) => get<Route>("/route", new URLSearchParams({ from, to })),
+  info: () => get<{ feed_version: string; valid_from: string; valid_until: string; reference_day: string }>("/info"),
+  modes: (signal?: AbortSignal) => get<{ modes: { id: string }[] }>("/modes", undefined, signal).then((r) => r.modes),
+  schoolRoute: async (from: string, to: string, excluded: string[], signal?: AbortSignal) => {
+    const params = new URLSearchParams({ from, to, transfer_min: "15" });
+    excluded.forEach((mode) => params.append("exclude", mode));
+    const route = await get<Route>("/route", params, signal);
+    // Even when the full dataset is enabled, never show TGV, Intercités or coaches in a school proposal.
+    if (route.legs.some((leg) => leg.mode !== "Train TER" && leg.mode !== WALK)) throw new ApiError("no_route");
+    return route;
+  },
 };

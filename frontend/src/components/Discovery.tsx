@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "../api";
 import { useI18n } from "../i18n";
-import { WALK_LIMIT_KM, creditOf, distanceKm, imageOf, walkMinutes, type Discovery } from "../data/discoveries";
+import { creditOf, distanceKm, imageOf, type Discovery } from "../data/discoveries";
 
 // Photo du lieu ; si elle manque (pas encore téléchargée, hors ligne), un aplat aux couleurs de la charte
 export function DiscoveryImage({ d, className }: { d: Discovery; className?: string }) {
@@ -16,15 +16,14 @@ export function DiscoveryImage({ d, className }: { d: Discovery; className?: str
   );
 }
 
-// « À 12 min à pied de Nîmes Centre », ou la distance quand c'est trop loin pour marcher
+// A straight-line distance cannot establish a pedestrian route or a duration for a school group.
 export function useDistanceLabel() {
-  const { t, locale } = useI18n();
+  const { locale } = useI18n();
   return (d: Discovery, station: Place | undefined) => {
     if (!station) return "";
     const km = distanceKm(d, station);
-    return km <= WALK_LIMIT_KM
-      ? t.walkFrom(walkMinutes(km), station.name)
-      : t.farFrom(km.toLocaleString(locale, { maximumFractionDigits: 1 }), station.name);
+    const label = km.toLocaleString(locale, { maximumFractionDigits: 1 });
+    return locale === "fr" ? `${label} km à vol d’oiseau de ${station.name} · accès à pied à vérifier` : `${label} km in a straight line from ${station.name} · walking route unverified`;
   };
 }
 

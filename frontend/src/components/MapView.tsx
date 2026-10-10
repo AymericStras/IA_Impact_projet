@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { Component, memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import maplibregl, { type GeoJSONSource, type LngLatLike, type Map as MlMap } from "maplibre-gl";
 import { Protocol } from "pmtiles";
@@ -18,10 +18,11 @@ type Props = {
   onSelect: (id: string) => void;
   onPick: (which: "from" | "to", name: string) => void;
   onOpenDiscovery: (d: Discovery) => void;
+  discoveries?: Discovery[];
 };
 
-// Moteur cartographique : MapLibre GL (rendu WebGL) sur un fond vectoriel de l'Occitanie seule, servi par le
-// site (public/basemap, voir scripts/fetch-basemap.sh). Réseau, gares et itinéraire sont des couches de la
+// Moteur cartographique : MapLibre GL (WebGL), fond OpenStreetMap par défaut ou archive vectorielle
+// locale optionnelle (public/basemap, scripts/fetch-basemap.sh). Réseau, gares et itinéraire sont des couches de la
 // carte, pas des éléments HTML : le GPU les dessine, et MapLibre gère seul le chevauchement des noms.
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
@@ -108,6 +109,14 @@ const BASE = `${location.origin}${import.meta.env.BASE_URL}basemap`;
 const STATION_LAYERS = ["lio-stops", ...TIERS.map((t) => `st-${t}`), "st-route", "st-important"];
 
 function buildStyle(): maplibregl.StyleSpecification {
+  // The optional offline archive is not tracked in Git. A fresh checkout must still display a map.
+  if (import.meta.env.VITE_LOCAL_BASEMAP !== "true") return {
+    version: 8,
+    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+    sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19,
+      attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>' } },
+    layers: [{ id: "osm", type: "raster", source: "osm", paint: { "raster-saturation": -0.8, "raster-opacity": 0.8 } }],
+  };
   return {
     version: 8,
     glyphs: `${BASE}/fonts/{fontstack}/{range}.pbf`,
@@ -125,7 +134,10 @@ function buildStyle(): maplibregl.StyleSpecification {
 }
 
 function addOverlays(map: MlMap) {
-  for (const [name, colors] of Object.entries(BADGES)) map.addImage(`badge-${name}`, ...Object.values(badgeImage(colors)) as [ImageData, { pixelRatio: number }]);
+  for (const [name, colors] of Object.entries(BADGES)) {
+    const { image, pixelRatio } = badgeImage(colors);
+    map.addImage(`badge-${name}`, image, { pixelRatio });
+  }
   const empty = fc([]);
   for (const id of ["network", "route", "stations", "stops"]) map.addSource(id, { type: "geojson", data: empty });
   map.addSource("mask", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: OUTSIDE_MASK } } });
@@ -217,18 +229,31 @@ function StationCard({ card, onPick, onOpenDiscovery, close }: { card: Place; on
   );
 }
 
-export default memo(function MapView({ places, edges, byId, route, selected, onSelect, onPick, onOpenDiscovery }: Props) {
+class MapBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (this.state.failed) return <div className="map" role="status"><p className="map-error">La carte est indisponible sur cet appareil. Vous pouvez continuer avec la liste des sorties.</p></div>;
+    return this.props.children;
+  }
+}
+
+function MapCanvas({ places, edges, byId, route, selected, onSelect, onPick, onOpenDiscovery, discoveries = DISCOVERIES }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MlMap | null>(null);
+  // Fast Refresh and StrictMode can keep state while replacing the underlying WebGL map.
+  const liveMap = useRef<MlMap | null>(null);
   const [card, setCard] = useState<Place | null>(null);
+  const [mapError, setMapError] = useState(false);
   const { locale } = useI18n();
   const popup = useRef<maplibregl.Popup | null>(null);
   const popupBody = useMemo(() => document.createElement("div"), []);
   // Les gestionnaires d'événements de la carte sont posés une fois : ils lisent les données via des refs
-  const latest = useRef({ byId, onSelect, onOpenDiscovery });
-  latest.current = { byId, onSelect, onOpenDiscovery };
+  const latest = useRef({ byId, onSelect, onOpenDiscovery, route });
+  latest.current = { byId, onSelect, onOpenDiscovery, route };
 
   useEffect(() => {
+    setMapError(false);
     const m = new maplibregl.Map({
       container: box.current!,
       style: buildStyle(),
@@ -241,10 +266,14 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
       pitchWithRotate: false,
       touchPitch: false,
     });
+    liveMap.current = m;
     m.touchZoomRotate.disableRotation();
+    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    m.on("error", () => { if (liveMap.current === m) setMapError(true); });
     m.on("load", () => {
-      addOverlays(m);
-      setMap(m);
+      if (liveMap.current !== m) return;
+      try { addOverlays(m); setMap(m); }
+      catch { setMapError(true); }
     });
     m.on("click", STATION_LAYERS, (e) => {
       const p = latest.current.byId.get(e.features?.[0]?.properties.id);
@@ -256,13 +285,33 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
     m.on("mouseleave", STATION_LAYERS, () => (m.getCanvas().style.cursor = ""));
     // Taille des épingles de lieux selon le zoom (variable CSS lue par .disc-pin), noms à partir du zoom 11
     const scalePins = () => {
+      if (liveMap.current !== m || !box.current) return;
       const z = m.getZoom();
       box.current!.style.setProperty("--pin", `${Math.round(Math.min(46, Math.max(24, 24 + (z - 6) * 3.7)))}px`);
       box.current!.classList.toggle("pins-named", z >= 11);
     };
     m.on("zoom", scalePins);
     scalePins();
-    return () => m.remove();
+    const resize = new ResizeObserver(() => {
+      if (liveMap.current !== m) return;
+      m.resize();
+      if (!box.current?.clientWidth || !latest.current.route) return;
+      const bounds = new maplibregl.LngLatBounds();
+      for (const leg of latest.current.route.legs) for (const id of leg.stops) {
+        const place = latest.current.byId.get(id);
+        if (place) bounds.extend(lonLat(place));
+      }
+      if (!bounds.isEmpty()) m.fitBounds(bounds, { padding: { top: 90, bottom: 85, left: 45, right: 45 }, duration: 0 });
+    });
+    resize.observe(box.current!);
+    return () => {
+      resize.disconnect();
+      if (liveMap.current === m) liveMap.current = null;
+      setMap(null);
+      popup.current?.remove();
+      popup.current = null;
+      m.remove();
+    };
   }, []);
 
   // Une seule ligne par paire de gares et par type de service (A→B et B→A confondus)
@@ -281,14 +330,15 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   }, [edges, byId]);
 
   useEffect(() => {
-    (map?.getSource("network") as GeoJSONSource | undefined)?.setData(network);
+    if (!map || liveMap.current !== map) return;
+    (map.getSource("network") as GeoJSONSource | undefined)?.setData(network);
   }, [map, network]);
 
   // Lieux à découvrir : une épingle avec la photo du lieu, nommée dans la langue de l'interface. Des marqueurs
   // HTML plutôt qu'une couche : ils ne sont que 32, et une photo ronde s'y fait en CSS.
   useEffect(() => {
-    if (!map) return;
-    const markers = DISCOVERIES.map((d) => {
+    if (!map || liveMap.current !== map) return;
+    const markers = discoveries.map((d) => {
       const pin = document.createElement("button");
       pin.className = `disc-pin cat-${d.category}`;
       pin.setAttribute("aria-label", d.title[locale]);
@@ -304,7 +354,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
       return new maplibregl.Marker({ element: pin, anchor: "bottom", offset: [0, -9] }).setLngLat([d.lon, d.lat]).addTo(map);
     });
     return () => markers.forEach((mk) => mk.remove());
-  }, [map, locale]);
+  }, [map, locale, discoveries]);
 
   // Épingles en retrait quand un itinéraire est affiché
   useEffect(() => {
@@ -313,7 +363,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
 
   // Réseau estompé quand un itinéraire est affiché
   useEffect(() => {
-    if (!map) return;
+    if (!map || liveMap.current !== map) return;
     const dimmed = route !== null;
     map.setPaintProperty("net-casing", "line-opacity", dimmed ? 0.4 : 0.9);
     map.setPaintProperty("net-train", "line-opacity", dimmed ? 0.3 : 0.75);
@@ -323,7 +373,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
 
   // Itinéraire + état de chaque gare (départ, arrivée, correspondance, desservie, estompée)
   useEffect(() => {
-    if (!map) return;
+    if (!map || liveMap.current !== map) return;
     const legs = (route?.legs ?? []).map((l) =>
       line(l.stops.map((id) => byId.get(id)).filter((p): p is Place => !!p).map(lonLat), { walk: l.mode === WALK }),
     );
@@ -363,7 +413,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
 
   // Recadre la carte sur l'itinéraire, ou vole vers le lieu sélectionné
   useEffect(() => {
-    if (!map) return;
+    if (!map || liveMap.current !== map) return;
     if (selected) {
       const p = byId.get(selected);
       if (p) map.flyTo({ center: lonLat(p), zoom: Math.max(map.getZoom(), 12), duration: 800 });
@@ -373,7 +423,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
         const p = byId.get(id);
         if (p) bounds.extend(lonLat(p));
       }
-      if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 60, duration: 800 });
+      if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: { top: 90, bottom: 85, left: 45, right: 45 }, duration: 800 });
     }
   }, [map, route, selected, byId]);
 
@@ -381,7 +431,7 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   useEffect(() => {
     popup.current?.remove();
     popup.current = null;
-    if (!map || !card) return;
+    if (!map || liveMap.current !== map || !card) return;
     const p = new maplibregl.Popup({ offset: card.network === "lio" ? 6 : 16, className: "station-card", maxWidth: "280px" })
       .setLngLat(lonLat(card) as LngLatLike)
       .setDOMContent(popupBody)
@@ -393,7 +443,12 @@ export default memo(function MapView({ places, edges, byId, route, selected, onS
   return (
     <div className="map">
       <div ref={box} className="map-canvas" />
+      {mapError && <p className="map-error" role="status">Le fond de carte est partiellement indisponible. La liste des sorties reste utilisable.</p>}
       {card && createPortal(<StationCard card={card} onPick={onPick} onOpenDiscovery={onOpenDiscovery} close={() => setCard(null)} />, popupBody)}
     </div>
   );
+}
+
+export default memo(function MapView(props: Props) {
+  return <MapBoundary><MapCanvas {...props} /></MapBoundary>;
 });
