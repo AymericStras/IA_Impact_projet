@@ -19,7 +19,7 @@ This repository is a hackathon prototype. The items below are **not done**; each
 - [ ] Encrypted storage and backups; restore tested.
 
 ## Database and concurrency
-- [ ] PostgreSQL path exercised (only SQLite has been run) with Alembic migrations (ADR-013).
+- [ ] Alembic migrations (ADR-013). The PostgreSQL path itself is exercised by `tests/test_postgres.py` (single process, `create_all`), not yet under concurrent load.
 - [ ] Concurrency tested with several workers: duplicate submits, stale versions, crashes during a model call.
 
 ## Model

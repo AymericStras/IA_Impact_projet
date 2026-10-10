@@ -13,7 +13,7 @@
       "id": "P1-P2-BACKEND",
       "status": "done",
       "title": "FastAPI: structured extraction, patch merge, validation, state machine, dialogue, confirmation, export",
-      "evidence": "services/api: 81 pytest, ruff, mypy --strict; live two-turn conversation 10/10 against gpt-5.4-mini"
+      "evidence": "services/api: 81 pytest (+1 PostgreSQL flow, run with TEST_POSTGRES_URL against postgres:16), ruff, mypy --strict; live two-turn conversation 10/10 against gpt-5.4-mini; hosted CI green for the guards and API jobs (run 38010165576)"
     },
     {
       "id": "P2-EVALS",

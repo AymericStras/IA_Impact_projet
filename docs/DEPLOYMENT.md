@@ -20,7 +20,7 @@ machine; the server only runs two small containers.
 
 | Container | Memory cap (no swap) | CPU | Observed locally |
 |---|---|---|---|
-| `api` (FastAPI, 1 worker) | 384 MiB | 1 | about 80–120 MiB |
+| `api` (FastAPI, 1 worker) | 384 MiB | 1 | 185 MiB after a text and an audio request (amd64 image under emulation) |
 | `web` (Next.js standalone) | 384 MiB | 1 | about 100–180 MiB |
 
 Images: API 288 MB (Alpine + ffmpeg). Root filesystem on the host is tight (about 26 GiB free on 2026-10-10; the host rule wants 25 GiB): prune old `sncf-chatbot-*` images after a successful release.
@@ -51,6 +51,6 @@ The URL is public and, at the owner's request, there is no rate limiting and no 
 
 ## Status — 2026-10-10
 
-- Done: deployment bundle written; API image builds locally for linux/amd64; API key copied to the server's credentials directory (fingerprint verified).
+- Done: deployment bundle written; the linux/amd64 API image was run locally with the deployment restrictions (uid 1000, read-only root, no capabilities, 384 MiB cap) and served a real extraction and a real transcription; API key copied to the server's credentials directory (fingerprint verified).
 - Not done: web image build, `ship`, `up`, `route`. On 2026-10-10 around 02:35 the preflight refused: memory PSI `full` avg10 between 3 % and 9 % (a pre-existing ClamAV container restart loop on the host, 76 restarts) and `host-guard` reporting `resource_pressure` and `production_health_unavailable_or_failed`. Nothing was started on the server.
 - Building on the server is possible later only if the host rules allow it; today they suspend full builds on that machine.
