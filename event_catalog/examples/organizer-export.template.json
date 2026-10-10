@@ -1,0 +1,37 @@
+{
+  "records": [
+    {
+      "kind": "educational_offer",
+      "external_id": "REPLACE with an organizer-provided stable ID",
+      "title": null,
+      "description": null,
+      "canonical_url": null,
+      "department_code": null,
+      "commune_code": null,
+      "latitude": null,
+      "longitude": null,
+      "location_name": null,
+      "address": null,
+      "city": null,
+      "source_updated_at": null,
+      "status": "unknown",
+      "school": {
+        "school_groups": "unknown",
+        "min_age": null,
+        "max_age": null,
+        "min_group": null,
+        "max_group": null,
+        "grade_levels": [],
+        "learning_objectives": null,
+        "duration_minutes": null,
+        "languages": [],
+        "booking_required": "unknown",
+        "booking_url": null,
+        "notice_days": null,
+        "price_amount": null,
+        "price_currency": null,
+        "price_unit": null
+      }
+    }
+  ]
+}

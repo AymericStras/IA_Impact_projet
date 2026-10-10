@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-10T04:44:59+00:00",
+  "languages": [
+    "en",
+    "fr"
+  ],
+  "record_counts": {
+    "sources": 144,
+    "activities": 1336,
+    "occurrences": 5373,
+    "school_conditions": 1336,
+    "stations": 260,
+    "walking_assessments": 1336
+  },
+  "kind_counts": {
+    "educational_offer": 7,
+    "event": 1279,
+    "venue": 50
+  },
+  "walking_limit_seconds": 1200,
+  "timezone": "Europe/Paris",
+  "database_role": "Portable exchange snapshot; not an operational crawler database",
+  "reuse_notice": "Source-specific rights apply. A false reuse flag remains pending review; publication does not grant reuse permission. Descriptions are omitted unless their reuse review allows them.",
+  "excluded": [
+    "credentials",
+    "raw source responses",
+    "contact lists",
+    "quarantine payloads",
+    "private operational history"
+  ],
+  "station_datasets": [
+    {
+      "attribution": "AymericStras / IA_Impact_projet; SNCF GTFS",
+      "build_info": {
+        "feed_version": "2026-10-09",
+        "lio_feed_version": "09/10/2026-02:45",
+        "lio_networks": {
+          "liO 09": 87,
+          "liO 11": 127,
+          "liO 12": 180,
+          "liO 30": 432,
+          "liO 31": 269,
+          "liO 32": 76,
+          "liO 34": 614,
+          "liO 46": 61,
+          "liO 48": 96,
+          "liO 65": 91,
+          "liO 66": 213,
+          "liO 81": 238,
+          "liO 82": 141,
+          "liO TIL": 32
+        },
+        "lio_source": "transport.data.gouv.fr — Réseau interurbain liO Occitanie",
+        "missions": 3381,
+        "modes": {
+          "Car TER": 207,
+          "Car liO": 2657,
+          "Car à réservation": 14,
+          "INTERCITES": 33,
+          "INTERCITES de nuit": 25,
+          "Navette": 2,
+          "OUIGO": 8,
+          "TGV INOUI": 32,
+          "Train TER": 403
+        },
+        "reference_day": "20261105",
+        "segments": 12085,
+        "source": "https://eu.ftp.opendatasoft.com/sncf/plandata/Export_OpenData_SNCF_GTFS_NewTripId.zip",
+        "stations": 5050,
+        "valid_from": "20261009",
+        "valid_until": "20270331",
+        "walk_links": 345
+      },
+      "commit": "5029e9d0b5f64c12e2b01e931f4ab63ef887d747",
+      "count": 260,
+      "files": {
+        "build_info.json": "2be39e6199a2adade96169bfd095cf8754e8bd07bb4a11c59250e40a41e0357c",
+        "missions_occitanie.csv": "f00cbf49279446843afc651b8f37bd46bed52d0dee0bb8e63c99c56736698197",
+        "stations_occitanie.csv": "e7e579dfe48cee5e14085becfb9a437db646c6094ce8816ee421bf2a5b34da35"
+      },
+      "license_note": "Repository MIT; underlying GTFS reuse terms require separate review.",
+      "repository": "https://github.com/AymericStras/IA_Impact_projet"
+    }
+  ],
+  "files": {
+    "catalogue.sqlite3": {
+      "sha256": "9adbdcd841626ea1c52e2f7612f6e558de999c6fa86b962be5286936dedff379",
+      "bytes": 3350528
+    },
+    "csv/activities.csv": {
+      "sha256": "90d8ea53c753ff0c6848cc7d0e5d15329710e3db979456bab4c5d1263c211882",
+      "bytes": 1409904
+    },
+    "csv/occurrences.csv": {
+      "sha256": "b31032d0ff7dcb61bd82e2ac122848759f633779be15237d15e2e85c3d29346d",
+      "bytes": 650297
+    },
+    "csv/school_conditions.csv": {
+      "sha256": "725d14f7499a355cf0ce69525e6e5160350c0f4aae9abddfa6e11ddffb38f91b",
+      "bytes": 92566
+    },
+    "csv/sources.csv": {
+      "sha256": "af77a707b3daf8702ee009829ccd65e55cb17d0b41ade5c431350b0093e18ab8",
+      "bytes": 68512
+    },
+    "csv/stations.csv": {
+      "sha256": "1d1835bb48d2a72817b8c5658de029e6cefb2e4df4bfa09037fd1b5340ba1ddb",
+      "bytes": 32186
+    },
+    "csv/walking_assessments.csv": {
+      "sha256": "b64b6774d479211004fdb30ee4c153ca5b2b192a15070d130737a9193c66cde3",
+      "bytes": 186477
+    },
+    "schema.json": {
+      "sha256": "ef2e81106055868354c8f3a6353cfb0deeeb9ebe9b7222437dc60ddf42944841",
+      "bytes": 2770
+    }
+  }
+}

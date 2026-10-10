@@ -1,0 +1,11 @@
+{
+  "read_allowed": true,
+  "facts_reuse_allowed": false,
+  "description_reuse_allowed": false,
+  "license_name": "Public API reading; per-calendar redistribution review pending",
+  "evidence_url": "https://doc.openagenda.com/fr/article/conditions-generales-dutilisation-xq325m/",
+  "attribution": "OpenAgenda — original event contributors and source calendars retained in evidence.",
+  "reviewer": "Codex — official public-reading docs and supplied public key",
+  "expires_at": "2026-11-10T00:00:00Z",
+  "notes": "Read-only public oa_pk_ access. No private fields, members, writes or contact operations. Public export remains disabled until applicable calendar license and contributor attribution are recorded."
+}

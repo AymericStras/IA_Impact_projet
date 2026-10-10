@@ -1,0 +1,11 @@
+{
+  "read_allowed": false,
+  "facts_reuse_allowed": false,
+  "description_reuse_allowed": false,
+  "license_name": "REPLACE after reviewing the actual source or dataset",
+  "evidence_url": "https://example.org/replace-with-actual-terms",
+  "attribution": "REPLACE with the actual required attribution",
+  "reviewer": "REPLACE with the reviewer identity",
+  "expires_at": "REPLACE with an explicit future ISO timestamp including timezone",
+  "notes": "REPLACE with approved paths, API scope, robots findings and restrictions"
+}

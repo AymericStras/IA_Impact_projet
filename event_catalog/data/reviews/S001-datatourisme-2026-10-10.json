@@ -1,0 +1,11 @@
+{
+  "read_allowed": true,
+  "facts_reuse_allowed": true,
+  "description_reuse_allowed": false,
+  "license_name": "Licence Ouverte 2.0 (Etalab)",
+  "evidence_url": "https://www.datatourisme.fr/faq/",
+  "attribution": "DATAtourisme — producteurs territoriaux indiqués dans les données; Licence Ouverte 2.0 (Etalab).",
+  "reviewer": "Codex — official FAQ and user-provided API access",
+  "expires_at": "2026-11-10T00:00:00Z",
+  "notes": "GET-only public event/place endpoints using personal API access supplied by user. No contact POST, images or account operations. Source descriptions remain excluded from public exports. Bounded one-page smoke tests, not complete API coverage."
+}

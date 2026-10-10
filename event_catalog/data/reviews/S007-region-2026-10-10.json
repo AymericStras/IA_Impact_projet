@@ -1,0 +1,11 @@
+{
+  "read_allowed": true,
+  "facts_reuse_allowed": true,
+  "description_reuse_allowed": false,
+  "license_name": "Licence Ouverte v2.0 (Etalab)",
+  "evidence_url": "https://data.laregion.fr/api/explore/v2.1/catalog/datasets/agendas-participatif-des-sorties-en-occitanie",
+  "attribution": "Région Occitanie — Agendas participatifs des sorties en Occitanie; dataset updated 2026-10-09; retrieved 2026-10-10; Licence Ouverte v2.0 (Etalab).",
+  "reviewer": "Codex — verified public dataset metadata",
+  "expires_at": "2026-11-10T00:00:00Z",
+  "notes": "Scope: this dataset and its /records endpoint only. Anonymous metadata and records returned HTTP 200. Metadata declares Licence Ouverte v2.0, publisher Région Occitanie. Raw metadata and checksum saved in var/intake/region-metadata*.json. Description export remains disabled. No event-level update timestamp or precise hours published. Host execution authorization is separate: this turn only, maximum 5 public HTTP requests, no daemon."
+}

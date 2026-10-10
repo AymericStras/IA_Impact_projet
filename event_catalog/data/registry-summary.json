@@ -1,0 +1,80 @@
+{
+  "as_of": "2026-10-10",
+  "source_count": 144,
+  "aliases": 5,
+  "enabled_sources": 4,
+  "actual_crawl_tested": 4,
+  "business_records_imported": 1276,
+  "database_initialized": true,
+  "tests_executed": true,
+  "seed_sha256": "ac7232150cd03507d1905d122c9a8c595ad45deba441aed7c785593e09c84beb",
+  "migration_sha256": {
+    "001_initial": "84e1ed37ea86acede67511ab40fd87c447703bd1850977f29a82e4808d20540e",
+    "002_region_dataset": "47914e39f31e352f2eb6d13ef81025c12bd1957df87ddd768e4c93fe0cf71edc",
+    "003_quarantine_resolution": "4214732a6c25cba02380cee9d17edb70ebd85555cb671eb610e47867a4102920",
+    "004_school_html": "01abfd5d659092a93553358e8740dc9b1a41622b03875bf1ee70fe3d3dbf215b"
+  },
+  "original_input_sha256": "54dfbdd7f243228669d7731b3d02148fe68dc5a6f719bb5fd23857e14bb77bf9",
+  "priority_counts": {
+    "P0": 20,
+    "P1": 89,
+    "P2": 29,
+    "P3": 6
+  },
+  "department_source_counts": {
+    "11": 5,
+    "12": 7,
+    "30": 6,
+    "31": 14,
+    "32": 4,
+    "34": 14,
+    "46": 3,
+    "48": 3,
+    "65": 3,
+    "66": 6,
+    "81": 3,
+    "82": 4,
+    "09": 8
+  },
+  "note": "144 research sources; four live-tested sources. 1219 event records, 7 educational offers, 50 venue candidates. IDs deduplicated within each provider, not across providers. DATAtourisme and two new regional OpenAgenda calendars retain partial pagination. School offers have no confirmed booking dates or capacity. Runtime data and keys are excluded from Git.",
+  "tests_passed": 124,
+  "business_record_counts": {
+    "sources": 144,
+    "entities": 1276,
+    "events": 1219,
+    "educational_offers": 7,
+    "venues": 50,
+    "snapshots": 34,
+    "quarantined_records": 148,
+    "discovered_agendas": 50,
+    "enabled_sources": 4,
+    "open_issues": 4430,
+    "unresolved_quarantined_records": 45
+  },
+  "verified_at": "2026-10-10T01:04:06.164287+00:00",
+  "verification": {
+    "sqlite_integrity": "ok",
+    "foreign_key_errors": 0,
+    "backup_restore_verified": true,
+    "backup_tables_checked": 25,
+    "evidence_audit": {
+      "ok": true,
+      "snapshots": 34,
+      "observations": 1295,
+      "field_evidence": 19094
+    },
+    "tests": {
+      "passed": 124,
+      "failures": 0,
+      "errors": 0,
+      "line_coverage": {
+        "covered": 1611,
+        "executable": 1778
+      }
+    },
+    "default_seed_endpoints": 6,
+    "credentials_committed": false,
+    "upgrade_preserved_existing_data": true
+  },
+  "version": "0.3.0"
+}

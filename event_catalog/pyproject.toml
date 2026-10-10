@@ -1,0 +1,9 @@
+[project]
+name = "sncf-events"
+version = "0.6.0"
+description = "Occitanie educational travel source registry and evidence store"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.ruff]
+line-length = 100

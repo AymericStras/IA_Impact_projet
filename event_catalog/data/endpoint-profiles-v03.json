@@ -1,0 +1,13 @@
+{
+  "as_of": "2026-10-10",
+  "note": "Reviewable profiles only. Loading this file does not enable or fetch any source. Date filters are explicit and must be maintained.",
+  "profiles": [
+    {"id":"oa-musees-occitanie","source_id":"S002","connector":"openagenda_events","config":{"agenda_uid":"20704265","starts_after":"2026-10-10T00:00:00+02:00"}},
+    {"id":"oa-architecture-2026-occitanie","source_id":"S002","connector":"openagenda_events","config":{"agenda_uid":"4838751","starts_after":"2026-10-10T00:00:00+02:00"}},
+    {"id":"oa-mrac","source_id":"S002","connector":"openagenda_events","config":{"agenda_uid":"53387560","starts_after":"2026-10-10T00:00:00+02:00"}},
+    {"id":"fabre-school-offers","source_id":"S097","connector":"fabre_school_offers","config":{}}
+  ],
+  "school_followups": [
+    {"source_id":"S015","url":"https://www.instantscience.fr/catalogues-scolaires/","status":"discovered_not_ingested","reason":"Published catalogues include in-class, remote and travelling services. Review PDFs and actual delivery venue before treating them as school trip destinations; office addresses must not become activity locations."}
+  ]
+}

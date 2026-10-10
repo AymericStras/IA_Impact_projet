@@ -1,0 +1,11 @@
+{
+  "read_allowed": true,
+  "facts_reuse_allowed": false,
+  "description_reuse_allowed": false,
+  "license_name": "Public page reading; no redistribution permission recorded",
+  "evidence_url": "https://www.museefabre.fr/mentions-legales",
+  "attribution": "Musée Fabre — Montpellier Méditerranée Métropole; source URL and collection time retained.",
+  "reviewer": "Codex — public school page, legal notice and robots checked on 2026-10-10",
+  "expires_at": "2026-11-10T00:00:00Z",
+  "notes": "Bounded internal research GET of the single reviewed school-offer page, with robots checked before reading. Legal notice reserves reproduction rights; public export is disabled. No image/PDF downloading, contact lists, form submission or booking operations. Retained HTML is private evidence, not a public content feed. Published school audiences do not confirm current availability or group capacity."
+}
