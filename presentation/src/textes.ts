@@ -98,6 +98,9 @@ export const T = {
   stat2: "missions TER liO",
   networkLead: "Construit sur les horaires officiels SNCF et liO en open data, reconstruits en 2 secondes à chaque mise à jour.",
 
+  qrTitle: "Essayez-le <em>maintenant</em>",
+  qrLead: "Scannez le code avec votre téléphone : le site s'ouvre directement.",
+  qrAlt: "QR code vers le site IA Impact",
   thanksTitle: "Montez <em>à bord</em>",
   thanksLead: "Merci ! Place à la démo en direct.",
   // ── Slides de la première version (remises) ──
