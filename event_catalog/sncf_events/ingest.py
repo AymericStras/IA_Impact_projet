@@ -116,7 +116,12 @@ def persist_candidate(conn, source_id, snapshot_id, candidate):
             old_marker,new_marker = old_marker[:10],new_marker[:10]
         older = old_marker and new_marker and new_marker<old_marker
         unknown_freshness = old_marker and not new_marker
-        if older or unknown_freshness:
+        for occurrence in old.get('occurrences') or []:
+            occurrence.pop('evidence_locator',None)
+        # A collector that requests more fields extends an unchanged record; that is not an upstream conflict.
+        if {k:v for k,v in comparable.items() if k in old}==old:
+            pass
+        elif older or unknown_freshness:
             promote = False
             issue(conn,eid,oid,'stale_or_unverifiable_revision','Preserved current projection; retained incoming evidence.')
         elif previous['source_id']!=source_id:

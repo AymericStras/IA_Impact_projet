@@ -184,7 +184,7 @@ def csv_export(items):
     buffer = io.StringIO(newline='')
     writer = csv.writer(buffer)
     fields = ('title','date_start','date_end','time_precision','city','location_name','address',
-              'department_code','description_text','price_text','status','source_name','canonical_url','observed_at','source_updated_at',
+              'department_code','description_text','price_text','status','source_name','canonical_url','official_url','booking_url','venue_url','observed_at','source_updated_at',
               'rail_status','station_name','walking_seconds','walking_metres','route_checked_at','route_provider','route_evidence_url')
     writer.writerow(fields)
     def cell(value):

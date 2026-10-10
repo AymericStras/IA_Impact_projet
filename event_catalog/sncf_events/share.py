@@ -33,7 +33,8 @@ SCHEMA = {
     'activities': {
         'id':'TEXT PRIMARY KEY','kind':'TEXT','provider':'TEXT','external_id':'TEXT',
         'source_id':'TEXT REFERENCES sources(id)','title':'TEXT','title_note':'TEXT',
-        'description':'TEXT','canonical_url':'TEXT','department_code':'TEXT',
+        'description':'TEXT','canonical_url':'TEXT','official_url':'TEXT','booking_url':'TEXT',
+        'venue_url':'TEXT','department_code':'TEXT',
         'commune_code':'TEXT','city':'TEXT','address':'TEXT','location_name':'TEXT',
         'latitude':'REAL','longitude':'REAL','status':'TEXT','edition_year':'INTEGER',
         'theme':'TEXT','source_active':'INTEGER','observed_at':'TEXT','source_updated_at':'TEXT',

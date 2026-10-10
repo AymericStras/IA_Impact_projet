@@ -8,6 +8,8 @@ contains only the standalone `event_catalog/` project.
 
 **New in 0.7.0 — station lookup.** Give one or more railway stations and a date; receive structured data for that day's activities within a checked 20-minute walk, collected live around those stations only.
 
+Version 0.7.2 returns the organiser, ticketing and venue web links that DATAtourisme and OpenAgenda publish (`official_url`, `booking_url`, `venue_url`) next to the source page link `url`, in the station lookup, exports and viewer. Each is `null` when the source does not publish it; see [INTEGRATION.md](INTEGRATION.md). Update your `event_catalog/` code to use this version.
+
 Version 0.7.1 removes the station lookup's application-imposed hourly request quota. Provider HTTP 429 cooldowns, serial collection, caching and storage limits remain in effect. Update your `event_catalog/` code to use this version; `SNCF_EVENTS_HOURLY_REQUESTS` is no longer used.
 
 ## Integrate with one prompt

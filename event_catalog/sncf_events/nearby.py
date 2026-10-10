@@ -26,6 +26,8 @@ NOTE = ('Walking times are route estimates from the station coordinates at 4 km/
         'opening hours, booking availability and trains on the chosen day are not confirmed. '
         'A date range does not establish daily opening.')
 # Reviewed profile applied by setup(); live collection stops when a recorded source review expires.
+# Organiser, ticketing and venue pages as published by the source; `url` stays the source's own page.
+LINKS = ('official_url','booking_url','venue_url')
 LIVE_SOURCES = ('S001','S002','S007')
 LIVE_ENDPOINTS = (('oa-toulouse-museum','2342325'),('oa-musees-occitanie','20704265'),
                   ('oa-architecture-2026-occitanie','4838751'),('oa-mrac','53387560'))
@@ -301,7 +303,8 @@ def lookup(conn, references, day):
                     'address':record.get('address'),'city':record.get('city'),
                     'latitude':record.get('latitude'),'longitude':record.get('longitude'),'price_text':record.get('price_text'),
                     'description':record['description_text'] if review and review['description_reuse_allowed'] else None,
-                    'url':record.get('canonical_url'),'source_id':record['source_id'],'source_name':record['source_name'],
+                    'url':record.get('canonical_url'),**{k:record.get(k) for k in LINKS},
+                    'source_id':record['source_id'],'source_name':record['source_name'],
                     'attribution':record.get('attribution'),'license':record.get('license'),
                     'facts_reuse_allowed':bool(review and review['facts_reuse_allowed']),'observed_at':record['observed_at']}
             seconds,_,_,route = options[0]
@@ -315,7 +318,9 @@ def lookup(conn, references, day):
             twin = next((m for m in merged if _name_key(m['title'])==_name_key(activity['title']) and rail.distance(
                 (m['latitude'],m['longitude']),(activity['latitude'],activity['longitude']))<=150),None)
             if twin:
-                twin['other_sources'].append({k:activity[k] for k in ('id','source_id','source_name','url')})
+                twin['other_sources'].append({k:activity[k] for k in ('id','source_id','source_name','url',*LINKS)})
+                for k in LINKS:
+                    twin[k] = twin[k] or activity[k]
             else:
                 merged.append({**activity,'other_sources':[]})
         activities = merged

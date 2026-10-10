@@ -56,6 +56,16 @@ class IngestionTests(DatabaseCase):
         self.assertEqual(self.scalar('SELECT status FROM events'),'scheduled')
         self.assertEqual(self.scalar("SELECT count(*) FROM review_issues WHERE code='same_timestamp_conflict'"),1)
 
+    def test_newly_collected_fields_extend_an_unchanged_record_without_conflict(self):
+        self.ingest([event()])
+        # Observations stored before link collection have no link keys at all.
+        self.conn.execute("UPDATE observations SET data_json=json_remove(data_json,'$.booking_url','$.venue_url')")
+        self.ingest([event(registration=[{'type':'link','value':'https://tickets.example.org/e/1'}])],
+                    url='https://api.openagenda.com/v2/agendas/1/events?size=50')
+        self.assertEqual(self.scalar("SELECT json_extract(data_json,'$.booking_url') FROM events"),'https://tickets.example.org/e/1')
+        self.assertEqual(self.scalar("SELECT count(*) FROM review_issues WHERE code='same_timestamp_conflict'"),0)
+        self.assertEqual(self.scalar("SELECT count(*) FROM field_evidence WHERE field='booking_url' AND locator LIKE '%/registration/0/value'"),1)
+
     def test_cross_source_conflict_is_not_automatically_promoted(self):
         self.ingest([event()])
         self.ingest([event(status=6,updatedAt='2026-10-03T00:00:00Z')],source='S011')
@@ -168,6 +178,18 @@ class DateAndMarkupTests(DatabaseCase):
                          'location':{'address':{'postalCode':'31000'}}},'S097','script[0]')
         with self.assertRaisesRegex(ValueError,'unverified_location'):
             c.validate()
+
+    def test_datatourisme_links_separate_the_organiser_page_from_ticketing(self):
+        raw = {'uuid':'test-links','label':{'fr':['TEST ONLY']},'lastUpdate':'2026-10-01',
+               'isLocatedAt':[{'address':[{'hasAddressCity':{'insee':'31555','isPartOfDepartment':{'insee':'31'}}}]}],
+               'hasContact':[{'homepage':['https://tickets.example.org/e/1']},{'homepage':['ftp://example.org/x','https://organiser.example.org/show']}],
+               'hasBookingContact':[{'homepage':['https://tickets.example.org/e/1']}]}
+        c = datatourisme(raw,'event').validate()
+        self.assertEqual((c.data['official_url'],c.data['booking_url']),('https://organiser.example.org/show','https://tickets.example.org/e/1'))
+        self.assertEqual(c.evidence['official_url']['locator'],'/objects/0/hasContact/1/homepage/1')
+        raw.pop('hasBookingContact');raw['hasContact']='unexpected'
+        c = datatourisme(raw,'event').validate()
+        self.assertEqual((c.data['official_url'],c.data['booking_url']),(None,None))
 
     def test_datatourisme_date_period_is_not_expanded_into_daily_sessions(self):
         raw = {'uuid':'test-period','label':{'fr':['TEST ONLY']},'lastUpdate':'2026-10-01',

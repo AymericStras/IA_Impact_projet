@@ -155,6 +155,34 @@ class LookupTests(NearbyCase):
         self.assertEqual(item['walking_seconds'],300)
         self.assertEqual(item['also_near'],[{'station_id':'87000001','station_name':'TEST Gare Centre','walking_seconds':900}])
 
+    def test_published_links_are_returned_and_unusable_ones_are_dropped(self):
+        Routes.durations=[540,600]
+        first=dated(1,43.6005,1.44)
+        first['location']['website']='https://venue.example.org/'
+        first['registration']=[{'type':'phone','value':'0500000000'},{'type':'link','value':'https://tickets.example.org/e/1'}]
+        second=dated(2,43.6015,1.44,'TEST ONLY — visite')
+        second['location']['website']='http://localhost/admin'
+        second['registration']=[{'type':'link','value':'not a link'}]
+        result=self.collect(['87000001'],[first,second])
+        items={i['title']:i for i in result['stations'][0]['activities']}
+        item=items['TEST ONLY — atelier']
+        self.assertEqual((item['official_url'],item['booking_url'],item['venue_url']),
+                         (None,'https://tickets.example.org/e/1','https://venue.example.org/'))
+        other=items['TEST ONLY — visite']
+        self.assertEqual((other['official_url'],other['booking_url'],other['venue_url']),(None,None,None))
+        self.assertIn('includeFields%5B%5D=registration',Pages.urls[0])
+        self.assertIn('includeFields%5B%5D=location.website',Pages.urls[0])
+
+    def test_merged_entry_keeps_links_from_the_other_source(self):
+        with_link=dated(2,43.6006,1.44,'TOMBER DU CIEL')
+        with_link['registration']=[{'type':'link','value':'https://tickets.example.org/e/2'}]
+        result=self.collect(['87000001'],[dated(1,43.6005,1.44,'Tomber du ciel'),with_link])
+        items=result['stations'][0]['activities']
+        self.assertEqual(len(items),1)
+        self.assertEqual(items[0]['booking_url'],'https://tickets.example.org/e/2')
+        self.assertEqual(len(items[0]['other_sources']),1)
+        self.assertIn('booking_url',items[0]['other_sources'][0])
+
     def test_same_title_and_place_from_two_records_is_merged(self):
         result=self.collect(['87000001'],[dated(1,43.6005,1.44,'Tomber du ciel'),dated(2,43.6006,1.44,'TOMBER DU CIEL'),dated(3,43.6005,1.44,'Autre atelier')])
         items=result['stations'][0]['activities']

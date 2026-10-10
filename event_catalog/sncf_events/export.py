@@ -11,7 +11,7 @@ from .db import dumps, now
 from .ingest import collection_url
 from .policy import latest_review, timestamp
 
-FACT_FIELDS = {'title','canonical_url','department_code','commune_code','latitude','longitude',
+FACT_FIELDS = {'title','canonical_url','official_url','booking_url','venue_url','department_code','commune_code','latitude','longitude',
                'address','city','location_name','status','edition_year','attendance_mode',
                'age','source_updated_date','venue_external_id','theme','source_calendar',
                'schedule_text','schedule_semantics','schedule_periods','producer','provider_types',

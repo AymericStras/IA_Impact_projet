@@ -43,6 +43,39 @@ def text(value):
     return None
 
 
+def public_link(value):
+    if not isinstance(value,str):
+        return None
+    try:
+        validate_public_url(value.strip())
+    except ValueError:
+        return None
+    return value.strip()
+
+
+def assign_link(c, name, paths, skip=()):
+    """First published public web link; an unusable or absent link stays null and never rejects the record."""
+    for path in paths:
+        link = public_link(optional(c.raw,path))
+        if link and link not in skip:
+            return c.assign(name,path,public_link)
+    c.data[name] = None
+
+
+def link_paths(raw, base):
+    """JSON pointers to every `homepage` entry of a DATAtourisme contact list."""
+    contacts = optional(raw,base)
+    contacts = contacts if isinstance(contacts,list) else []
+    result = []
+    for i,contact in enumerate(contacts):
+        pages = contact.get('homepage') if isinstance(contact,dict) else None
+        if isinstance(pages,list):
+            result += [f'{base}/{i}/homepage/{j}' for j in range(len(pages))]
+        elif pages is not None:
+            result.append(f'{base}/{i}/homepage')
+    return result
+
+
 def first_path(raw, base):
     return base+'/0' if isinstance(optional(raw,base),list) else base
 
@@ -229,6 +262,10 @@ def oa_event(raw, locator='/events/0'):
     c.assign('address','/location/address',text)
     c.assign('city','/location/city',text)
     c.assign('location_name','/location/name',text)
+    assign_link(c,'venue_url',['/location/website'])
+    entries = raw.get('registration') if isinstance(raw.get('registration'),list) else []
+    assign_link(c,'booking_url',[f'/registration/{i}/value' for i,r in enumerate(entries)
+                                 if isinstance(r,dict) and r.get('type')=='link'])
     c.assign('status','/status',lambda v:{1:'scheduled',2:'rescheduled',3:'moved_online',4:'postponed',5:'full',6:'cancelled'}.get(v,'unknown'))
     c.data['status'] = c.data.get('status') or 'unknown'
     c.assign('attendance_mode','/attendanceMode')
@@ -266,6 +303,10 @@ def datatourisme(raw, kind, locator='/objects/0'):
     c.assign('address',address+'/streetAddress',text)
     c.assign('city',address+'/addressLocality',text)
     c.assign('producer','/hasBeenCreatedBy')
+    assign_link(c,'booking_url',link_paths(raw,'/hasBookingContact'))
+    # Contact pages repeat the ticketing link; the organiser page is the first one that is not ticketing.
+    assign_link(c,'official_url',link_paths(raw,'/hasContact'),
+                {public_link(optional(raw,p)) for p in link_paths(raw,'/hasBookingContact')})
     c.assign('provider_types','/type')
     c.data['status'] = 'unknown'
     if kind=='event':

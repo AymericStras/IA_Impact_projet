@@ -133,6 +133,9 @@ class ConnectorTests(DatabaseCase):
         url = initial_url(endpoint)
         query = parse_qs(urlsplit(url).query)
         self.assertIn('takesPlaceAt',query['fields'][0])
+        # Web links only: contact names and telephone numbers are never requested.
+        self.assertIn('hasContact.homepage,hasBookingContact.homepage',query['fields'][0])
+        self.assertNotIn('telephone',query['fields'][0])
         self.assertIn('09,11,12,30,31,32,34,46,48,65,66,81,82',query['filters'][0])
         target = next_url(endpoint,url,{'meta':{'next':'http://api.datatourisme.fr/v1/catalog?filters=type%3DEntertainmentAndEvent&page=2&api_key=secret'}})
         self.assertTrue(target.startswith('https://'))

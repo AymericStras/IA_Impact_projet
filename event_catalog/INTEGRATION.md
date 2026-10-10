@@ -66,7 +66,9 @@ per client as well.
                        "precision": "date", "status": "scheduled"}],
       "schedule_text": null, "location_name": null, "address": "6 Boulevard des arènes", "city": "Nîmes",
       "latitude": 43.835, "longitude": 4.36, "price_text": null, "description": null,
-      "url": "https://…", "source_id": "S001", "source_name": "DATAtourisme",
+      "url": "https://data.datatourisme.fr/…", "official_url": "https://organiser.example/…",
+      "booking_url": "https://tickets.example/…", "venue_url": null,
+      "source_id": "S001", "source_name": "DATAtourisme",
       "attribution": "…", "license": "…", "facts_reuse_allowed": true, "observed_at": "2026-10-10T05:58:12+00:00",
       "walking_seconds": 795, "walking_minutes": 14, "walking_metres": 795, "route_checked_at": "…",
       "also_near": [], "other_sources": []
@@ -84,7 +86,20 @@ per client as well.
 - `coverage.state`: `not_requested`, `queued`, `running`, `complete`, `partial` (a source or route failed; see
   `error` and `sources`) or `failed`. An empty `activities` list means "none found" only when the state is `complete`.
 - An activity near several requested stations appears once, under the shortest checked walk; `also_near` lists the others.
-- The same title at the same place from two publishers is one entry; `other_sources` keeps the other links.
+- The same title at the same place from two publishers is one entry; `other_sources` keeps the other links,
+  and a link missing from the listed record is taken from the other one.
+- Four links, each `null` when the source does not publish it:
+  - `url`: the record's page on the source platform (DATAtourisme, OpenAgenda or laregion.fr). Always the
+    attribution link; it is not the organiser's site.
+  - `official_url`: the organiser's page as published by DATAtourisme (`hasContact.homepage`). Usually the
+    activity's own page, sometimes only the organiser's home page.
+  - `booking_url`: the ticketing or registration page (DATAtourisme `hasBookingContact.homepage`,
+    OpenAgenda `registration` entries of type `link`). It does not establish availability or group booking.
+  - `venue_url`: the venue's website (OpenAgenda `location.website`); not specific to the activity.
+  Links are copied from the source, checked only for being public `http(s)` addresses, and never fetched or
+  guessed. Région Occitanie publishes no link other than `url`. In a live check on 2026-10-10, 97 of 100
+  DATAtourisme events around Toulouse carried an organiser page and 66 a ticketing page; of 251 OpenAgenda
+  events in three agendas, 179 carried a venue website and 95 a registration link.
 - `description` is `null` unless the source's recorded review allows description reuse. Keep `url` and
   `attribution` with anything you display. `facts_reuse_allowed: false` means that review is not affirmative.
 - Bus stops and unknown or ambiguous names are returned in `unknown_stations`, never guessed.

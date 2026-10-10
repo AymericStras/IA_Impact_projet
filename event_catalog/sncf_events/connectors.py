@@ -125,7 +125,7 @@ def initial_url(endpoint):
             filters += (' AND takesPlaceAt.startDate[lte]='+config['to_date']+
                         ' AND (takesPlaceAt.endDate[gte]='+config['from_date']+
                         ' OR takesPlaceAt.startDate[gte]='+config['from_date']+')')
-        fields = 'uuid,uri,label,type,isLocatedAt.address,isLocatedAt.geo,isLocatedAt.openingHoursSpecification,hasDescription,lastUpdate,hasBeenCreatedBy.legalName,takesPlaceAt'
+        fields = 'uuid,uri,label,type,isLocatedAt.address,isLocatedAt.geo,isLocatedAt.openingHoursSpecification,hasDescription,lastUpdate,hasBeenCreatedBy.legalName,takesPlaceAt,hasContact.homepage,hasBookingContact.homepage'
         params = [('page_size','50'),('lang','fr'),('fields',fields),('filters',filters)]
         if config.get('near'):
             params.append(('geo_distance','%s,%s,%dm' % (*config['near'],NEAR_METRES)))
@@ -136,7 +136,7 @@ def initial_url(endpoint):
             fields = ['uid','title','description','canonicalUrl','state','status','removed','updatedAt',
                       'timings','timezone','location.uid','location.insee','location.department',
                       'location.latitude','location.longitude','location.address','location.city',
-                      'location.name','conditions','age','attendanceMode','extIds']
+                      'location.name','location.website','registration','conditions','age','attendanceMode','extIds']
             params += [('includeFields[]',field) for field in fields]
         if config.get('updated_since'):
             params.append(('updatedAt[gte]' if name.endswith('events') else 'updatedAt.gte',config['updated_since']))

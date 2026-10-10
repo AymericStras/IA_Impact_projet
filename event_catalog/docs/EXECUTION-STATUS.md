@@ -1,5 +1,27 @@
 # Contribution verification
 
+## Version 0.7.2 — organiser, ticketing and venue links, 2026-10-10
+
+Collected records and the station lookup now carry `official_url` (DATAtourisme
+`hasContact.homepage`), `booking_url` (DATAtourisme `hasBookingContact.homepage`,
+OpenAgenda `registration` links) and `venue_url` (OpenAgenda `location.website`),
+next to the existing source page link. Only the link sub-fields are requested upstream;
+contact names, e-mail addresses and telephone numbers are not collected. Links are
+copied from the source, validated as public `http(s)` addresses and never fetched.
+
+The package passes 225 Python tests and the interface logic checks; the copied
+implementation and tests match the verified files. Live check with real keys on a new
+database: Toulouse Matabiau and Narbonne for 2026-10-17 completed in 66 seconds with
+15 activities; all 10 DATAtourisme activities carried `official_url` and 7
+`booking_url`, the OpenAgenda activity carried `venue_url`, and the 4 Région Occitanie
+activities carried only their laregion.fr page.
+
+The portable database and CSV snapshot in `distribution/` are unchanged: they were
+collected before this version and contain no link columns. Links appear in a database
+you collect with this code, including the live station lookup. A database created by
+an earlier version keeps working without a migration; its records gain links when they
+are collected again. Existing integrations must update their `event_catalog/` code.
+
 ## Version 0.7.1 — hourly quota removal, 2026-10-10
 
 Removed the station lookup's application-imposed hourly request quota. The former
