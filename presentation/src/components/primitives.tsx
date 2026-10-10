@@ -48,6 +48,9 @@ const ICONS = {
   code: <path d="M16 10l-8 14 8 14M32 10l8 14-8 14M27 8l-6 32" />,
   bolt: <path d="M27 4L10 28h13l-2 16 17-24H25z" />,
   map: <><path d="M6 12l12-5 12 5 12-5v29l-12 5-12-5-12 5z" /><path d="M18 7v29M30 12v29" /></>,
+  window: <><rect x="6" y="8" width="36" height="28" rx="9" /><path d="M6 28l10-9 8 7 6-5 12 9" /><circle cx="32" cy="17" r="3" /></>,
+  school: <><path d="M4 18l20-10 20 10-20 10z" /><path d="M12 22v10c4 4 20 4 24 0V22M44 18v12" /></>,
+  chat: <><path d="M8 10h32a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H22l-10 8v-8H8a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z" /><path d="M14 22h.01M24 22h.01M34 22h.01" /></>,
   ter: <><rect x="10" y="6" width="28" height="30" rx="7" /><path d="M10 24h28M17 14h14M15 36l-5 7M33 36l5 7" /></>,
 };
 

@@ -74,9 +74,13 @@ export default function RoutePanel({ places, from, to, setFrom, setTo, onSearch,
     return () => document.removeEventListener("pointerdown", close);
   }, [relOpen]);
   const rel = useMemo(() => (route ? reliabilityOf(route) : null), [route]);
-  const reviews = useMemo(() => (route && rel ? reviewsOf(route, rel) : []), [route, rel]);
   const departures = useMemo(() => (route ? departuresOf(route) : []), [route]);
   const dep = departures.length ? pickDeparture(departures, fromClock(departAfter)) : null;
+  // Les avis suivent le départ choisi : changer d'horaire change les avis et leur note
+  const reviews = useMemo(
+    () => (route && rel ? (dep ? reviewsOf(route, dep.rel, dep.minute) : reviewsOf(route, rel)) : []),
+    [route, rel, dep],
+  );
   // Heure de passage à chaque arrêt pour le départ choisi : départ + accès, puis attente + trajet de chaque tronçon
   const legStarts = useMemo(() => {
     if (!route || !dep) return [];

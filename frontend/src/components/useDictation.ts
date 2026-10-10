@@ -26,6 +26,8 @@ export function useDictation(onText: (text: string) => void) {
   const [phase, setPhase] = useState<DictationPhase>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<DictationErrorCode | null>(null);
+  // Le flux du micro, exposé pour l'onde de la barre d'enregistrement (null hors enregistrement)
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -38,6 +40,7 @@ export function useDictation(onText: (text: string) => void) {
     timerRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setStream(null);
   }, []);
 
   const stop = useCallback(() => {
@@ -69,6 +72,7 @@ export function useDictation(onText: (text: string) => void) {
     }
     if (cancelledRef.current) return stream.getTracks().forEach((t) => t.stop());
     streamRef.current = stream;
+    setStream(stream);
 
     let rec: MediaRecorder;
     try {
@@ -113,5 +117,5 @@ export function useDictation(onText: (text: string) => void) {
   // Fermer le chat (ou quitter la page) coupe le micro : le voyant d'enregistrement ne doit pas rester allumé
   useEffect(() => cancel, [cancel]);
 
-  return { phase, elapsed, error, clearError: () => setError(null), start, stop, cancel };
+  return { phase, elapsed, maxSeconds: MAX_SECONDS, stream, error, clearError: () => setError(null), start, stop, cancel };
 }

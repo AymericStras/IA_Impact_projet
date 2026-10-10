@@ -3,6 +3,7 @@ import { ApiError, type Place } from "../api";
 import { useI18n } from "../i18n";
 import { CategoryIcon } from "./CategoryIcon";
 import PlaceInput from "./PlaceInput";
+import { OFFER_MAX, OFFER_MIN } from "../reliability";
 import { INITIAL_PROJECT, LEVELS, THEMES, TRIP_TYPES, searchSchoolTrips, travellers, validateProject, type Proposal, type SchoolProject } from "../school";
 
 type Props = {
@@ -155,12 +156,12 @@ export default function SchoolForm({ places, byId, onResults }: Props) {
           <div className={project.tripType === "round" ? "school-row" : undefined}>
             <label className="school-field">
               {t.schoolDeparture}
-              <input type="time" required value={project.departure} onChange={(e) => change("departure", e.target.value)} />
+              <input type="time" required min={OFFER_MIN} max={OFFER_MAX} value={project.departure} onChange={(e) => change("departure", e.target.value)} />
             </label>
             {project.tripType === "round" && (
               <label className="school-field">
                 {t.schoolReturn}
-                <input type="time" required value={project.returnBy} onChange={(e) => change("returnBy", e.target.value)} />
+                <input type="time" required min={OFFER_MIN} max={OFFER_MAX} value={project.returnBy} onChange={(e) => change("returnBy", e.target.value)} />
               </label>
             )}
           </div>

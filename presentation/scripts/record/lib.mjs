@@ -127,7 +127,7 @@ export async function record(name, script) {
   console.log(`${name}: ${frames.length} images, ${duration} s, ${cams.length} plans -> ${mp4}`);
 }
 
-// src/data/videos.json : toutes les démos enregistrées (le diapo ne les montre plus, gardé pour les refaire)
+// src/data/videos.json : toutes les démos enregistrées, lues par les slides vidéo du diapo
 export function collect() {
   const all = {};
   for (const f of fs.readdirSync(OUT).filter((f) => f.endsWith(".json")).sort()) all[f.replace(".json", "")] = JSON.parse(fs.readFileSync(path.join(OUT, f), "utf8"));

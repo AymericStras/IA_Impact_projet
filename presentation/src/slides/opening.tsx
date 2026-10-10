@@ -1,4 +1,5 @@
-// Ouverture : intro 3D, couverture 2D, le constat, et l'histoire de Claire (avec ?story).
+// Ouverture : intros 3D (courte, puis la première version avec le réseau et les trains), couverture 2D, le constat,
+// et l'histoire de Claire en photos puis en 3D low poly.
 import { Trame, Words } from "../components/primitives";
 import { Net } from "../components/Net";
 import { IDEAS } from "../data";
@@ -20,12 +21,29 @@ export const intro3d: SlideDef = {
       </div>
     </>
   ),
-  enter: ({ el, t0 }) => void loadIntro3D().then((m) => m.Deck3D.play(el, t0)),
+  enter: ({ el, t0 }) => void loadIntro3D().then((m) => m.Deck3D.play(el, "intro", t0)),
+  leave: (el) => void loadIntro3D().then((m) => m.Deck3D.stop(el)),
+};
+
+// La première intro, 10 s : chute depuis le ciel, voies et gares qui se révèlent, petits trains sur tout le réseau
+export const intro3dFull: SlideDef = {
+  id: "intro-full", tone: "dark", cls: "s-3d s-intro", trans: "flap",
+  Body: () => (
+    <>
+      <div className="stage3d" />
+      <div className="intro-title">
+        <div className="kicker" data-in="flap" data-at={7400}>{T.coverKicker}</div>
+        <Words as="h1" className="title huge" data-at={7900} text={T.coverTitle} />
+        <Trame rows={3} cols={30} palette={["red", "yellow", "white"]} data-in="trame" data-at={9000} data-idle="drift" />
+      </div>
+    </>
+  ),
+  enter: ({ el, t0 }) => void loadIntro3D().then((m) => m.Deck3D.play(el, "introFull", t0)),
   leave: (el) => void loadIntro3D().then((m) => m.Deck3D.stop(el)),
 };
 
 export const cover: SlideDef = {
-  id: "cover", tone: "dark", cls: "s-cover", trans: "train",
+  id: "cover", tone: "dark", cls: "s-cover", trans: "ter3d",
   Body: () => (
     <>
       <Net kind="cover" />
@@ -70,14 +88,14 @@ export const problem: SlideDef = {
   ),
 };
 
-// ── L'histoire de Claire (?story) : quatre photos, puis les mêmes quatre scènes en 3D low poly ──
+// ── L'histoire de Claire : quatre photos, puis les mêmes quatre scènes en 3D low poly ──
 const STORY = [
   { img: "01-prof", kb: "1.02,0,0;1.2,-6,-3", lp: "classe", line: "Claire, prof de CM2, <em>prépare une sortie.</em>" },
   { img: "02-gare", kb: "1.18,4,0;1.05,-4,1", lp: "quai", line: "Mardi, 9 h : <em>28 élèves, un TER.</em>" },
   { img: "03-train", kb: "1.0,0,2;1.22,2,-4", lp: "trajet", line: "Par la fenêtre, <em>le paysage défile.</em>" },
   { img: "04-ville", kb: "1.3,0,-4;1.02,0,0", lp: "ville", line: "59 minutes plus tard : <em>Carcassonne.</em>" },
 ];
-const STORY_TRANS = ["iris", "train", "train", "zoom"] as const;
+const STORY_TRANS = ["iris", "ter3d", "ter3d-front", "zoom"] as const;
 const carca = IDEAS.find((d) => d.city === "Carcassonne");
 const carcaTime = carca ? `${fmtMin(carca.minutes)} · ${carca.transfers ? "1 corresp." : "direct"}` : "";
 
@@ -105,7 +123,7 @@ export const storyPhotos: SlideDef[] = STORY.map((s, i) => ({
 }));
 
 export const storyLowpoly: SlideDef[] = STORY.map((s, i) => ({
-  id: `lowpoly-${i + 1}`, tone: "dark", cls: "s-lowpoly", trans: (["iris", "train", "zoom", "train"] as const)[i],
+  id: `lowpoly-${i + 1}`, tone: "dark", cls: "s-lowpoly", trans: (["iris", "ter3d", "zoom", "ter3d-front"] as const)[i],
   Body: () => (
     <>
       <div className="stage3d" />

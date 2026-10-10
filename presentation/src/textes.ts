@@ -1,5 +1,7 @@
 // Textes du diapo (français uniquement, à la demande) : une présentation-pub du site et de ses fonctionnalités.
 // Les <em> sont soulignés en rouge, comme le premier mot de la charte liO ; <b> met un mot en gras.
+export type WagonIcon = "route" | "train" | "window" | "pin" | "cube" | "school" | "chat";
+
 export const T = {
   fullscreen: "Plein écran",
   exitFullscreen: "Quitter le plein écran",
@@ -18,7 +20,19 @@ export const T = {
   problem3: "Sans réponse claire à « comment j'y vais en train ? », on <b>prend la voiture</b>.",
 
 
-  k3: "02 · Itinéraire",
+  k2: "02 · Le site",
+  overviewTitle: "Tout le voyage, <em>un seul site</em>",
+  wagons: [
+    ["route", "Itinéraire", "Le trajet le plus rapide, correspondances comprises."],
+    ["train", "Simulation", "Un train 3D parcourt votre trajet, arrêt par arrêt."],
+    ["window", "Par la fenêtre", "Le paysage défile comme si vous y étiez."],
+    ["pin", "Lieux à découvrir", "Ce qui vaut le détour autour des gares."],
+    ["cube", "Monuments en 3D", "Faites tourner les arènes de Nîmes du bout du doigt."],
+    ["school", "Sortie scolaire", "Des idées de sorties à portée de train pour une classe."],
+    ["chat", "Assistant IA", "Demander un trajet en langage naturel — bientôt."],
+  ] as [WagonIcon, string, string][],
+
+  k3: "03 · Itinéraire",
   searchTitle: "Votre trajet, <em>en un clic</em>",
   msQuestion: "Où allez-vous ?",
   msButton: "Trouver mon trajet",
@@ -28,7 +42,7 @@ export const T = {
   routePerDay: (n: number) => `${n}/jour`,
   routeTotal: "Durée totale du trajet",
 
-  k4: "03 · Simulation",
+  k4: "04 · Simulation",
   simTitle: "Suivez votre train <em>en direct</em>",
   simLead: "Le trajet se rejoue sur la carte : la caméra suit le train, le panneau dit où vous êtes.",
   simCard: "Trajet simulé",
@@ -38,7 +52,7 @@ export const T = {
   simArrived: (s: string) => `Arrivé à ${s}`,
   simNear: "À voir autour du train",
 
-  k5: "04 · Par la fenêtre",
+  k5: "05 · Par la fenêtre",
   windowTitle: "Le paysage <em>défile</em>",
   win1: "Ce qu'on verrait dehors, <b>au bon endroit du trajet</b> : étangs, vignes, Montagne Noire…",
   win2: "Le défilement suit le train : il <b>accélère</b>, <b>freine</b> et <b>s'arrête à quai</b>.",
@@ -47,9 +61,13 @@ export const T = {
   winTag: "Par la fenêtre",
   sceneryCredits: "Photos : Wikimedia Commons —",
 
+  k6: "06 · Lieux à découvrir",
+  discoverTitle: "Des monuments, <em>en 3D</em>",
+  discoverLead: "Autour de chaque gare, une sélection de lieux à visiter — et certains se visitent déjà en 3D.",
   photoCredits: "Photos : Wikimedia Commons —",
+  modelBy: (a: string, l: string) => `Modèle 3D : ${a} (${l})`,
 
-  k7: "05 · Sortie scolaire",
+  k7: "07 · Sortie scolaire",
   schoolTitle: "Une sortie de classe, <em>en train</em>",
   form: [
     // [libellé, valeur tapée]
@@ -64,13 +82,21 @@ export const T = {
   ideaTrain: (m: string, n: number) => `${m} de train · ${n === 0 ? "direct" : n + " corresp."}`,
   ideasTitle: "Idées pour votre classe",
 
-  k8: "06 · Assistant IA",
+  k8: "08 · Assistant IA",
   assistantTitle: "Demandez, <em>il répond</em>",
   assistantLead: "Le chat est déjà dans l'interface. Bientôt, il trouvera trajets et lieux à partir d'une simple phrase.",
   chatHead: "Demandez à l'assistant",
   chatPh: "Écrivez un message…",
   chatUser: "Je pars de Toulouse samedi avec mes enfants, une idée de sortie en train ?",
   chatBot: "Aperçu de la future réponse : un trajet, des lieux à voir à la descente du train.",
+
+  soon: "Bientôt",
+
+  k9: "09 · Fiable",
+  networkTitle: "Les vrais horaires, <em>tout le réseau</em>",
+  stat1: "gares",
+  stat2: "missions TER liO",
+  networkLead: "Construit sur les horaires officiels SNCF et liO en open data, reconstruits en 2 secondes à chaque mise à jour.",
 
   thanksTitle: "Montez <em>à bord</em>",
   thanksLead: "Merci ! Place à la démo en direct.",

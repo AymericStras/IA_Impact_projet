@@ -9,7 +9,7 @@ import { $, $$, A, fmtMin, html } from "../engine/util";
 import { T } from "../textes";
 
 export const data: SlideDef = {
-  id: "data", tone: "light", cls: "s-data", trans: "train",
+  id: "data", tone: "light", cls: "s-data", trans: "ter3d",
   Body: () => (
     <>
       <div className="kicker" data-in="flap">{T.dataKick}</div>
@@ -40,6 +40,25 @@ export const network: SlideDef = {
         <ol className="steps">
           {[T.step1, T.step2, T.step3].map((s, i) => <li key={i} data-in="left" data-d={5 + i}><i>{i + 1}</i><span dangerouslySetInnerHTML={html(s)} /></li>)}
         </ol>
+      </div>
+      <Net kind="map" />
+    </>
+  ),
+  enter: ({ el, t0, run }) => enterNet(run, $<SVGSVGElement>(el, ".net-map:not(.net-ov)"), t0 + 300, { draw: 2400, trains: 14 }),
+};
+
+// 09 · Fiable : les chiffres du réseau à côté de la carte, où circulent les petits trains
+export const reliable: SlideDef = {
+  id: "reliable", tone: "dark", cls: "s-network", trans: "zoom",
+  Body: () => (
+    <>
+      <div className="col">
+        <div className="kicker" data-in="flap">{T.k9}</div>
+        <Words className="title" data-d={1} text={T.networkTitle} />
+        <div className="stats small">
+          <div className="stat" data-in="up" data-d={4}><b data-count={259} /><span>{T.stat1}</span></div>
+          <div className="stat" data-in="up" data-d={5}><b data-count={403} /><span>{T.stat2}</span></div>
+        </div>
       </div>
       <Net kind="map" />
     </>
@@ -97,7 +116,7 @@ export const engine: SlideDef = {
 };
 
 export const stack: SlideDef = {
-  id: "stack", tone: "dark", cls: "s-stack", trans: "train",
+  id: "stack", tone: "dark", cls: "s-stack", trans: "ter3d-front",
   Body: () => {
     const nodes = [
       ["cube", T.p1, T.p1s], ["code", T.p2, "build_from_gtfs.py · ~2 s"], ["bolt", "FastAPI", "/route · /places · /network"],

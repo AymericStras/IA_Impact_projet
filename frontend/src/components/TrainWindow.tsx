@@ -257,6 +257,10 @@ export default function TrainWindows({ sim, byId, onOpenDiscovery }: Props) {
                   <div className="tws-glass" aria-hidden="true" />
                   {d && <button className="tws-open" onClick={() => onOpenDiscovery(d)} aria-label={d.title[locale]} />}
                 </div>
+                {/* Habillage intérieur du wagon : rideaux noués, cantonnière, tablette */}
+                <span className="tws-curtain tws-curtain-l" aria-hidden="true" />
+                <span className="tws-curtain tws-curtain-r" aria-hidden="true" />
+                <span className="tws-valance" aria-hidden="true" />
               </div>
               <figcaption>
                 {view && (

@@ -2,7 +2,7 @@
 // et la recherche d'idées de sorties (aller-retour ou aller simple). Les libellés vivent dans i18n.tsx (clés ci-dessous).
 import { api, ApiError, type Route } from "./api";
 import { CATEGORIES, DISCOVERIES, type Category, type Discovery } from "./data/discoveries";
-import { departuresOf, fromClock, pickDeparture, pickReturn } from "./reliability";
+import { OFFER_MAX, OFFER_MIN, departuresOf, fromClock, pickDeparture, pickReturn } from "./reliability";
 
 export type Level = "primary" | "middle" | "high";
 // Thème pédagogique = catégorie de lieu (la même que les filtres de la carte), ou tous
@@ -26,7 +26,7 @@ export type Proposal = { discovery: Discovery; outbound: Route; inbound: Route |
 // Ce qu'on pré-réserve : une idée de sortie (projet connu, formulaire prérempli) ou un trajet trouvé depuis la carte
 // (pas de projet : le formulaire demande en plus le groupe ; visit = le lieu choisi sur sa fiche, s'il y en a un)
 export type Booking = { outbound: Route; inbound: Route | null; visit: Discovery | null; project: SchoolProject | null };
-export type SchoolError = "required" | "counts" | "tooMany" | "tooFew" | "times";
+export type SchoolError = "required" | "counts" | "tooMany" | "tooFew" | "times" | "hours";
 
 const FEATURED = ["musee-lautrec", "cite-carcassonne", "chateau-foix"];
 function candidates(theme: Theme): Discovery[] {
@@ -42,6 +42,7 @@ export function validateProject(p: SchoolProject): SchoolError | null {
   if (!Number.isInteger(p.students) || !Number.isInteger(p.adults) || p.students < 1 || p.adults < 1) return "counts";
   if (travellers(p) > 50) return "tooMany";
   if (travellers(p) < 6) return "tooFew";
+  if (p.departure < OFFER_MIN || p.departure > OFFER_MAX || (round && (p.returnBy < OFFER_MIN || p.returnBy > OFFER_MAX))) return "hours";
   if (round && p.departure >= p.returnBy) return "times";
   return null;
 }

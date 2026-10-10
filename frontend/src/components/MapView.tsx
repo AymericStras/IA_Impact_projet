@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import maplibregl, { type GeoJSONSource, type LngLatLike, type Map as MlMap } from "maplibre-gl";
 import { Protocol } from "pmtiles";
@@ -12,6 +12,9 @@ import { DiscoveryImage } from "./Discovery";
 import type { TrainSim } from "../sim";
 import { createTrain3D } from "../train3d";
 import { MOBILE_QUERY } from "./MobileNav";
+
+// Intérieur du wagon en 3D, chargé seulement quand on monte à bord
+const WagonInterior = lazy(() => import("./WagonInterior"));
 
 type Props = {
   places: Place[];
@@ -611,6 +614,11 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
     // Le panneau du bas qui change de cran recadre aussi : le trajet reste entier dans la partie visible
   }, [map, route, selected, byId, inset.bottom]);
 
+  const [wagon, setWagon] = useState(false);
+  useEffect(() => {
+    if (!sim) setWagon(false);
+  }, [sim]);
+
   // Train simulé : un marqueur HTML (au-dessus des épingles de lieux, qui sont elles aussi en HTML), déplacé à
   // chaque image ; la caméra le suit jusqu'à ce qu'on fasse glisser la carte
   useEffect(() => {
@@ -618,8 +626,25 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
     // Rame qui suit le zoom entre deux bornes, un peu plus petite sur téléphone (elle y couvre vite la carte)
     const base = window.matchMedia(MOBILE_QUERY).matches ? 0.8 : 1;
     let scale = trainScale(map.getZoom(), base);
-    const train = createTrain3D(scale);
+    const train = createTrain3D(scale, t.wagonDoor);
     const marker = new maplibregl.Marker({ element: train.el }).setLngLat(sim.position()).addTo(map);
+    // Un clic sur la rame fait apparaître une porte au-dessus ; un clic ailleurs la range ; la porte fait monter à bord
+    let doorOn = false;
+    const clickTrain = (e: maplibregl.MapMouseEvent) => {
+      const { clientX, clientY } = e.originalEvent;
+      doorOn = train.hit(clientX, clientY) ? !doorOn : false;
+      train.showDoor(doorOn);
+    };
+    const hoverTrain = (e: maplibregl.MapMouseEvent) => {
+      map.getCanvas().style.cursor = train.hit(e.originalEvent.clientX, e.originalEvent.clientY) ? "pointer" : "";
+    };
+    map.on("click", clickTrain);
+    map.on("mousemove", hoverTrain);
+    train.onDoor = () => {
+      doorOn = false;
+      train.showDoor(false);
+      setWagon(true);
+    };
     map.flyTo({ center: sim.position(), zoom: Math.max(map.getZoom(), 10), offset: offset(), duration: 900 });
     let flying = true;
     const landed = () => (flying = false);
@@ -693,6 +718,9 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
       window.removeEventListener("pointerup", release);
       window.removeEventListener("pointercancel", release);
       map.off("moveend", landed);
+      map.off("click", clickTrain);
+      map.off("mousemove", hoverTrain);
+      map.getCanvas().style.cursor = "";
       marker.remove();
       train.dispose();
     };
@@ -728,6 +756,12 @@ export default memo(function MapView({ places, edges, byId, route, fromId, toId,
           );
         })}
       </div>
+      {wagon && sim && createPortal(
+        <Suspense fallback={null}>
+          <WagonInterior sim={sim} byId={byId} onClose={() => setWagon(false)} />
+        </Suspense>,
+        document.body,
+      )}
       {card && createPortal(<StationCard card={card} onPick={onPick} onOpenDiscovery={onOpenDiscovery} close={() => setCard(null)} />, popupBody)}
     </div>
   );

@@ -2,7 +2,7 @@
 // Tout est tiré d'un générateur pseudo-aléatoire semé par le trajet lui-même : le même trajet donne toujours les
 // mêmes chiffres et les mêmes avis, d'une recherche à l'autre. Les correspondances et les cars font baisser l'indice.
 import { COACH_MODES, WALK, type Route } from "./api";
-import { REVIEW_BANK, TEACHERS } from "./data/teacher-reviews";
+import { REVIEW_BANK, TEACHERS, slotOf } from "./data/teacher-reviews";
 import type { Text } from "./data/discoveries";
 
 export type Level = "high" | "medium" | "low";
@@ -25,6 +25,7 @@ export type Review = {
   monthsAgo: number;
   group: number; // élèves emmenés
   text: Text;
+  train?: number; // heure du départ emprunté (minutes), quand les avis portent sur un horaire précis
 };
 
 // mulberry32 : petit générateur déterministe, suffisant pour de la démo
@@ -49,6 +50,10 @@ export const toClock = (m: number) => {
 };
 export const fromClock = (v: string) => Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5));
 
+// Plage de l'offre groupes scolaires : départs acceptés de 8 h à 16 h seulement
+export const OFFER_START = 480, OFFER_END = 960;
+export const OFFER_MIN = "08:00", OFFER_MAX = "16:00";
+
 const RUSH = (m: number) => (m >= 420 && m < 540) || (m >= 1020 && m < 1140);
 
 // Sans `minute`, l'indice moyen du trajet ; avec, celui du départ de cette heure-là (heures de pointe et soirée plus fragiles)
@@ -72,45 +77,55 @@ export function reliabilityOf(route: Route, minute?: number): Reliability {
 
 export type Departure = { minute: number; arrival: number; rel: Reliability };
 
-// Départs de la journée : autant que de trains par jour sur le premier tronçon roulant, étalés de 5 h 45 à 21 h 30.
+// Départs de la journée, limités à la plage de l'offre (8 h - 16 h) : la part des trains quotidiens du premier tronçon
+// roulant qui tombe dans ces huit heures (sur une journée de service d'environ 16 h).
 // Le moteur ne connaît pas les horaires réels : ce sont des heures de démonstration, stables pour un même trajet.
 export function departuresOf(route: Route): Departure[] {
   const r = rng("dep:" + seedOf(route));
   const firstRide = route.legs.find((l) => l.mode !== WALK);
-  const n = clamp(firstRide?.trips_per_day ?? 8, 4, 24);
-  const start = 345, end = 1290, step = (end - start) / (n - 1);
-  const minutes = Array.from({ length: n }, (_, i) => Math.round(start + i * step + (r() - 0.5) * step * 0.5));
+  const n = clamp(Math.round((firstRide?.trips_per_day ?? 8) / 2), 3, 12);
+  const start = OFFER_START, end = OFFER_END, step = (end - start) / (n - 1);
+  const minutes = Array.from({ length: n }, (_, i) => clamp(Math.round(start + i * step + (r() - 0.5) * step * 0.5), start, end));
   return [...new Set(minutes)].sort((a, b) => a - b).map((minute) => ({ minute, arrival: minute + route.minutes, rel: reliabilityOf(route, minute) }));
 }
 
 // Premier départ à partir de l'heure voulue, sinon le dernier de la journée
 export const pickDeparture = (deps: Departure[], after: number) => deps.find((d) => d.minute >= after) ?? deps[deps.length - 1];
 
-export function reviewsOf(route: Route, rel: Reliability): Review[] {
-  const r = rng("rev:" + seedOf(route));
+// Avec `minute`, les avis portent sur ce départ-là : notes calées sur son indice, et au moins deux avis propres à sa
+// tranche horaire (train bondé à 8 h, calme à midi, lycéens l'après-midi…) — changer d'horaire change les avis.
+export function reviewsOf(route: Route, rel: Reliability, minute?: number): Review[] {
+  const r = rng("rev:" + seedOf(route) + (minute ?? ""));
   const pick = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
   const towns = [...new Set(route.legs.flatMap((l) => [l.from, l.to]))];
   const teachers = [...TEACHERS];
   const used = new Set<number>();
   const count = 3 + Math.floor(r() * 3);
+  const slot = minute === undefined ? undefined : slotOf(minute);
 
-  return Array.from({ length: count }, () => {
+  return Array.from({ length: count }, (_, k) => {
     // La note suit l'indice : un trajet fiable reçoit surtout des 4-5, un trajet fragile plus de 2-3
     const rating = clamp(Math.round(rel.score / 20 + (r() - 0.55) * 2.4), 1, 5);
-    const pool = REVIEW_BANK.map((c, i) => ({ c, i })).filter(
-      ({ c, i }) => !used.has(i) && c.rating.includes(rating) && (!c.needsTransfer || route.transfers > 0) && (!c.direct || route.transfers === 0),
+    const fits = REVIEW_BANK.map((c, i) => ({ c, i })).filter(
+      ({ c, i }) =>
+        !used.has(i) && (!c.needsTransfer || route.transfers > 0) && (!c.direct || route.transfers === 0) && (!c.slot || c.slot === slot),
     );
-    const { c, i } = pick(pool.length ? pool : REVIEW_BANK.map((c, i) => ({ c, i })));
+    const inSlot = k < 2 && slot ? fits.filter(({ c }) => c.slot === slot) : [];
+    const rated = fits.filter(({ c }) => c.rating.includes(rating));
+    const pool = inSlot.length ? inSlot : rated.length ? rated : fits.length ? fits : REVIEW_BANK.map((c, i) => ({ c, i }));
+    const { c, i } = pick(pool);
     used.add(i);
     const teacher = teachers.splice(Math.floor(r() * teachers.length), 1)[0];
     return {
       author: teacher.name,
       role: teacher.role,
       school: pick(towns),
-      rating,
+      // Un avis propre à la tranche garde une note cohérente avec son texte
+      rating: c.rating.includes(rating) ? rating : c.rating.reduce((b, x) => (Math.abs(x - rating) < Math.abs(b - rating) ? x : b)),
       monthsAgo: 1 + Math.floor(r() * 14),
       group: 12 + Math.floor(r() * 10) * 2,
       text: c.text,
+      train: minute,
     };
   }).sort((a, b) => a.monthsAgo - b.monthsAgo);
 }

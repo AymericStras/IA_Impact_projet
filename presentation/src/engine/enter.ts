@@ -18,6 +18,11 @@ const IN: Record<string, Preset> = {
   right: (el, d) => (A(el, [{ opacity: 0, transform: "translateX(110px)" }, { opacity: 1, transform: "none" }], { duration: 600, delay: d }), 600),
   zoom: (el, d) => (A(el, [{ opacity: 0, transform: "scale(.4) rotate(-40deg)" }, { opacity: 1, transform: "none" }], { duration: 900, delay: d }), 900),
   pop: (el, d) => (A(el, [{ opacity: 0, transform: "scale(.3)" }, { opacity: 1, transform: "none" }], { duration: 550, delay: d, easing: BACK }), 550),
+  // Écran du site qui arrive de loin, incliné, et se pose face à la caméra
+  screen: (el, d) => (A(el, [
+    { opacity: 0, transform: "perspective(2400px) translate3d(300px, 260px, -1600px) rotateY(-38deg) rotateX(24deg) rotateZ(-6deg)" },
+    { opacity: 1, offset: 0.3 },
+    { opacity: 1, transform: "none" }], { duration: 1100, delay: d, easing: "cubic-bezier(.16,.84,.24,1)" }), 1100),
   // Caméra lente sur une image : « échelle,x%,y% ; échelle,x%,y% » en 10 s
   kenburns: (el, d) => {
     const [a, b] = (el.dataset.kb ?? "1,0,0;1,0,0").split(";").map((k) => k.split(",").map(Number));

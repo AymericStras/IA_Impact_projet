@@ -1,6 +1,6 @@
 // Indice de fiabilité et avis d'enseignants d'un trajet (données de démonstration, voir reliability.ts)
 import { useEffect, useRef } from "react";
-import { toClock, type Departure, type Review } from "../reliability";
+import { OFFER_MAX, OFFER_MIN, toClock, type Departure, type Review } from "../reliability";
 import { useI18n } from "../i18n";
 
 const fmt = (n: number, locale: string) => n.toLocaleString(locale, { maximumFractionDigits: 1 });
@@ -22,7 +22,7 @@ export function Departures({ departures, selected, after, onAfter, relOpen, onRe
       <div className="deps-strip" ref={strip}>
         <label className="deps-after">
           <span>{t.depAfter}</span>
-          <input type="time" value={after} onChange={(e) => e.target.value && onAfter(e.target.value)} />
+          <input type="time" min={OFFER_MIN} max={OFFER_MAX} value={after} onChange={(e) => e.target.value && onAfter(e.target.value < OFFER_MIN ? OFFER_MIN : e.target.value > OFFER_MAX ? OFFER_MAX : e.target.value)} />
         </label>
         {departures.map((d) => (
           <button
@@ -48,7 +48,6 @@ export function Departures({ departures, selected, after, onAfter, relOpen, onRe
         <span>{t.relDelayShort(fmt(rel.avgDelay, locale))}</span>
         <span>{t.relCancelShort(fmt(rel.cancelRate, locale))}</span>
         {rel.missedTransfers > 0 && <span>{t.relMissedShort(rel.missedTransfers)}</span>}
-        <span className="demo-tag">{t.demoData}</span>
       </p>
     </div>
   );
@@ -90,6 +89,7 @@ export function TeacherReviews({ reviews }: { reviews: Review[] }) {
             </div>
             <p>{r.text[locale]}</p>
             <small className="review-meta">
+              {r.train !== undefined && <>{t.reviewTrain(toClock(r.train))} · </>}
               {t.reviewAgo(r.monthsAgo)} · {t.reviewGroup(r.group)}
             </small>
           </li>

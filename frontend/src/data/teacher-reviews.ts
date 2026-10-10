@@ -15,7 +15,11 @@ export const TEACHERS: { name: string; role: Text }[] = [
   { name: "M. Pujol", role: { en: "Occitan teacher, high school", fr: "Prof d'occitan, lycée" } },
 ];
 
-export const REVIEW_BANK: { rating: number[]; needsTransfer?: boolean; direct?: boolean; text: Text }[] = [
+// Tranche horaire du départ : un avis qui en porte une ne sort que pour un départ de cette tranche
+export type Slot = "morning" | "midday" | "afternoon";
+export const slotOf = (minute: number): Slot => (minute < 600 ? "morning" : minute < 810 ? "midday" : "afternoon");
+
+export const REVIEW_BANK: { rating: number[]; needsTransfer?: boolean; direct?: boolean; slot?: Slot; text: Text }[] = [
   {
     rating: [5],
     direct: true,
@@ -108,6 +112,79 @@ export const REVIEW_BANK: { rating: number[]; needsTransfer?: boolean; direct?: 
     text: {
       en: "Good trip. Tip: the front of the train is emptier, gather the class at the head of the platform.",
       fr: "Bon trajet. Astuce : l'avant du train est plus vide, regroupez la classe en tête de quai.",
+    },
+  },
+  // — Avis liés à l'heure du départ —
+  {
+    rating: [3, 2],
+    slot: "morning",
+    text: {
+      en: "The morning train is packed with commuters and high-schoolers: half the class stood until the third stop.",
+      fr: "Le train du matin est bondé d'actifs et de lycéens : la moitié de la classe est restée debout jusqu'au troisième arrêt.",
+    },
+  },
+  {
+    rating: [4, 3],
+    slot: "morning",
+    text: {
+      en: "Early departure, so the meeting point was at 7:30. A few late pupils made it stressful, but we arrived for the opening.",
+      fr: "Départ tôt, rendez-vous à 7 h 30 en gare. Quelques retardataires, un peu stressant, mais on est arrivés pour l'ouverture.",
+    },
+  },
+  {
+    rating: [5, 4],
+    slot: "morning",
+    text: {
+      en: "Leaving in the morning gives the whole day on site. Train slightly late, but nothing compared to the time gained.",
+      fr: "Partir le matin laisse toute la journée sur place. Léger retard, mais rien à côté du temps gagné.",
+    },
+  },
+  {
+    rating: [5],
+    slot: "midday",
+    text: {
+      en: "Off-peak train, almost empty: the class sat together in one carriage. The calmest trip I've done with pupils.",
+      fr: "Train de milieu de journée presque vide : toute la classe assise dans la même voiture. Le trajet le plus calme que j'ai fait avec des élèves.",
+    },
+  },
+  {
+    rating: [4, 5],
+    slot: "midday",
+    text: {
+      en: "Late-morning departure, no rush and on time. Only downside: a shorter visit, plan a half-day activity.",
+      fr: "Départ en fin de matinée, sans bousculade et à l'heure. Seul bémol : visite plus courte, prévoyez une activité d'une demi-journée.",
+    },
+  },
+  {
+    rating: [3, 4],
+    slot: "midday",
+    text: {
+      en: "Fewer trains around noon: if you miss one, the next is far. We were on time, but I wouldn't cut it close.",
+      fr: "Moins de trains autour de midi : si on en rate un, le suivant est loin. On était à l'heure, mais je ne prendrais pas de marge serrée.",
+    },
+  },
+  {
+    rating: [2, 3],
+    slot: "afternoon",
+    text: {
+      en: "Afternoon train full of high-schoolers going home. Impossible to keep the group together, and 15 minutes late.",
+      fr: "Train de l'après-midi rempli de lycéens qui rentrent. Impossible de garder le groupe ensemble, et 15 minutes de retard.",
+    },
+  },
+  {
+    rating: [3],
+    slot: "afternoon",
+    text: {
+      en: "We arrived after 3 p.m.: some sites close early. Check opening hours, we only had an hour on site.",
+      fr: "Arrivée après 15 h : certains sites ferment tôt. Vérifiez les horaires, on n'a eu qu'une heure sur place.",
+    },
+  },
+  {
+    rating: [4],
+    slot: "afternoon",
+    text: {
+      en: "Good choice for a short visit in the afternoon. Busier on board than in the morning, but the controller helped us.",
+      fr: "Bon choix pour une visite courte l'après-midi. Plus de monde qu'au matin, mais le contrôleur nous a aidés à nous placer.",
     },
   },
 ];

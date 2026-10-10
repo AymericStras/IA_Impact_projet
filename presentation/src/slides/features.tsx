@@ -1,12 +1,13 @@
 // Ce que fait le site, une fonctionnalité par slide, chacune avec sa petite démo animée.
 import { Fragment } from "react";
-import { Icon, Words } from "../components/primitives";
+import { Icon, Trame, Words } from "../components/primitives";
 import { Net } from "../components/Net";
-import { IDEAS, PHOTOS, ROUTE, SCENERY, ST } from "../data";
+import { IDEAS, MODEL, PHOTOS, ROUTE, SCENERY, ST, VIDEOS } from "../data";
 import type { SlideDef } from "../engine/deck";
 import { press, STEP, typeInto } from "../engine/enter";
 import { enterNet, routeOn } from "../engine/net";
-import { $, $$, A, BACK, EASE, RED, YELLOW, fmtMin, html, short, typo } from "../engine/util";
+import { loadIntro3D, loadModelViewer } from "../engine/three";
+import { $, $$, A, BACK, EASE, FLAGS, RED, YELLOW, easeIO, fmtMin, html, short, typo } from "../engine/util";
 import { T } from "../textes";
 
 export const solution: SlideDef = {
@@ -60,7 +61,7 @@ function Legs({ full, base }: { full: boolean; base?: number }) {
 
 // Démo de recherche : on tape le départ, l'arrivée, on clique, le résultat se déplie et le trajet se dessine
 export const search: SlideDef = {
-  id: "search", tone: "light", cls: "s-search", trans: "train",
+  id: "search", tone: "light", cls: "s-search", trans: "ter3d-front",
   Body: () => (
     <>
       <Net kind="route" />
@@ -127,7 +128,7 @@ export const route: SlideDef = {
 // Simulation : le train parcourt le trajet, le panneau donne l'heure, l'avancement et l'endroit
 const NEAR = { "chateau-collioure": "Château royal de Collioure", "cite-carcassonne": "La Cité de Carcassonne", "canal-du-midi": "Canal du Midi", "viaduc-millau": "Viaduc de Millau" } as const;
 export const sim: SlideDef = {
-  id: "sim", tone: "dark", cls: "s-sim", trans: "train",
+  id: "sim", tone: "dark", cls: "s-sim", trans: "ter3d",
   Body: () => (
     <>
       <Net kind="sim" />
@@ -269,6 +270,7 @@ export const assistant: SlideDef = {
       <div className="col">
         <div className="kicker" data-in="flap">{T.k8}</div>
         <Words className="title" data-d={1} text={T.assistantTitle} />
+        <span className="soon" data-in="pop" data-d={6} data-idle="pulse">{T.soon}</span>
       </div>
       <div className="chat" data-in="right" data-d={3}>
         <div className="chat-head"><i className="live" /><b>{T.chatHead}</b></div>
@@ -294,5 +296,163 @@ export const assistant: SlideDef = {
     A(msgs[2], [{ opacity: 1 }, { opacity: 0, maxHeight: "0px", padding: "0px", margin: "0px" }], { duration: 250, delay: e + 1700, fill: "forwards" });
     pop(msgs[3], e + 1800);
     msgs[2].querySelectorAll("i").forEach((d, i) => d.animate({ translate: ["0 0", "0 -8px"] }, { duration: 380, delay: i * 120, iterations: Infinity, direction: "alternate", easing: "ease-in-out" }));
+  },
+};
+
+// 02 · Le site : les fonctionnalités en wagons, le train arrive, puis avance d'un wagon à la fois
+export const overview: SlideDef = {
+  id: "overview", tone: "dark", cls: "s-overview", trans: "train",
+  Body: () => (
+    <>
+      <div className="kicker" data-in="flap">{T.k2}</div>
+      <Words className="title" data-d={1} text={T.overviewTitle} />
+      <div className="wagons">
+        <div className="wagon-train">
+          {T.wagons.map(([k, title], i) => (
+            <div key={k} className="wagon" data-i={i}>
+              <div className="wagon-box"><Icon name={k} className="ico" /><h3>{title}</h3></div>
+              <i className="wh l" /><i className="wh r" /><i className="hitch" />
+            </div>
+          ))}
+        </div>
+        <div className="wagon-rails" />
+      </div>
+    </>
+  ),
+  enter: ({ el, t0, run }) => {
+    const wagons = $$(el, ".wagon"), wheels = $$(el, ".wh"), rails = $(el, ".wagon-rails");
+    const SP = 470, n = wagons.length, CENTER = 960 - 210;
+    const ARRIVE = 2200, MOVE = 1150, STOP = 1900;
+    const start = performance.now() + t0;
+    run.tick((now) => {
+      const t = now - start;
+      let pos: number; // distance parcourue par le train, en px
+      if (t < ARRIVE) pos = -2600 * Math.pow(1 - Math.max(0, t / ARRIVE), 3);
+      else {
+        const c = t - ARRIVE, k = Math.floor(c / (MOVE + STOP)), r = c % (MOVE + STOP);
+        pos = (k + easeIO(Math.min(1, r / MOVE))) * SP;
+      }
+      let hot: HTMLElement | null = null, best = Infinity;
+      wagons.forEach((w, i) => {
+        let x = i * SP - pos;
+        if (t >= ARRIVE) x = ((x % (n * SP)) + n * SP) % (n * SP) - SP;
+        w.style.transform = `translateX(${CENTER + x}px)`;
+        if (Math.abs(x) < best) { best = Math.abs(x); hot = w; }
+      });
+      wagons.forEach((w) => w.classList.toggle("hot", w === hot && best < 30));
+      wheels.forEach((wh) => (wh.style.rotate = `${pos / 0.22}deg`));
+      rails.style.backgroundPositionX = `${-pos}px`;
+    });
+  },
+};
+
+// Vidéos du vrai site, pilotées par Claude : l'écran arrive, la caméra zoome en suivant les plans notés à l'enregistrement
+function videoSlide(name: string, trans: SlideDef["trans"], kick: string, title: string): SlideDef {
+  return {
+    id: `video-${name}`, tone: "dark", cls: "s-video", trans,
+    Body: () => (
+      <>
+        <Trame className="bg-trame" rows={7} cols={60} palette={["navy2", "navy2", "red"]} data-idle="drift" />
+        <div className="screen" data-in="screen" data-idle="float">
+          <div className="screen-bar"><i /><i /><i /><span>occitanie-en-train</span></div>
+          <div className="screen-view"><video muted playsInline preload="auto" src={VIDEOS[name]?.file} /></div>
+        </div>
+        <div className="chip-title" data-in="mask" data-d={4}><span className="chip-kick">{kick}</span><span dangerouslySetInnerHTML={html(title)} /></div>
+      </>
+    ),
+    enter: ({ el, t0, run }) => {
+      const meta = VIDEOS[name], v = $<HTMLVideoElement>(el, "video"), view = $(el, ".screen-view");
+      if (!meta) return;
+      v.pause(); v.currentTime = 0;
+      run.later(t0 + 1500, () => void v.play().catch(() => {}));
+      const VW = 1600, VH = 900;
+      let idx = -1, from = { z: 1, x: 0.5, y: 0.5 }, cur = { ...from };
+      run.tick(() => {
+        const t = v.currentTime, cams = meta.cams;
+        let i = 0;
+        while (i + 1 < cams.length && cams[i + 1].t <= t) i++;
+        if (i !== idx) { idx = i; from = { ...cur }; }
+        const c = cams[i], k = easeIO(Math.min(1, Math.max(0, (t - c.t) / c.e)));
+        cur = { z: from.z + (c.z - from.z) * k, x: from.x + (c.x - from.x) * k, y: from.y + (c.y - from.y) * k };
+        const tx = Math.min(0, Math.max(VW - VW * cur.z, VW / 2 - cur.x * VW * cur.z));
+        const ty = Math.min(0, Math.max(VH - VH * cur.z, VH / 2 - cur.y * VH * cur.z));
+        v.style.transform = `translate(${tx}px, ${ty}px) scale(${cur.z})`;
+        // L'écran s'incline un peu vers ce que regarde la caméra : profondeur
+        const zz = cur.z - 1;
+        view.style.transform = `perspective(2200px) rotateY(${(cur.x - 0.5) * -9 * zz}deg) rotateX(${(cur.y - 0.5) * 7 * zz}deg)`;
+      });
+    },
+    leave: (el) => el.querySelector("video")?.pause(),
+  };
+}
+export const videoRoute = videoSlide("itineraire", "cube", "Itinéraire", "Votre trajet <em>en un clic</em>");
+export const videoSim = videoSlide("simulation", "zoom", "Simulation · par la fenêtre", "Le trajet <em>en direct</em>");
+export const videoPlaces = videoSlide("lieux", "push", "Lieux · monuments en 3D", "Des lieux <em>à découvrir</em>");
+export const videoSchool = videoSlide("scolaire", "train", "Sortie scolaire", "Une sortie de classe <em>en train</em>");
+
+// « Suivez le train » en 3D : le trajet se dessine, la caméra suit la rame, correspondance à Toulouse, arrivée à Albi
+export const follow3d: SlideDef = {
+  id: "follow", tone: "dark", cls: "s-3d", trans: "flap",
+  Body: () => (
+    <>
+      <div className="stage3d" />
+      <div className="chip-title" data-in="mask" data-d={4}><span className="chip-kick">En 3D</span>Suivez <em>le train</em></div>
+      <div className="caption3d" />
+    </>
+  ),
+  enter: ({ el, t0 }) => {
+    const cap = $(el, ".caption3d");
+    const caption = (c: string | null) => {
+      cap.classList.remove("in");
+      if (!c) return;
+      cap.innerHTML = `<b>${c}</b>`;
+      void cap.offsetWidth;
+      cap.classList.add("in");
+    };
+    void loadIntro3D().then((m) => m.Deck3D.play(el, "follow", t0, caption));
+  },
+  leave: (el) => void loadIntro3D().then((m) => m.Deck3D.stop(el)),
+};
+
+// 06 · Lieux à découvrir : photos jetées sur la table, et un monument en 3D qui tourne (une photo avec ?lite)
+const PHOTO_TITLES = { "cite-carcassonne": "Cité de Carcassonne", "pont-valentre": "Pont Valentré", "viaduc-millau": "Viaduc de Millau", "chateau-collioure": "Collioure" } as const;
+const photoKeys = Object.keys(PHOTO_TITLES) as (keyof typeof PHOTO_TITLES)[];
+const MODEL_VIEWER = `<model-viewer camera-controls disable-zoom auto-rotate auto-rotate-delay="0" rotation-per-second="18deg"
+  interaction-prompt="none" shadow-intensity="0" exposure="1.05" camera-orbit="30deg 62deg 80%" alt="${MODEL.title}"></model-viewer>`;
+export const discover: SlideDef = {
+  id: "discover", tone: "dark", cls: "s-discover", trans: "ter3d-front",
+  Body: () => (
+    <>
+      <div className="col">
+        <div className="kicker" data-in="flap">{T.k6}</div>
+        <Words className="title" data-d={1} text={T.discoverTitle} />
+        <p className="lead" data-in="up" data-d={4} dangerouslySetInnerHTML={html(T.discoverLead)} />
+        <div className="photos mini">
+          {photoKeys.map((k, i) => (
+            <div key={k} className="photo-pos" style={{ left: i * 205, top: i % 2 ? 26 : 0, transform: `rotate(${[-5, 4, -3, 5][i]}deg)` }}>
+              <div className="photo" data-in="throw" data-d={6 + i} data-idle="sway">
+                <img src={PHOTOS[k].file} alt={PHOTO_TITLES[k]} draggable={false} /><span>{PHOTO_TITLES[k]}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="model-stage" data-in="zoom" data-d={3}>
+        <div className="ring ring-b" data-idle="spin-rev" data-speed={40}><i className="dot red" /><i className="dot yellow" /></div>
+        {FLAGS.lite
+          ? <img className="model-photo" src={PHOTOS["arenes-nimes"].file} alt="" data-idle="float" />
+          : <div className="model-host" dangerouslySetInnerHTML={{ __html: MODEL_VIEWER }} />}
+        <div className="model-tag"><b>{MODEL.title}</b><span>{typo(T.modelBy(MODEL.author, MODEL.license))}</span></div>
+      </div>
+      <p className="credits">{`${T.photoCredits} ` + photoKeys.map((k) => `${PHOTO_TITLES[k]} : ${PHOTOS[k].author} (${PHOTOS[k].license})`).join(" · ")}</p>
+    </>
+  ),
+  enter: ({ el }) => {
+    const mv = el.querySelector<HTMLElement & { resetTurntableRotation?: (t: number) => void }>("model-viewer");
+    if (!mv) return;
+    void loadModelViewer().then(() => {
+      if (!mv.getAttribute("src")) mv.setAttribute("src", MODEL.file);
+      mv.resetTurntableRotation?.(0);
+    });
   },
 };

@@ -1,6 +1,8 @@
-// Données du diapo, produites par scripts/build-data.py (network.json, photos.json — ne pas les éditer à la main).
+// Données du diapo, produites par scripts/build-data.py (network.json, photos.json) et scripts/record (videos.json)
+// — ne pas les éditer à la main.
 import networkJson from "./network.json";
 import photosJson from "./photos.json";
+import videosJson from "./videos.json";
 
 /** Gare : x, y dans le repère 1000 × 820 de la carte, nom */
 export type Station = [x: number, y: number, name: string];
@@ -63,9 +65,14 @@ interface Photos {
   IDEAS: Idea[];
 }
 
+/** Plan de caméra noté à l'enregistrement : à `t` s, zoom `z` centré sur (x, y) en fractions de l'image, en `e` s */
+export interface Cam { t: number; z: number; x: number; y: number; e: number }
+export interface VideoMeta { file: string; duration: number; cams: Cam[] }
+
 export const NETWORK = networkJson as unknown as Network;
 const photos = photosJson as unknown as Photos;
-export const { PHOTOS, SCENERY, MODELS, IDEAS } = photos;
+export const { PHOTOS, SCENERY, MODEL, MODELS, IDEAS } = photos;
+export const VIDEOS = videosJson as Record<string, VideoMeta>;
 
 export const ST = NETWORK.stations;
 export const ROUTE = NETWORK.route;

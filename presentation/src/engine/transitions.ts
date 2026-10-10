@@ -1,9 +1,10 @@
 // Transitions entre deux slides : chacune lance l'entrée de la nouvelle slide au bon moment (env.enter)
 // et appelle done() quand elle a fini.
+import { deck3d } from "./three";
 import { passTrain } from "./train";
 import { H, IO3, NAVY, RED, W, WHITE, YELLOW, rand } from "./util";
 
-export type TransKind = "train" | "zoom" | "cube" | "iris" | "flap" | "push";
+export type TransKind = "train" | "zoom" | "cube" | "iris" | "flap" | "push" | "ter3d" | "ter3d-front";
 
 export interface TransEnv {
   stage: HTMLElement;
@@ -110,5 +111,33 @@ export const TRANSITIONS: Record<TransKind, Transition> = {
     bar.animate({ transform: dir > 0 ? ["translateX(1920px)", "translateX(-140px)"] : ["translateX(-140px)", "translateX(1920px)"] }, { duration: 1050, easing: ease })
       .finished.then(() => { bar.remove(); env.stage.classList.remove("persp"); done(); });
     env.enter(next, 650);
+  },
+
+  // Un TER 3D grandeur écran passe de profil, tout près, et découvre la slide derrière sa queue
+  ter3d(env, prev, next, dir, done, fast) {
+    if (!deck3d) return TRANSITIONS.train(env, prev, next, dir, done, fast);
+    [...prev.querySelectorAll("[data-in]")].forEach((el, i) => el.animate(
+      { opacity: [1, 0], transform: ["none", `translateX(${dir * 140}px)`] },
+      { duration: 420, delay: Math.min(i * 18, 260), easing: "ease-in", fill: "forwards" }));
+    next.classList.add("revealing");
+    next.classList.toggle("rev-right", dir < 0);
+    next.style.clipPath = dir > 0 ? `inset(0 ${W}px 0 0)` : `inset(0 0 0 ${W}px)`;
+    env.enter(next, 1000);
+    deck3d.transition(env.layer, "ter3d", dir, {
+      onReveal(rev) { next.style.clipPath = dir > 0 ? `inset(0 ${W - rev}px 0 0)` : `inset(0 0 0 ${W - rev}px)`; },
+      done() { next.style.clipPath = ""; next.classList.remove("revealing", "rev-right"); done(); },
+    });
+  },
+
+  // Un TER 3D fonce vers la caméra, remplit l'écran : la slide change derrière lui
+  "ter3d-front"(env, prev, next, dir, done, fast) {
+    if (!deck3d) return TRANSITIONS.zoom(env, prev, next, dir, done, fast);
+    next.style.visibility = "hidden";
+    prev.animate([{ transform: "scale(1)" }, { transform: "scale(1.08)" }], { duration: 1200, easing: "ease-in", fill: "forwards" });
+    env.enter(next, 1250);
+    deck3d.transition(env.layer, "front", dir, {
+      onCover() { next.style.visibility = ""; prev.style.visibility = "hidden"; },
+      done() { prev.style.visibility = ""; done(); },
+    });
   },
 };

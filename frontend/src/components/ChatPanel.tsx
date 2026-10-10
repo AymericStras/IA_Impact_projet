@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { api, ChatFailure, type CatalogPlace, type ChatAction, type ChatError } from "../api";
 import { useI18n } from "../i18n";
 import Trame from "./Trame";
+import VoiceMeter from "./VoiceMeter";
 import { MOBILE_QUERY } from "./MobileNav";
 import { dictationSupported, useDictation } from "./useDictation";
 
-type Message = { id: number; role: "user" | "assistant"; text: string } | { id: number; role: "error"; code: ChatError };
+// `dictated` : le message part d'une dictée (relue dans le champ) — c'est ce texte-là que l'IA a reçu
+type Message =
+  | { id: number; role: "user" | "assistant"; text: string; dictated?: boolean }
+  | { id: number; role: "error"; code: ChatError };
 
 // Assistant flottant : une bulle en bas à droite qui ouvre une fenêtre de discussion.
 // Les réponses viennent de POST /chat (modèle OpenAI côté backend, qui calcule les trajets avec le même moteur
@@ -27,14 +31,49 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
   const { t } = useI18n();
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  // Champ agrandi : il prend toute la fenêtre du chat pour relire un long texte (dictée de deux minutes)
+  const [expanded, setExpanded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const dictatedRef = useRef(false);
+  const caretToEndRef = useRef(false);
   // La dictée remplit le champ (à la suite de ce qui était déjà écrit) : on relit, on corrige, on envoie
   const dictation = useDictation((text) => {
     setDraft((d) => (d.trim() ? d.trimEnd() + " " + text : text));
-    inputRef.current?.focus();
+    dictatedRef.current = true;
+    caretToEndRef.current = true;
   });
   const listening = dictation.phase !== "idle";
+
+  // Le champ grandit avec le texte (jusqu'au plafond de max-height, puis il défile) : une dictée de deux minutes
+  // se relit en entier avant d'être envoyée. Après une dictée, curseur et défilement vont à la fin du texte ajouté.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "";
+    if (!expanded) {
+      el.style.height = "auto";
+      const border = el.offsetHeight - el.clientHeight;
+      el.style.height = el.scrollHeight + border + "px";
+    }
+    if (caretToEndRef.current) {
+      caretToEndRef.current = false;
+      // Dictée trop longue pour le champ : on l'agrandit, le texte se relit sans défiler
+      if (!expanded && el.scrollHeight > el.clientHeight + 4) {
+        caretToEndRef.current = true;
+        return setExpanded(true);
+      }
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [draft, listening, open, expanded]);
+  // Le bouton d'agrandissement n'apparaît que si le texte déborde (ou que le champ est déjà agrandi)
+  const [overflows, setOverflows] = useState(false);
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    setOverflows(!!el && el.scrollHeight > el.clientHeight + 4);
+  }, [draft, expanded, listening, open]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -54,7 +93,9 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
     text = text.trim();
     if (!text || busy) return;
     setDraft("");
-    const mine: Message = { id: Date.now(), role: "user", text };
+    setExpanded(false);
+    const mine: Message = { id: Date.now(), role: "user", text, dictated: dictatedRef.current || undefined };
+    dictatedRef.current = false;
     // Historique envoyé : les échanges réussis seulement (une erreur affichée n'est pas un tour de parole)
     const history = [...messages, mine].flatMap((m) => (m.role === "error" ? [] : [{ role: m.role, content: m.text }]));
     setMessages((m) => [...m, mine]);
@@ -73,11 +114,18 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
     e.preventDefault();
     ask(draft);
   }
+  // Entrée envoie, Maj + Entrée va à la ligne ; sur téléphone, Entrée va à la ligne (le bouton envoie)
+  function onKeyDown(e: ReactKeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing || window.matchMedia(MOBILE_QUERY).matches) return;
+    e.preventDefault();
+    ask(draft);
+  }
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <>
       {open && (
-        <section className={docked ? "chat-pop chat-dock" : "chat-pop"} role={docked ? "region" : "dialog"} aria-label={t.chatTitle}>
+        <section className={`chat-pop${docked ? " chat-dock" : ""}${expanded && !listening ? " is-expanded" : ""}`} role={docked ? "region" : "dialog"} aria-label={t.chatTitle}>
           <div className="hero hero-compact chat-head">
             <h1>{t.chatTitle}</h1>
             <button className="chat-close" onClick={() => setOpen(false)} aria-label={t.close}>
@@ -103,6 +151,12 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
                 </p>
               ) : (
                 <p key={m.id} className={`chat-msg ${m.role === "user" ? "user" : "bot"}`}>
+                  {m.role === "user" && m.dictated && (
+                    <span className="chat-msg-src">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+                      {t.chatDictated}
+                    </span>
+                  )}
                   {m.text}
                 </p>
               ),
@@ -124,26 +178,64 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
             </p>
           )}
           {listening ? (
-            <div className="chat-input chat-recording" role="group" aria-label={t.micStart}>
-              <span className={dictation.phase === "recording" ? "chat-rec-dot live" : "chat-rec-dot"} aria-hidden="true" />
-              <span className="chat-rec-label" role="status">
-                {dictation.phase === "requesting" ? t.micRequesting : dictation.phase === "recording" ? t.micRecording : t.micTranscribing}
-              </span>
-              {dictation.phase === "recording" && (
-                <span className="chat-rec-time">
-                  {Math.floor(dictation.elapsed / 60)}:{String(dictation.elapsed % 60).padStart(2, "0")}
+            <div className={`chat-recorder is-${dictation.phase}`} role="group" aria-label={t.micStart}>
+              <div className="rec-top">
+                <span className={dictation.phase === "recording" ? "chat-rec-dot live" : "chat-rec-dot"} aria-hidden="true" />
+                <span className="chat-rec-label" role="status">
+                  {dictation.phase === "requesting" ? t.micRequesting : dictation.phase === "recording" ? t.micRecording : t.micTranscribing}
                 </span>
-              )}
-              <button type="button" className="chat-rec-cancel" onClick={dictation.cancel} aria-label={t.micCancel}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
-              </button>
-              <button type="button" onClick={dictation.stop} disabled={dictation.phase !== "recording"} aria-label={t.micStop}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
-              </button>
+                <span className="chat-rec-time">
+                  {fmt(dictation.elapsed)}
+                  <span className="rec-max" aria-label={t.micMaxLabel}> / {fmt(dictation.maxSeconds)}</span>
+                </span>
+              </div>
+              <VoiceMeter stream={dictation.stream} busy={dictation.phase !== "recording"} label={t.micHeard} />
+              <div className="rec-progress" aria-hidden="true">
+                <span style={{ width: `${Math.min(100, (dictation.elapsed / dictation.maxSeconds) * 100)}%` }} />
+              </div>
+              <div className="rec-actions">
+                <button type="button" className="rec-cancel" onClick={dictation.cancel} aria-label={t.micCancel}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
+                  {t.micCancelShort}
+                </button>
+                <button type="button" className="rec-stop" onClick={dictation.stop} disabled={dictation.phase !== "recording"} aria-label={t.micStop}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+                  {t.micDone}
+                </button>
+              </div>
             </div>
           ) : (
             <form className="chat-input" onSubmit={send}>
-              <input ref={inputRef} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={t.chatPh} aria-label={t.chatPh} />
+              <div className="chat-field">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  if (!e.target.value.trim()) dictatedRef.current = false;
+                }}
+                onKeyDown={onKeyDown}
+                placeholder={t.chatPh}
+                aria-label={t.chatPh}
+              />
+              {(overflows || expanded) && (
+                <button
+                  type="button"
+                  className="chat-expand"
+                  onClick={() => setExpanded((x) => !x)}
+                  aria-pressed={expanded}
+                  aria-label={expanded ? t.chatShrink : t.chatExpand}
+                  title={expanded ? t.chatShrink : t.chatExpand}
+                >
+                  {expanded ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                  )}
+                </button>
+              )}
+              </div>
               {dictationSupported() && (
                 <button type="button" className="chat-mic" onClick={dictation.start} disabled={busy} aria-label={t.micStart} title={t.micStart}>
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -152,8 +244,8 @@ export default function ChatPanel({ open, setOpen, docked = false, catalog, onAc
                   </svg>
                 </button>
               )}
-              <button type="submit" disabled={!draft.trim() || busy} aria-label={t.chatSend}>
-                {t.chatSend}
+              <button type="submit" className="chat-send" disabled={!draft.trim() || busy} aria-label={t.chatSend} title={t.chatSend}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
               </button>
             </form>
           )}

@@ -19,10 +19,9 @@ export const SVGNS = "http://www.w3.org/2000/svg";
 
 export const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** Options d'URL : `?lite` retire les scènes WebGL, `?story` remet l'histoire de Claire */
+/** Option d'URL : `?lite` retire les scènes WebGL (si une machine rame pendant la présentation) */
 export const FLAGS = {
   lite: /[?&]lite\b/.test(location.search),
-  story: /[?&]story\b/.test(location.search),
 };
 
 export const fmtInt = new Intl.NumberFormat("fr-FR");

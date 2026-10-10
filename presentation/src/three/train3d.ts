@@ -1,10 +1,10 @@
-// Le TER liO en 3D (rame réversible de n voitures), utilisé par l'histoire low poly.
+// Le TER liO en 3D (rame réversible de n voitures), utilisé par les scènes 3D de la carte, les transitions et l'histoire low poly.
 import * as THREE from "three";
 
 const NAVY = 0x0f2149, RED = 0xc90c0f, YELLOW = 0xffd500, WHITE = 0xf4f5f8, GREY = 0xc9cdd8;
-const mat = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
+export const mat = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1, ...extra });
-const MATS = {
+export const MATS = {
   body: new THREE.MeshPhysicalMaterial({ color: RED, roughness: 0.32, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
   navy: mat(NAVY), white: mat(WHITE), yellow: mat(YELLOW, { roughness: 0.4 }), roof: mat(0x8f0a0c, { roughness: 0.6 }),
   grey: mat(GREY, { roughness: 0.5, metalness: 0.4 }),
@@ -20,7 +20,7 @@ const BODY = new THREE.ExtrudeGeometry(PROFILE, { depth: WID, bevelEnabled: true
 BODY.translate(0, 0, -WID / 2);
 const WHEEL = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 18); WHEEL.rotateX(Math.PI / 2);
 const LAMP = new THREE.SphereGeometry(0.045, 10, 8);
-const box = (bw: number, bh: number, bd: number, m: THREE.Material, x: number, y: number, z: number) => {
+export const box = (bw: number, bh: number, bd: number, m: THREE.Material, x: number, y: number, z: number) => {
   const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), m);
   b.position.set(x, y, z);
   return b;

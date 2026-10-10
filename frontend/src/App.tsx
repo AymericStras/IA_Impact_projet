@@ -15,7 +15,7 @@ import { TrainSim } from "./sim";
 import { scheduleOf, type Booking, type Proposal } from "./school";
 import type { Recommendations } from "./recommendations";
 import RecoPanel from "./components/RecoPanel";
-import { departuresOf, fromClock, pickDeparture, toClock } from "./reliability";
+import { OFFER_END, OFFER_START, departuresOf, fromClock, pickDeparture, toClock } from "./reliability";
 import { BottomNav, SheetGrip, sheetContentHeight, sheetHeights, useSheetDrag, useTopRoom, useViewport, type NavKey, type Snap } from "./components/MobileNav";
 
 type Tab = "route" | "places";
@@ -35,7 +35,8 @@ export default function App() {
   const [routeError, setRouteError] = useState<ErrorCode | null>(null);
   const [loading, setLoading] = useState(false);
   // Heure de départ voulue (« HH:MM ») : celle du projet scolaire quand on vient d'une idée de sortie, sinon maintenant
-  const [departAfter, setDepartAfter] = useState(() => toClock(new Date().getHours() * 60 + new Date().getMinutes()));
+  // Heure courante, ramenée dans la plage de l'offre (8 h - 16 h)
+  const [departAfter, setDepartAfter] = useState(() => toClock(Math.min(OFFER_END, Math.max(OFFER_START, new Date().getHours() * 60 + new Date().getMinutes()))));
   // Idée de sortie ouverte : on bascule entre son aller et son retour, chacun avec son heure, puis on pré-réserve
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [dir, setDir] = useState<TripDir>("out");
@@ -67,6 +68,18 @@ export default function App() {
       .catch((e) => setLoadError(e instanceof ApiError ? e.code : "network"));
   }, []);
 
+  // Lien direct vers un trajet : /?from=Toulouse&to=Carcassonne (&at=09:30 pour l'heure de départ)
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const f = q.get("from")?.trim();
+    const d = q.get("to")?.trim();
+    if (!f || !d) return;
+    const at = q.get("at");
+    setFrom(f);
+    setTo(d);
+    search(f, d, at && /^\d{1,2}:\d{2}$/.test(at) ? at : undefined);
+  }, []);
+
   const byId = useMemo(() => new Map(places.map((p) => [p.id, p])), [places]);
   // Gare de départ / d'arrivée déjà choisie (nom exact, sans casse ni accents) : la carte la colore avant même
   // qu'un itinéraire existe, pour que l'on voie d'un coup d'œil d'où l'on part et où l'on va
@@ -74,7 +87,7 @@ export default function App() {
   const fromId = byName.get(normName(from)) ?? null;
   const toId = byName.get(normName(to)) ?? null;
 
-  async function search(f = from, d = to) {
+  async function search(f = from, d = to, at?: string) {
     if (!f.trim() || !d.trim()) return;
     setLoading(true);
     setRouteError(null);
@@ -84,7 +97,11 @@ export default function App() {
       setProposal(null);
       setRet(null);
       setDir("out");
-      setDepartAfter(toClock(new Date().getHours() * 60 + new Date().getMinutes()));
+      setDepartAfter(at ?? toClock(new Date().getHours() * 60 + new Date().getMinutes()));
+      // Le trajet trouvé s'écrit dans l'adresse : la copier suffit pour le partager (?from=…&to=…)
+      const q = new URLSearchParams({ from: f.trim(), to: d.trim() });
+      if (at) q.set("at", at);
+      history.replaceState(null, "", `${location.pathname}?${q}`);
       setSelected(null);
     } catch (e) {
       setRoute(null);
@@ -208,6 +225,7 @@ export default function App() {
     setRoute(null);
     setRouteError(null);
     setVisit(null);
+    history.replaceState(null, "", location.pathname);
   };
   // Ce qu'on pré-réserve, quel que soit le chemin : l'idée de sortie avec son projet, ou le trajet trouvé sur la carte
   // (aller seul ou aller-retour) sans projet — le formulaire demandera alors le groupe. Seulement si tout est en TER.

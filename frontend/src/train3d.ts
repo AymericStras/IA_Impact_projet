@@ -20,6 +20,11 @@ export type Train3D = {
   // Taille affichée (1 = pleine taille) : la carte la réduit quand on dézoome
   setScale(scale: number): void;
   frame(now: number): void;
+  // Le point écran (clientX, clientY) touche-t-il la rame ?
+  hit(x: number, y: number): boolean;
+  // Porte flottante au-dessus de la voiture de tête : un clic dessus appelle onDoor
+  showDoor(on: boolean): void;
+  onDoor: (() => void) | null;
   dispose(): void;
 };
 
@@ -259,7 +264,7 @@ function buildConductor(glowTex: THREE.Texture) {
 }
 
 // `scale` réduit la rame à l'écran (téléphone, dézoom) : la scène reste la même, seul le canvas affiché rétrécit
-export function createTrain3D(scale = 1): Train3D {
+export function createTrain3D(scale = 1, doorLabel = ""): Train3D {
   const el = document.createElement("div");
   el.className = "train-3d";
   const resize = () => {
@@ -373,6 +378,7 @@ export function createTrain3D(scale = 1): Train3D {
     const shade = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.5), shadowMat);
     shade.rotation.x = -Math.PI / 2;
     shade.position.y = 0.005 / S;
+    shade.raycast = () => {}; // l'ombre au sol ne compte pas comme un clic sur le train
     pivot.add(shade);
     return { pivot, caisse, bogies: lead ? bogies : [bogies[1], bogies[0]] };
   }
@@ -495,8 +501,45 @@ export function createTrain3D(scale = 1): Train3D {
 
   let mode: TrainMode = "stopped", speed = 1, last = 0, roll = 0, hop = 0, prevMode: TrainMode = "stopped";
 
-  return {
+  // Porte HTML (cliquable, le reste du canvas laisse passer la souris vers la carte), suit la voiture de tête
+  const door = document.createElement("button");
+  door.type = "button";
+  door.className = "train-door";
+  door.innerHTML = `<span class="train-door-frame"><span class="train-door-leaf"></span><span class="train-door-leaf"></span></span><span class="train-door-label"></span>`;
+  door.querySelector(".train-door-label")!.textContent = doorLabel;
+  door.setAttribute("aria-label", doorLabel);
+  door.addEventListener("click", (e) => {
+    e.stopPropagation();
+    api.onDoor?.();
+  });
+  for (const ev of ["pointerdown", "mousedown", "touchstart", "dblclick"]) door.addEventListener(ev, (e) => e.stopPropagation());
+  el.appendChild(door);
+  let doorOn = false;
+  const doorPoint = new THREE.Vector3();
+  const placeDoor = () => {
+    if (!doorOn) return;
+    lead.caisse.localToWorld(doorPoint.set(LEN * 0.45, HGT + 0.5, 0));
+    doorPoint.project(camera);
+    door.style.left = `${((doorPoint.x + 1) / 2) * 100}%`;
+    door.style.top = `${((1 - doorPoint.y) / 2) * 100}%`;
+  };
+  const pick = new THREE.Raycaster();
+
+  const api: Train3D = {
     el,
+    onDoor: null,
+    hit(x, y) {
+      const r = renderer.domElement.getBoundingClientRect();
+      if (!r.width || x < r.left || x > r.right || y < r.top || y > r.bottom) return false;
+      pick.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), camera);
+      return pick.intersectObject(train, true).length > 0;
+    },
+    showDoor(on) {
+      if (on === doorOn) return;
+      doorOn = on;
+      door.classList.toggle("is-on", on);
+      placeDoor();
+    },
     setTrack(points) {
       const next: { x: number; z: number }[] = [];
       for (const [dx, dy] of points) {
@@ -550,6 +593,7 @@ export function createTrain3D(scale = 1): Train3D {
       }
       renderer.clear();
       renderer.render(scene, camera);
+      placeDoor();
       if (show > 0) {
         renderer.clearDepth();
         renderer.render(front, camera);
@@ -568,4 +612,5 @@ export function createTrain3D(scale = 1): Train3D {
       el.remove();
     },
   };
+  return api;
 }

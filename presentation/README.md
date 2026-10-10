@@ -11,7 +11,8 @@ npm run typecheck     # vérification TypeScript
 npm run build         # version autonome dans dist/ (s'ouvre depuis n'importe quel dossier)
 ```
 
-Options d'URL : `?lite` retire l'intro 3D (WebGL), `?story` remet l'histoire de Claire.
+Option d'URL : `?lite` retire les scènes WebGL (intros 3D, « Suivez le train », histoire low poly) et remplace les
+transitions TER 3D par le TER 2D, au cas où une machine rame pendant la présentation.
 
 **→ / Espace / clic** : suivante · **←** : précédente · **F** ou bouton : plein écran · `#12` dans l'URL ouvre la 12ᵉ slide.
 
@@ -23,9 +24,10 @@ Options d'URL : `?lite` retire l'intro 3D (WebGL), `?story` remet l'histoire de 
 | `src/textes.ts` | tous les textes (français). `<em>` = souligné rouge, `<b>` = gras |
 | `src/components/` | `Deck` (scène 1920 × 1080, clavier, souris), `Controls` (ligne de train, plein écran), `Net` (carte du réseau), titres en mots, trame |
 | `src/engine/` | moteur d'animation : entrée des blocs, mouvements lents, transitions, TER 2D, trains sur la carte |
-| `src/three/` | intro 3D et histoire low poly (three.js), chargées à la demande |
-| `src/data/` | `network.json`, `photos.json` (générés), typés par `index.ts` |
+| `src/three/` | scènes 3D de la carte (intro courte, intro complète, « Suivez le train »), transitions TER 3D et histoire low poly (three.js), chargées à la demande |
+| `src/data/` | `network.json`, `photos.json`, `videos.json` (générés), typés par `index.ts` |
 | `public/assets/` | photos, paysages, images de l'histoire, modèles, vidéos |
+| `public/vendor/` | `<model-viewer>` et son décodeur meshopt, pour le monument 3D (slide « Lieux à découvrir ») |
 
 **Pourquoi un moteur à côté de React.** React rend le contenu des slides une fois ; ensuite le moteur anime le DOM
 directement (Web Animations + une boucle `requestAnimationFrame` partagée). Aucun rendu React pendant un mouvement :
@@ -39,7 +41,9 @@ Dans le contenu, un bloc porte `data-in` (entrée : `up`, `left`, `right`, `zoom
 Le reste (démo, carte, compteur) va dans `enter({ el, t0, run })` : `run.tick` / `run.later` s'arrêtent tout seuls
 quand on quitte la slide.
 
-Transitions (`trans` de la slide d'arrivée) : `train` (TER dessiné en 2D), `zoom`, `cube`, `iris`, `flap`, `push`.
+Transitions (`trans` de la slide d'arrivée) : `train` (TER dessiné en 2D), `ter3d` (TER 3D de profil), `ter3d-front`
+(TER 3D qui fonce vers la caméra), `zoom`, `cube`, `iris`, `flap`, `push`. Tant que three.js n'est pas chargé (ou
+avec `?lite`), `ter3d` retombe sur `train` et `ter3d-front` sur `zoom`.
 
 **Fluidité** : n'animer que `transform`, `opacity`, `clip-path` ; ce qui bouge à chaque image sur une carte va dans
 le SVG superposé (`.net-ov`) ; pas d'animation à l'intérieur d'un SVG ou sous un `filter`. Ce sont ces règles qui ont
@@ -52,5 +56,6 @@ backend/.venv/bin/python presentation/scripts/build-data.py   # réseau, itinér
 presentation/scripts/story-upscale.sh                          # images de l'histoire -> JPEG 2048 px
 ```
 
-Les vidéos du site (`scripts/record/`) ne sont plus dans le diapo ; les scripts restent pour les refaire
-(`cd scripts/record && npm install`, le site doit tourner : front :5173 + API :8000).
+Les vidéos du site sont enregistrées par `scripts/record/` (Claude pilote le vrai site) : pour les refaire,
+`cd scripts/record && npm install`, le site doit tourner (front :5173 + API :8000) ; chaque démo réécrit
+`src/data/videos.json`.
