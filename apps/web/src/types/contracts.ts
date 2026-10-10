@@ -157,6 +157,6 @@ export interface ClientConfig {
   max_audio_bytes: number;
   max_message_chars: number;
   timezone: string;
-  /** How the backend reaches the planner. Informational; the UI does not act on it. */
+  /** How the backend reaches the planner. The UI offers the search of proposals when it is "simulated" or "http". */
   planner_mode?: "off" | "simulated" | "http";
 }

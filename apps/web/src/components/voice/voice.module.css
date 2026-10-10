@@ -250,6 +250,117 @@
   height: 100%;
 }
 
+/* ------------------------------------------------------------------ journey stages */
+
+/*
+  Actions of a journey stage, rendered into the dock (outside the scrolling stage) so the
+  primary action is always reachable: secondary actions first, the one primary action last.
+*/
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-inline: auto;
+  width: 100%;
+  /* The widest stage column (48rem) minus its gutters: the actions line up with the cards. */
+  max-width: 46rem;
+}
+
+/* Same, for the narrow stages (42rem). */
+.actionsNarrow {
+  max-width: 40rem;
+}
+
+.actions:empty {
+  display: none;
+}
+
+.actionsPrimary {
+  margin-left: auto;
+}
+
+/* The secondary actions are plain items of the row… */
+.actionsSecondary {
+  display: contents;
+}
+
+/* …and the button that folds them exists on the narrowest shells only (see the tiny tier). */
+.actionsMore {
+  display: none;
+}
+
+/* One card at a time: a horizontal swipe changes the card, a vertical one scrolls the stage. */
+.slide {
+  touch-action: pan-y;
+}
+
+/* The day as a vertical line of dated points. */
+.timeline {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineItem {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.timelineItem::before {
+  content: "";
+  position: absolute;
+  top: 0.45rem;
+  left: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--primary);
+  border-radius: 9999px;
+  background-color: var(--card);
+}
+
+.timelineItem[data-kind="leg"]::before {
+  background-color: var(--primary);
+}
+
+.timelineItem:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 1.35rem;
+  bottom: -0.875rem;
+  left: calc(0.375rem - 1px);
+  width: 2px;
+  background-color: var(--border);
+}
+
+/* Narrow shells: the primary action takes its own full row, under the secondary ones. */
+@container voice (max-width: 35.999rem) {
+  .action {
+    flex: 1 1 auto;
+  }
+
+  .actionsPrimary {
+    flex: 1 0 100%;
+  }
+}
+
+/*
+  Tiny shells (very large text on a phone): every button takes a full row of several lines,
+  so two or more secondary actions fold behind « Autres choix » and the stage keeps its room.
+*/
+@container voice (max-width: 16.999rem) {
+  .actions[data-collapsible="true"] .actionsMore {
+    display: inline-flex;
+  }
+
+  .actions[data-collapsible="true"][data-open="false"] .actionsSecondary {
+    display: none;
+  }
+}
+
 /* ------------------------------------------------------------------ tiers */
 
 @container voice (max-height: 32.5rem) and (min-width: 30rem) {
@@ -267,6 +378,19 @@
   .listen {
     flex-direction: row;
     align-items: center;
+  }
+
+  /* The dock is a column on the right: one action per row, the primary one at the bottom. */
+  .actions {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+
+  .action,
+  .actionsPrimary {
+    flex: 0 0 auto;
+    margin-left: 0;
   }
 
   .listenText {
@@ -316,5 +440,49 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+/* ------------------------------------------------------------------ print */
+
+/*
+  Printing is offered on the travel file only. The paper gets the stage content — the file,
+  with its simulation label — and none of the chrome: no top bar, no actions, no banners.
+*/
+@media print {
+  .shell {
+    display: block;
+    /* A size container cannot take its height from its content: on paper the shell is only
+       an inline-size container (width tiers and cqi units keep working), as tall as the file. */
+    container-type: inline-size;
+    height: auto;
+    overflow: visible;
+    background-color: #fff;
+    color: #000;
+  }
+
+  .header,
+  .dock,
+  .noPrint {
+    display: none !important;
+  }
+
+  .body {
+    display: block;
+  }
+
+  .main {
+    overflow: visible;
+  }
+
+  .stageSlot {
+    display: block;
+    min-height: 0;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .printBlock {
+    break-inside: avoid;
   }
 }

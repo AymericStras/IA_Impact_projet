@@ -1,9 +1,21 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  adjustmentsJourney,
+  bookedJourney,
+  fakeJourneyService,
+  itinerariesJourney,
+  pendingJourney,
+  reviewJourney,
+} from "@/components/voice/journey/journeyFixtures";
 import { ApiError, type ConversationService } from "@/services/types";
 import type { ConversationResponse } from "@/types/contracts";
+import type { JourneyStage } from "@/types/journey";
 import {
+  BOOKING_AUTO_CHECK_MS,
   initialVoiceFlowState,
+  isJourneyStage,
+  isOpenJourneyStage,
   snapshotOf,
   stageFromServer,
   useVoiceFlow,
@@ -553,5 +565,451 @@ describe("snapshotOf", () => {
       },
     });
     expect(snapshotOf(dateOnly).anyKnown).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The journey after confirmation: the stage is the server's `journey.stage`.
+// ---------------------------------------------------------------------------------------
+
+const SERVER_STAGES: JourneyStage[] = [
+  "destinations",
+  "itineraries",
+  "adjustments",
+  "no_match",
+  "review",
+  "booking_pending",
+  "booked",
+  "booking_refused",
+  "closed",
+];
+const OPEN_STAGES: JourneyStage[] = ["destinations", "itineraries", "adjustments", "no_match", "review", "booking_refused"];
+const LOCKED_STAGES: JourneyStage[] = ["booking_pending", "booked", "closed"];
+
+const journeyAt = (stage: JourneyStage | null): VoiceFlowEvent => ({ type: "JOURNEY_STATE", stage });
+/** A confirmed conversation whose journey is on `stage`. */
+const onJourney = (stage: JourneyStage): VoiceFlowState => run([booted(CONFIRMED), journeyAt(stage)]);
+
+describe("voiceFlowReducer — journey stages", () => {
+  it.each(SERVER_STAGES)("restores a journey in progress on its stage: %s", (stage) => {
+    expect(onJourney(stage)).toMatchObject({ stage, journeyStage: stage, reviewing: false, searchRestart: false });
+  });
+
+  it("stays on done while there is no journey", () => {
+    const state = run([booted(CONFIRMED), journeyAt(null)]);
+    expect(state).toMatchObject({ stage: "done", journeyStage: null });
+    // Nothing changed: the same object comes back.
+    expect(voiceFlowReducer(state, journeyAt(null))).toBe(state);
+  });
+
+  it("follows every answer of the server, from the search to the end", () => {
+    const path: JourneyStage[] = ["destinations", "itineraries", "review", "booking_pending", "booked", "closed"];
+    let state = run([booted(CONFIRMED)]);
+    for (const stage of path) {
+      state = voiceFlowReducer(state, journeyAt(stage));
+      expect(state.stage).toBe(stage);
+    }
+  });
+
+  it("follows the branches: adjustments, no match, refusal", () => {
+    expect(run([journeyAt("adjustments")], onJourney("destinations")).stage).toBe("adjustments");
+    expect(run([journeyAt("itineraries")], onJourney("adjustments")).stage).toBe("itineraries");
+    expect(run([journeyAt("no_match")], onJourney("destinations")).stage).toBe("no_match");
+    expect(run([journeyAt("booking_refused")], onJourney("booking_pending")).stage).toBe("booking_refused");
+    expect(run([journeyAt("review")], onJourney("booking_refused")).stage).toBe("review");
+  });
+
+  it("keeps the journey stage when an accepted adjustment refreshes the confirmed requirements", () => {
+    const state = onJourney("itineraries");
+    expect(voiceFlowReducer(state, booted(CONFIRMED))).toBe(state);
+  });
+
+  it("knows which stages belong to the journey and which are still open to a change", () => {
+    for (const stage of [...SERVER_STAGES, "travel_file", "feedback"] as const) expect(isJourneyStage(stage)).toBe(true);
+    for (const stage of ["ask", "listen", "think", "sheet", "done", "loading"] as const) expect(isJourneyStage(stage)).toBe(false);
+    for (const stage of OPEN_STAGES) expect(isOpenJourneyStage(stage)).toBe(true);
+    for (const stage of LOCKED_STAGES) expect(isOpenJourneyStage(stage)).toBe(false);
+    expect(isOpenJourneyStage(null)).toBe(false);
+  });
+});
+
+describe("voiceFlowReducer — changing one's mind during the journey", () => {
+  it.each(OPEN_STAGES)("goes back to the destinations from %s, the server's stage unchanged", (stage) => {
+    const state = run([{ type: "DESTINATIONS_REQUESTED" }], onJourney(stage));
+    expect(state).toMatchObject({ stage: "destinations", journeyStage: stage });
+  });
+
+  it.each(LOCKED_STAGES)("does not go back to the destinations once a booking request exists: %s", (stage) => {
+    const state = onJourney(stage);
+    expect(voiceFlowReducer(state, { type: "DESTINATIONS_REQUESTED" })).toBe(state);
+    expect(voiceFlowReducer(state, { type: "MODIFY_REQUESTED" })).toBe(state);
+  });
+
+  it("returns from the destinations to the server's stage without choosing", () => {
+    const state = run([{ type: "DESTINATIONS_REQUESTED" }, { type: "JOURNEY_VIEW_CLOSED" }], onJourney("review"));
+    expect(state).toMatchObject({ stage: "review", journeyStage: "review" });
+  });
+
+  it("lands on the server's stage after a new choice, even when that stage is the same as before", () => {
+    // Looking at the destinations from the itineraries, then choosing one: itineraries again.
+    const state = run([{ type: "DESTINATIONS_REQUESTED" }, journeyAt("itineraries")], onJourney("itineraries"));
+    expect(state.stage).toBe("itineraries");
+  });
+
+  it("looks at the itineraries again from the review only", () => {
+    expect(run([{ type: "ITINERARIES_REQUESTED" }], onJourney("review"))).toMatchObject({ stage: "itineraries", journeyStage: "review" });
+    for (const stage of SERVER_STAGES.filter((item) => item !== "review")) {
+      const state = onJourney(stage);
+      expect(voiceFlowReducer(state, { type: "ITINERARIES_REQUESTED" })).toBe(state);
+    }
+  });
+
+  it.each(OPEN_STAGES)("opens the sheet of the confirmed request from %s and comes back to it untouched", (stage) => {
+    const sheet = run([{ type: "MODIFY_REQUESTED" }], onJourney(stage));
+    expect(sheet).toMatchObject({ stage: "sheet", reviewing: true, journeyStage: stage, searchRestart: false });
+    expect(voiceFlowReducer(sheet, { type: "CONFIRMATION_REOPENED" })).toMatchObject({ stage, reviewing: false });
+  });
+
+  it("opens the sheet from the destinations looked at again, and comes back to the server's stage", () => {
+    const sheet = run([{ type: "DESTINATIONS_REQUESTED" }, { type: "MODIFY_REQUESTED" }], onJourney("review"));
+    expect(sheet).toMatchObject({ stage: "sheet", reviewing: true });
+    expect(voiceFlowReducer(sheet, { type: "CONFIRMATION_REOPENED" }).stage).toBe("review");
+  });
+
+  it("only remembers an answer of the server while the sheet is open", () => {
+    const sheet = run([{ type: "MODIFY_REQUESTED" }, journeyAt("itineraries")], onJourney("review"));
+    expect(sheet).toMatchObject({ stage: "sheet", reviewing: true, journeyStage: "itineraries" });
+  });
+
+  it("does not record from a journey stage: speech goes through the sheet", () => {
+    const state = onJourney("destinations");
+    expect(voiceFlowReducer(state, { type: "LISTEN_STARTED" })).toBe(state);
+    expect(voiceFlowReducer(state, { type: "TEXT_SUBMITTED", text: "plutôt 18 h" })).toBe(state);
+  });
+});
+
+describe("voiceFlowReducer — the journey is dropped with the confirmation", () => {
+  it.each(OPEN_STAGES)("an edit on the sheet clears the journey of %s and says the search restarts", (stage) => {
+    const edited = run([{ type: "MODIFY_REQUESTED" }, booted(PARTIAL)], onJourney(stage));
+    expect(edited).toMatchObject({ stage: "sheet", reviewing: false, searchRestart: true });
+    // The server dropped the journey: nothing of it is left.
+    const cleared = voiceFlowReducer(edited, journeyAt(null));
+    expect(cleared).toMatchObject({ stage: "sheet", journeyStage: null, searchRestart: true });
+    expect(isJourneyStage(cleared.stage)).toBe(false);
+  });
+
+  it.each(SERVER_STAGES)("a confirmation lost while on %s lands on the sheet with the notice", (stage) => {
+    const state = run([booted(PARTIAL), journeyAt(null)], onJourney(stage));
+    expect(state).toMatchObject({ stage: "sheet", journeyStage: null, reviewing: false, searchRestart: true });
+  });
+
+  it("leaves the local views too", () => {
+    for (const event of [{ type: "TRAVEL_FILE_OPENED" }, { type: "FEEDBACK_OPENED" }] as const) {
+      const state = run([event, booted(PARTIAL), journeyAt(null)], onJourney("booked"));
+      expect(state).toMatchObject({ stage: "sheet", journeyStage: null });
+    }
+  });
+
+  it("confirming again leads to done, without journey and without notice", () => {
+    const state = run([{ type: "MODIFY_REQUESTED" }, booted(PARTIAL), journeyAt(null), booted(CONFIRMED)], onJourney("review"));
+    expect(state).toMatchObject({ stage: "done", journeyStage: null, searchRestart: false, reviewing: false });
+  });
+
+  it("the notice can be closed", () => {
+    const state = run([{ type: "MODIFY_REQUESTED" }, booted(PARTIAL), journeyAt(null), { type: "SEARCH_RESTART_DISMISSED" }], onJourney("review"));
+    expect(state).toMatchObject({ stage: "sheet", searchRestart: false });
+    expect(voiceFlowReducer(state, { type: "SEARCH_RESTART_DISMISSED" })).toBe(state);
+  });
+
+  it("a spoken change from the sheet behaves like an edit", () => {
+    const state = run(
+      [
+        { type: "MODIFY_REQUESTED" },
+        { type: "LISTEN_STARTED" },
+        { type: "RECORDED" },
+        { type: "TRANSCRIBED", transcript: "plutôt un retour à 18 h" },
+        // The server answers while the analysis is still on screen: remembered, not shown.
+        booted(PARTIAL),
+        journeyAt(null),
+        { type: "EXTRACTION_RETURNED" },
+        { type: "UNDERSTOOD", snapshot: PARTIAL, applied: true },
+      ],
+      onJourney("itineraries"),
+    );
+    expect(state).toMatchObject({ stage: "sheet", journeyStage: null, reviewing: false, searchRestart: true });
+  });
+
+  it("a message that leaves the confirmation untouched returns to the journey", () => {
+    const state = run(
+      [{ type: "MODIFY_REQUESTED" }, { type: "TEXT_SUBMITTED", text: "merci" }, { type: "EXTRACTION_RETURNED" }, { type: "UNDERSTOOD", snapshot: CONFIRMED, applied: true }],
+      onJourney("itineraries"),
+    );
+    expect(state).toMatchObject({ stage: "itineraries", reviewing: false, searchRestart: false });
+  });
+
+  it("a journey that disappears while the request is still confirmed returns to done", () => {
+    expect(run([journeyAt(null)], onJourney("destinations"))).toMatchObject({ stage: "done", journeyStage: null, searchRestart: false });
+  });
+
+  it("a new trip forgets the journey and the notice", () => {
+    const state = run([{ type: "MODIFY_REQUESTED" }, booted(PARTIAL), { type: "RESET" }], onJourney("review"));
+    expect(state).toMatchObject({ stage: "ask", booted: false, journeyStage: null, searchRestart: false });
+    // The journey vanishing after the reset is not a changed request.
+    expect(voiceFlowReducer(state, journeyAt(null)).searchRestart).toBe(false);
+  });
+});
+
+describe("voiceFlowReducer — after the booking", () => {
+  it("opens the travel file of a confirmed booking, and of a closed journey", () => {
+    expect(run([{ type: "TRAVEL_FILE_OPENED" }], onJourney("booked"))).toMatchObject({ stage: "travel_file", journeyStage: "booked" });
+    expect(run([{ type: "TRAVEL_FILE_OPENED" }], onJourney("closed"))).toMatchObject({ stage: "travel_file", journeyStage: "closed" });
+    for (const stage of SERVER_STAGES.filter((item) => item !== "booked" && item !== "closed")) {
+      const state = onJourney(stage);
+      expect(voiceFlowReducer(state, { type: "TRAVEL_FILE_OPENED" })).toBe(state);
+    }
+  });
+
+  it("asks for feedback once the booking is confirmed, and only then", () => {
+    expect(run([{ type: "FEEDBACK_OPENED" }], onJourney("booked")).stage).toBe("feedback");
+    expect(run([{ type: "TRAVEL_FILE_OPENED" }, { type: "FEEDBACK_OPENED" }], onJourney("booked")).stage).toBe("feedback");
+    for (const stage of SERVER_STAGES.filter((item) => item !== "booked")) {
+      const state = onJourney(stage);
+      expect(voiceFlowReducer(state, { type: "FEEDBACK_OPENED" })).toBe(state);
+    }
+  });
+
+  it("returns from the file or the feedback to the server's stage", () => {
+    expect(run([{ type: "TRAVEL_FILE_OPENED" }, { type: "JOURNEY_VIEW_CLOSED" }], onJourney("booked")).stage).toBe("booked");
+    expect(run([{ type: "FEEDBACK_OPENED" }, { type: "JOURNEY_VIEW_CLOSED" }], onJourney("booked")).stage).toBe("booked");
+    expect(run([{ type: "TRAVEL_FILE_OPENED" }, { type: "JOURNEY_VIEW_CLOSED" }], onJourney("closed")).stage).toBe("closed");
+  });
+
+  it("closes when the server has recorded the feedback", () => {
+    expect(run([{ type: "FEEDBACK_OPENED" }, journeyAt("closed")], onJourney("booked"))).toMatchObject({ stage: "closed", journeyStage: "closed" });
+  });
+
+  it("ignores journey events outside the journey", () => {
+    const sheet = run([booted(PARTIAL)]);
+    for (const type of ["DESTINATIONS_REQUESTED", "ITINERARIES_REQUESTED", "TRAVEL_FILE_OPENED", "FEEDBACK_OPENED", "JOURNEY_VIEW_CLOSED"] as const) {
+      expect(voiceFlowReducer(sheet, { type })).toBe(sheet);
+    }
+  });
+});
+
+describe("useVoiceFlow — journey", () => {
+  const confirmed = () => response({ state: "CONFIRMED", version: 4, missing_fields: [] });
+  const withPlanner = (mode: "off" | "simulated" | "http" | undefined, overrides: Partial<ConversationService> = {}) =>
+    makeService({
+      getConfig: vi.fn(async () => ({
+        max_audio_seconds: 90,
+        max_audio_bytes: 1_000_000,
+        max_message_chars: 500,
+        timezone: "Europe/Paris",
+        ...(mode ? { planner_mode: mode } : {}),
+      })),
+      get: vi.fn(async () => confirmed()),
+      ...overrides,
+    });
+
+  async function mountJourney(service: ConversationService, journeyService = fakeJourneyService()) {
+    window.localStorage.setItem("lio.conversation_id", "conv_test");
+    const hook = renderHook(() => useVoiceFlow(service, { allowSyntheticCapture: true, journeyService }));
+    await waitFor(() => expect(hook.result.current.state.booted).toBe(true));
+    return { ...hook, journeyService };
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it.each(["off", undefined] as const)("offers no search when the planner mode is %s, and never calls the journey service", async (mode) => {
+    const { result, journeyService } = await mountJourney(withPlanner(mode));
+    expect(result.current.state.stage).toBe("done");
+    expect(result.current.planner.available).toBe(false);
+    expect(journeyService.get).not.toHaveBeenCalled();
+  });
+
+  it("offers the search in simulated mode, and the scenarios with it", async () => {
+    const { result, journeyService } = await mountJourney(withPlanner("simulated"));
+    await waitFor(() => expect(result.current.planner).toEqual({ available: true, simulated: true, ready: true }));
+    expect(result.current.state.stage).toBe("done");
+
+    act(() => result.current.search({ search_scenario: "adjustments", booking_scenario: "refused" }));
+    await waitFor(() => expect(result.current.state.stage).toBe("destinations"));
+    expect(journeyService.start).toHaveBeenCalledWith("conv_test", { search_scenario: "adjustments", booking_scenario: "refused" });
+  });
+
+  it("offers the search without scenarios when the real planner is announced", async () => {
+    const { result } = await mountJourney(withPlanner("http"));
+    await waitFor(() => expect(result.current.planner).toEqual({ available: true, simulated: false, ready: true }));
+  });
+
+  it("restores a journey in progress on the server's stage", async () => {
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => reviewJourney()) });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("review"));
+    expect(result.current.journey.journey?.selected_itinerary_id).toBe("iti_9f11c4f37d");
+  });
+
+  it("keeps a technical failure of the search apart from a result: still on done, with the server's words and a retry", async () => {
+    const start = vi
+      .fn()
+      .mockRejectedValueOnce(new ApiError(502, "Planification", "La recherche a rencontré un problème technique.", "PLANNER_ERROR"))
+      .mockResolvedValueOnce(itinerariesJourney({ stage: "destinations" }));
+    const { result } = await mountJourney(withPlanner("simulated"), fakeJourneyService({ start }));
+    await waitFor(() => expect(result.current.planner.ready).toBe(true));
+
+    act(() => result.current.search({ search_scenario: "error" }));
+    await waitFor(() => expect(result.current.journey.error).not.toBeNull());
+    expect(result.current.state.stage).toBe("done");
+    expect(result.current.journey.error).toMatchObject({ code: "PLANNER_ERROR", detail: "La recherche a rencontré un problème technique.", action: "start" });
+    expect(result.current.journey.journey).toBeNull();
+
+    await act(async () => {
+      await result.current.journey.error?.retry?.();
+    });
+    await waitFor(() => expect(result.current.state.stage).toBe("destinations"));
+    expect(start).toHaveBeenCalledTimes(2);
+  });
+
+  it("re-reads the conversation after an accepted adjustment, and stays on the journey", async () => {
+    const get = vi
+      .fn<ConversationService["get"]>()
+      .mockResolvedValueOnce(confirmed())
+      .mockResolvedValue(response({ state: "CONFIRMED", version: 5, missing_fields: [] }));
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => adjustmentsJourney()) });
+    const { result } = await mountJourney(withPlanner("simulated", { get }), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("adjustments"));
+    expect(get).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.journey.acceptAdjustment("adj_762b46e27f");
+    });
+    expect(journeyService.acceptAdjustment).toHaveBeenCalledWith("conv_test", "adj_762b46e27f");
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(result.current.conversation.conversation?.version).toBe(5);
+    expect(result.current.state.stage).toBe("itineraries");
+    // Still confirmed: the journey was not looked up again, nor dropped.
+    expect(journeyService.get).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops the journey when a requirement is edited, and lands on the sheet with the notice", async () => {
+    const editField = vi.fn(async () => response({ state: "AWAITING_CONFIRMATION", version: 5, missing_fields: [], ready_for_confirmation: true }));
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => itinerariesJourney()) });
+    const { result } = await mountJourney(withPlanner("simulated", { editField }), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("itineraries"));
+
+    act(() => result.current.modify());
+    expect(result.current.state).toMatchObject({ stage: "sheet", reviewing: true });
+    // Looking is not editing: the journey is still there.
+    expect(result.current.journey.journey).not.toBeNull();
+
+    await act(async () => {
+      await result.current.conversation.editField("participants_count", 31);
+    });
+    await waitFor(() => expect(result.current.journey.journey).toBeNull());
+    expect(result.current.state).toMatchObject({ stage: "sheet", reviewing: false, journeyStage: null, searchRestart: true });
+  });
+
+  it("checks a waiting booking once by itself after the delay, then leaves it to the teacher", async () => {
+    const checkBooking = vi.fn(async () => pendingJourney());
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => reviewJourney()), checkBooking });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("review"));
+
+    vi.useFakeTimers();
+    await act(async () => {
+      await result.current.journey.submitBooking();
+    });
+    expect(result.current.state.stage).toBe("booking_pending");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BOOKING_AUTO_CHECK_MS - 1);
+    });
+    expect(checkBooking).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(checkBooking).toHaveBeenCalledTimes(1);
+
+    // Still waiting: no polling. The next check is the teacher's.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BOOKING_AUTO_CHECK_MS * 10);
+    });
+    expect(checkBooking).toHaveBeenCalledTimes(1);
+    expect(result.current.state.stage).toBe("booking_pending");
+
+    checkBooking.mockResolvedValueOnce(bookedJourney());
+    await act(async () => {
+      await result.current.journey.checkBooking();
+    });
+    expect(result.current.state.stage).toBe("booked");
+  });
+
+  it("does not check automatically when the teacher has already left the waiting stage", async () => {
+    const checkBooking = vi.fn(async () => bookedJourney());
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => pendingJourney()), checkBooking });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("booking_pending"));
+
+    vi.useFakeTimers();
+    // The teacher is faster than the timer.
+    await act(async () => {
+      await result.current.journey.checkBooking();
+    });
+    expect(result.current.state.stage).toBe("booked");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(BOOKING_AUTO_CHECK_MS * 2);
+    });
+    expect(checkBooking).toHaveBeenCalledTimes(1);
+  });
+
+  it("loads the travel file once, then shows it; feedback closes the journey", async () => {
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => bookedJourney()) });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("booked"));
+
+    act(() => result.current.openTravelFile());
+    await waitFor(() => expect(result.current.state.stage).toBe("travel_file"));
+    expect(result.current.journey.travelFile?.reference).toBe("SIM-050033B9");
+
+    act(() => result.current.closeJourneyView());
+    expect(result.current.state.stage).toBe("booked");
+    act(() => result.current.openTravelFile());
+    expect(result.current.state.stage).toBe("travel_file");
+    expect(journeyService.travelFile).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.openFeedback());
+    expect(result.current.state.stage).toBe("feedback");
+    await act(async () => {
+      await result.current.journey.giveFeedback({ rating: 5, comment: null });
+    });
+    expect(result.current.state.stage).toBe("closed");
+  });
+
+  it("stays on the confirmed booking when the travel file cannot be loaded", async () => {
+    const travelFile = vi.fn(async () => {
+      throw new ApiError(502, "Dossier", "Le dossier de voyage n'a pas pu être préparé.", "PLANNER_ERROR");
+    });
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => bookedJourney()), travelFile });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("booked"));
+
+    act(() => result.current.openTravelFile());
+    await waitFor(() => expect(result.current.journey.error?.action).toBe("travel_file"));
+    expect(result.current.state.stage).toBe("booked");
+  });
+
+  it("a new trip leaves the journey behind", async () => {
+    const journeyService = fakeJourneyService({ get: vi.fn(async () => bookedJourney()) });
+    const { result } = await mountJourney(withPlanner("simulated"), journeyService);
+    await waitFor(() => expect(result.current.state.stage).toBe("booked"));
+    act(() => result.current.restart());
+    await waitFor(() => expect(result.current.state.stage).toBe("ask"));
+    expect(result.current.journey.journey).toBeNull();
+    expect(result.current.state.searchRestart).toBe(false);
   });
 });

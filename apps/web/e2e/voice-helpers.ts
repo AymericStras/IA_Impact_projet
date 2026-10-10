@@ -38,7 +38,23 @@ export async function openVoice(page: Page, options: OpenVoiceOptions = {}): Pro
   await page.evaluate(() => document.fonts.ready);
 }
 
-export type Stage = "ask" | "listen" | "think" | "sheet" | "done";
+export type Stage =
+  | "ask"
+  | "listen"
+  | "think"
+  | "sheet"
+  | "done"
+  | "destinations"
+  | "itineraries"
+  | "adjustments"
+  | "no_match"
+  | "review"
+  | "booking_pending"
+  | "booked"
+  | "travel_file"
+  | "booking_refused"
+  | "feedback"
+  | "closed";
 
 export async function expectStage(page: Page, stage: Stage): Promise<void> {
   await expect(page.getByTestId("voice-shell")).toHaveAttribute("data-stage", stage, { timeout: 15_000 });
@@ -106,4 +122,41 @@ export async function failNextMessage(page: Page): Promise<void> {
 /** Parks the mouse away from every control (no hover state in screenshots). */
 export async function parkMouse(page: Page): Promise<void> {
   await page.mouse.move(0, 0);
+}
+
+/** The server's simulation label, as sent by the demo journey (and by the API). */
+export const SIMULATION_NOTICE = "Simulation : destinations, horaires, lieux et réservation sont illustratifs, sans disponibilité réelle.";
+
+/** Describes the whole trip in writing and confirms it: the shortest way to `done`. */
+export async function confirmTrip(page: Page): Promise<void> {
+  await page.getByTestId("write-instead").click();
+  await page.getByLabel("Votre réponse").fill(TYPED_FULL);
+  await page.getByTestId("text-entry-send").click();
+  await expectStage(page, "sheet");
+  await expect(page.getByTestId("sheet-confirm")).toBeEnabled();
+  await page.getByTestId("sheet-confirm").click();
+  await expectStage(page, "done");
+}
+
+export interface Scenarios {
+  search?: "auto" | "adjustments" | "no_match" | "error";
+  booking?: "confirmed" | "refused" | "error";
+}
+
+/** On `done`: picks the test scenarios (when given) and starts the search. */
+export async function searchProposals(page: Page, scenarios: Scenarios = {}): Promise<void> {
+  if (scenarios.search || scenarios.booking) {
+    const toggle = page.getByTestId("scenario-toggle");
+    await toggle.scrollIntoViewIfNeeded();
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+    if (scenarios.search) await page.getByTestId("scenario-search").selectOption(scenarios.search);
+    if (scenarios.booking) await page.getByTestId("scenario-booking").selectOption(scenarios.booking);
+  }
+  await expect(page.getByTestId("done-search")).toBeEnabled();
+  await page.getByTestId("done-search").click();
+}
+
+/** Every journey stage shows the server's simulation label. */
+export async function expectSimulationLabel(page: Page): Promise<void> {
+  await expect(page.getByTestId("journey-notices")).toContainText(SIMULATION_NOTICE);
 }

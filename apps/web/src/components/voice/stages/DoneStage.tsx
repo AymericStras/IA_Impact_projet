@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { useId, useState } from "react";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { frVoice } from "@/i18n/fr.voice";
 import { FLUID_BUTTON, TOUCH_TARGET, WRAP_ANYWHERE } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import type { ConversationResponse } from "@/types/contracts";
+import type { BookingScenario, JourneyScenarios, SearchScenario } from "@/types/journey";
 import { StageHeading } from "../StageFrame";
+import { ActionButton, StageActions } from "../journey/StageActions";
 import { SHEET_FIELDS, assistantText, fieldLabel, fieldValue, participantsDetail } from "../fieldDisplay";
 import styles from "../voice.module.css";
 
@@ -17,14 +19,36 @@ interface DoneStageProps {
   disabled: boolean;
   onModify: () => void;
   onNewTrip: () => void;
+  /** The search of proposals; absent when the server's `planner_mode` is "off" or unknown. */
+  search?: DoneSearch;
 }
+
+export interface DoneSearch {
+  /** Simulation: the test scenarios are offered. */
+  simulated: boolean;
+  /** The lookup of an existing journey has answered. */
+  ready: boolean;
+  /** The search request is in flight. */
+  searching: boolean;
+  onSearch: (scenarios?: JourneyScenarios) => void;
+}
+
+const SEARCH_SCENARIOS: readonly SearchScenario[] = ["auto", "adjustments", "no_match", "error"];
+const BOOKING_SCENARIOS: readonly BookingScenario[] = ["confirmed", "refused", "error"];
+const SELECT = "min-h-11 w-full min-w-0 rounded-lg border border-input bg-card px-2 text-base text-foreground";
 
 /**
  * Stage 5 — the hand-over is confirmed (the server says so). Success in words and icon,
  * the values that were transmitted, and the exact payload on demand.
  */
-export function DoneStage({ conversation, focusHeading, disabled, onModify, onNewTrip }: DoneStageProps) {
+export function DoneStage({ conversation, focusHeading, disabled, onModify, onNewTrip, search }: DoneStageProps) {
   const [jsonOpen, setJsonOpen] = useState(false);
+  const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [searchScenario, setSearchScenario] = useState<SearchScenario>("auto");
+  const [bookingScenario, setBookingScenario] = useState<BookingScenario>("confirmed");
+  const searchSelectId = useId();
+  const bookingSelectId = useId();
+  const scenarioCopy = frVoice.journey.scenario;
   const payload = conversation.confirmed_requirements ?? null;
   const json = payload ? JSON.stringify(payload, null, 2) : null;
 
@@ -94,12 +118,97 @@ export function DoneStage({ conversation, focusHeading, disabled, onModify, onNe
         </div>
       ) : null}
 
+      {search?.simulated ? (
+        // Test control of the simulation, discreet and closed by default.
+        <div className="min-w-0 rounded-2xl border border-dashed bg-muted/40" data-testid="scenario">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setScenarioOpen((open) => !open)}
+            aria-expanded={scenarioOpen}
+            aria-controls="scenario-content"
+            className={cn("m-1 text-muted-foreground", FLUID_BUTTON, TOUCH_TARGET)}
+            data-testid="scenario-toggle"
+          >
+            {scenarioOpen ? <ChevronUpIcon aria-hidden="true" /> : <ChevronDownIcon aria-hidden="true" />}
+            {scenarioCopy.toggle}
+          </Button>
+          {scenarioOpen ? (
+            <div id="scenario-content" className="grid gap-3 border-t px-3 py-3">
+              <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{scenarioCopy.hint}</p>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-3">
+                <div className="grid min-w-0 gap-1">
+                  <label htmlFor={searchSelectId} className="text-sm font-medium text-foreground">
+                    {scenarioCopy.searchLabel}
+                  </label>
+                  <select
+                    id={searchSelectId}
+                    value={searchScenario}
+                    onChange={(event) => setSearchScenario(event.target.value as SearchScenario)}
+                    className={SELECT}
+                    data-testid="scenario-search"
+                  >
+                    {SEARCH_SCENARIOS.map((value) => (
+                      <option key={value} value={value}>
+                        {scenarioCopy.search[value]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid min-w-0 gap-1">
+                  <label htmlFor={bookingSelectId} className="text-sm font-medium text-foreground">
+                    {scenarioCopy.bookingLabel}
+                  </label>
+                  <select
+                    id={bookingSelectId}
+                    value={bookingScenario}
+                    onChange={(event) => setBookingScenario(event.target.value as BookingScenario)}
+                    className={SELECT}
+                    data-testid="scenario-booking"
+                  >
+                    {BOOKING_SCENARIOS.map((value) => (
+                      <option key={value} value={value}>
+                        {scenarioCopy.booking[value]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {search ? (
+        <StageActions narrow>
+          <ActionButton
+            primary
+            busy={search.searching}
+            disabled={disabled || !search.ready || search.searching}
+            // Scenarios exist in the simulation only; a real planner receives none.
+            onClick={() => search.onSearch(search.simulated ? { search_scenario: searchScenario, booking_scenario: bookingScenario } : undefined)}
+            testId="done-search"
+          >
+            {search.searching ? null : <SearchIcon aria-hidden="true" />}
+            {search.searching ? frVoice.journey.searching : frVoice.journey.search}
+          </ActionButton>
+        </StageActions>
+      ) : null}
+
       <div className="flex flex-wrap justify-end gap-2">
         <Button type="button" variant="outline" onClick={onModify} disabled={disabled} className={cn(FLUID_BUTTON, TOUCH_TARGET)} data-testid="done-modify">
           <PencilIcon aria-hidden="true" />
           {frVoice.done.modify}
         </Button>
-        <Button type="button" onClick={onNewTrip} disabled={disabled} className={cn(FLUID_BUTTON, TOUCH_TARGET)} data-testid="done-new">
+        {/* One primary action per stage: when the search is offered, it is the one. */}
+        <Button
+          type="button"
+          variant={search ? "outline" : "default"}
+          onClick={onNewTrip}
+          disabled={disabled}
+          className={cn(FLUID_BUTTON, TOUCH_TARGET)}
+          data-testid="done-new"
+        >
           <PlusIcon aria-hidden="true" />
           {frVoice.done.newTrip}
         </Button>

@@ -68,4 +68,4 @@ destinations ──POST /journey/destination──▶ itineraries ──POST /jo
 
 ## Not done
 
-API and the classic chat (`/`) show the journey; the staged voice flow (`/vocal`) is in progress (task `PLANNER-SIM-UI`). No real data source is connected.
+The API and both frontends (classic chat `/` and staged voice flow `/vocal`) show the journey. No real data source is connected.

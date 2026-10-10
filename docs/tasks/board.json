@@ -53,8 +53,8 @@
     },
     {
       "id": "PLANNER-SIM-UI",
-      "status": "ready",
-      "priority": 2,
+      "status": "done",
+      "evidence": "2026-10-10: classic e2e 91 passed / 3 skipped and voice e2e 100 passed in demo mode (agent runs); lead ran both UIs in Chromium against the real local API (happy path to the travel file; adjustments with 6 options; refused booking on the classic chat). Not verified on real devices.",
       "title": "Journey stages in both frontends (classic chat and /vocal), with the simulation label and scenario switches",
       "acceptance": "After confirmation the teacher goes through destinations, itineraries or adjustments, review, booking (confirmed and refused), travel file and feedback; errors are distinct from no-result; preferences can be changed at any stage; hidden when planner_mode is off"
     },

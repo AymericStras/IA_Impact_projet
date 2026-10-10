@@ -11,8 +11,11 @@ import { defineConfig, devices } from "@playwright/test";
  *   pnpm exec playwright test -c playwright.voice.config.ts voice-visual       baselines
  *
  * Three kinds of spec:
- * - voice-flow.spec.ts        functional journeys (portable);
- * - voice-responsive.spec.ts  programmatic layout assertions over the viewport matrix
+ * - voice-flow.spec.ts, voice-journey.spec.ts
+ *                             functional journeys (portable): the five requirements, then
+ *                             the simulated journey after confirmation;
+ * - voice-responsive.spec.ts, voice-journey-responsive.spec.ts
+ *                             programmatic layout assertions over the viewport matrix
  *                             (portable, no screenshots — same verdict on Linux);
  * - voice-visual.spec.ts      screenshots against per-platform baselines (macOS only until
  *                             Linux baselines are generated and reviewed).
@@ -71,9 +74,9 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "voice", testMatch: "voice-flow.spec.ts", use: { ...shared, viewport: { width: 1280, height: 800 } } },
-    // The responsive spec sets its own viewport per test.
-    { name: "voice-responsive", testMatch: "voice-responsive.spec.ts", use: { ...shared } },
+    { name: "voice", testMatch: ["voice-flow.spec.ts", "voice-journey.spec.ts"], use: { ...shared, viewport: { width: 1280, height: 800 } } },
+    // The responsive specs set their own viewport per test.
+    { name: "voice-responsive", testMatch: ["voice-responsive.spec.ts", "voice-journey-responsive.spec.ts"], use: { ...shared } },
     { name: "desktop", testMatch: VISUAL, use: { ...shared, viewport: { width: 1440, height: 900 } } },
     { name: "tablet", testMatch: VISUAL, use: { ...shared, viewport: { width: 768, height: 1024 }, hasTouch: true } },
     { name: "mobile", testMatch: VISUAL, use: { ...shared, viewport: { width: 390, height: 844 }, hasTouch: true } },
