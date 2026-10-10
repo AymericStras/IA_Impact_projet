@@ -123,10 +123,13 @@ route() {
   confirm "${1:-}"
   local block; block="$(sed -e "s/__WEB_PORT__/$WEB_PORT/g" -e "s/__API_PORT__/$API_PORT/g" "$ROOT/deploy/gateway-sncf-chatbot.conf")"
   say "updating the managed block in the gateway (backup, nginx -t, graceful reload)"
-  printf '%s\n' "$block" | remote 'sudo -n python3 - "$@"' "$GATEWAY_CONF" "$GATEWAY_CONTAINER" <<'PY'
-import datetime, re, shutil, subprocess, sys
+  # The block travels as a base64 argument: stdin is taken by the Python program itself.
+  remote 'sudo -n python3 - "$@"' "$GATEWAY_CONF" "$GATEWAY_CONTAINER" "$(printf '%s\n' "$block" | base64 | tr -d '\n')" <<'PY'
+import base64, datetime, re, shutil, subprocess, sys
 conf, container = sys.argv[1], sys.argv[2]
-block = sys.stdin.read().strip() + "\n"
+block = base64.b64decode(sys.argv[3]).decode().strip() + "\n"
+if "# BEGIN managed sncf-chatbot" not in block or "# END managed sncf-chatbot" not in block:
+    sys.exit("route block missing or truncated: nothing changed")
 text = open(conf, encoding="utf-8").read()
 pattern = re.compile(r"# BEGIN managed sncf-chatbot\n.*?# END managed sncf-chatbot\n", re.S)
 if pattern.search(text):
@@ -135,7 +138,8 @@ else:
     anchor = "server_name zhaoyang.fr;\n"
     if text.count(anchor) != 1:
         sys.exit("gateway config: expected exactly one 'server_name zhaoyang.fr;'")
-    new = text.replace(anchor, anchor + block, 1)
+    new = text.replace(anchor + "\n", anchor, 1) if text.count(anchor + "\n") == 1 else text  # drop a stray blank line
+    new = new.replace(anchor, anchor + block, 1)
 if new == text:
     print("gateway block already up to date"); sys.exit(0)
 backup = f"{conf}.before-sncf-chatbot-{datetime.datetime.now():%Y%m%dT%H%M%S}"

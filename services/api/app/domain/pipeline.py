@@ -13,7 +13,7 @@ from app.domain.patch_merger import MergeResult, apply_patch
 from app.domain.state_machine import Action, ActionKind, Decision, decide
 from app.domain.validators import IssueKind, ValidationResult, is_field_complete, validate
 from app.schemas.conversation import ConversationState as State
-from app.schemas.patch import FieldName, RequirementPatch
+from app.schemas.patch import Ambiguity, AmbiguityKind, FieldName, RequirementPatch
 from app.schemas.requirements import PartialRequirements
 
 _ANNOUNCE_REPLACEMENT_BEFORE = (ActionKind.ASK_MISSING, ActionKind.CLARIFY, ActionKind.SUMMARIZE_AND_CONFIRM)
@@ -51,6 +51,24 @@ def _revert_inconsistent_dates(merge: MergeResult, validation: ValidationResult)
     return validation
 
 
+def _still_open(ambiguities: list[Ambiguity], reqs: PartialRequirements) -> list[Ambiguity]:
+    """Drop ambiguities the merged state already answers: a date that is known is not « unresolved »."""
+
+    def answered(ambiguity: Ambiguity) -> bool:
+        if ambiguity.field not in ("departure", "return"):
+            return False
+        value = reqs.return_ if ambiguity.field == "return" else reqs.departure
+        if value is None:
+            return False
+        if ambiguity.kind == AmbiguityKind.RELATIVE_DATE_UNRESOLVED:
+            return value.date is not None
+        if ambiguity.kind == AmbiguityKind.VAGUE_TIME:
+            return value.time is not None
+        return False
+
+    return [a for a in ambiguities if not answered(a)]
+
+
 def process_turn(
     previous_state: State,
     requirements: PartialRequirements,
@@ -68,6 +86,7 @@ def process_turn(
         validation = validate(merge.requirements, today)
         validation.issues = [i for i in validation.issues if i.kind != IssueKind.RETURN_BEFORE_DEPARTURE]
 
+    merge.ambiguities = _still_open(merge.ambiguities, merge.requirements)
     decision = decide(
         previous_state,
         intent=patch.user_intent,

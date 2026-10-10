@@ -604,3 +604,39 @@ def test_departure_station_is_collected_asked_and_exported(
         json={"field": "departure_station", "value": "   ", "expected_version": edited["version"]},
     ).json()
     assert blank["requirements"]["departure_station"] == "Narbonne"  # an empty name changes nothing
+
+
+def test_an_ambiguity_answered_by_the_merged_state_is_not_asked(
+    client: TestClient, provider: FakeProvider
+) -> None:
+    """The model flags the date as unresolved while also giving it: ask for what is really missing."""
+    cid = _create(client)["conversation_id"]
+    provider.queue(
+        mk_patch(
+            op("departure_station", "Toulouse"),
+            op("departure", dt("2026-11-12", None, None)),
+            total=30,
+            ambiguities=[("departure", AmbiguityKind.RELATIVE_DATE_UNRESOLVED)],
+        )
+    )
+    body = _send(client, cid, "Nous sommes 30, au départ de Toulouse, une sortie le 12 novembre.")
+    assert body["state"] == "COLLECTING"
+    assert body["assistant_message"] == "À quelle heure souhaitez-vous partir le jeudi 12 novembre ?"
+
+
+def test_clock_time_checklist() -> None:
+    from app.schemas.requirements import PartialRequirements
+    from app.services.extraction import build_user_content, clock_times
+
+    assert clock_times("On partirait vers 8 heures et il faudrait être rentré avant 17 heures.") == [
+        "08:00",
+        "17:00",
+    ]
+    assert clock_times("Départ à 8h30, retour 16:45, le 12 novembre 2026 avec 30 élèves") == [
+        "08:30",
+        "16:45",
+    ]
+    assert clock_times("Nous sommes 30, le 12 novembre.") == []
+    content = build_user_content("Retour avant 17 h.", PartialRequirements(), [])
+    assert "CLOCK TIMES FOUND IN THE TEACHER MESSAGE (by code): 17:00" in content
+    assert "CLOCK TIMES" not in build_user_content("Nous sommes 30.", PartialRequirements(), [])

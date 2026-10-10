@@ -1,9 +1,9 @@
 {
-  "timestamp": "20261010-033518",
+  "timestamp": "20261010-041446",
   "model": "default (EXTRACTION_MODEL)",
   "totals": {
-    "cases": 41,
-    "passed": 41,
+    "cases": 42,
+    "passed": 42,
     "unsupported_fills": 0,
     "false_confirmations": 0,
     "dropped_fields": 0

@@ -75,10 +75,33 @@ def describe_patch(patch: RequirementPatch) -> str:
     )
 
 
+_CLOCK = re.compile(
+    r"(?<!\d)(\d{1,2})\s*(?:h|heures?)\s*(\d{2})?(?!\d)|(?<!\d)(\d{1,2}):(\d{2})(?!\d)", re.IGNORECASE
+)
+
+
+def clock_times(message: str) -> list[str]:
+    """Clock times written with digits in the message, as HH:MM, in order of appearance."""
+    found: list[str] = []
+    for hour, minute, hour2, minute2 in _CLOCK.findall(message):
+        h, m = int(hour or hour2), int(minute or minute2 or 0)
+        if h < 24 and m < 60 and f"{h:02d}:{m:02d}" not in found:
+            found.append(f"{h:02d}:{m:02d}")
+    return found
+
+
 def build_user_content(message: str, requirements: PartialRequirements, recent: list[Message]) -> str:
     history = "\n".join(f"{m.role}: {m.content}" for m in recent[-RECENT_MESSAGES:]) or "(aucun)"
     current = json.dumps(requirements.model_dump(mode="json", by_alias=True), ensure_ascii=False)
-    return f"CURRENT REQUIREMENTS (JSON): {current}\nRECENT CONVERSATION (oldest first):\n{history}\nTEACHER MESSAGE: {message}"
+    # A checklist computed by code: the model tends to drop a time said in a separate sentence.
+    times = clock_times(message)
+    checklist = (
+        f"\nCLOCK TIMES FOUND IN THE TEACHER MESSAGE (by code): {', '.join(times)} — each one must appear "
+        "as the `time` of an operation, or be reported in `ambiguities`."
+        if times
+        else ""
+    )
+    return f"CURRENT REQUIREMENTS (JSON): {current}\nRECENT CONVERSATION (oldest first):\n{history}{checklist}\nTEACHER MESSAGE: {message}"
 
 
 class ExtractionService:
