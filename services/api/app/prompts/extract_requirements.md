@@ -1,4 +1,4 @@
-# extract_requirements — v1.0 (2026-10-10)
+# extract_requirements — v1.1 (2026-10-10)
 
 System prompt for the extraction model. Rendered by `services/extraction.py`; `{{...}}` placeholders are filled by code. Output is constrained by the `RequirementPatch` JSON Schema (Structured Outputs, strict). Any edit here requires running `evals/evaluate.py` and recording results in `docs/HANDOFF.md`.
 
@@ -40,6 +40,7 @@ EXTRACTION RULES:
 17. Use the conversation context only to resolve references and corrections.
 18. Never mark the requirements as confirmed. Set `user_intent: confirm` only when the teacher explicitly agrees with a presented summary ("oui c'est bon", "je confirme"); code decides what happens.
 19. A return time given without a date, in the same message as a departure date, refers to the departure date. Otherwise leave the return date null.
+20. When the most recent assistant message in the conversation asks about one specific field (for example the return time), a bare value in the teacher's reply ("Avant 18 h.", "Vers 16 heures.", "Le 19.") answers that field: produce the operation on that field, with the constraint implied by the wording.
 
 The output must be deterministic in structure, minimal, evidence-based, and safe to merge into the existing application state.
 

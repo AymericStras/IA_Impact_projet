@@ -112,7 +112,7 @@ def main() -> int:
     except ImportError:
         print(
             "services/api is not implemented yet (P1). evaluate.py needs app/evals_bridge.py exposing\n"
-            "  run_turn(state: dict, message: str, today: str, model: str | None) -> dict\n"
+            "  run_turn(state: dict, message: str, today: str, model: str | None, history: list[dict]) -> dict\n"
             "returning {'patch': RequirementPatch, 'merged': PartialRequirements, 'missing_fields': [...]}.",
             file=sys.stderr,
         )
@@ -124,9 +124,10 @@ def main() -> int:
     for case in cases:
         turns = case.get("turns") or [{"message": case["message"], "expect": case.get("expect", {})}]
         state = dict(case.get("state", {}))
+        history: list[dict[str, str]] = list(case.get("history", []))
         failures: list[str] = []
         for i, turn in enumerate(turns):
-            out = run_turn(state, turn["message"], case.get("today", "2026-10-10"), args.model)
+            out = run_turn(state, turn["message"], case.get("today", "2026-10-10"), args.model, history)
             patch, merged, missing = out["patch"], out["merged"], out["missing_fields"]
             turn_failures = check_patch(turn.get("expect", {}), patch) + check_merged(turn.get("expect", {}), merged, missing)
             failures += [f"turn {i + 1}: {f}" for f in turn_failures]
@@ -140,6 +141,11 @@ def main() -> int:
                 ):
                     totals["dropped_fields"] += 1
                     failures.append(f"turn {i + 1}: DROPPED_FIELD {field}")
+            if "state" in turn.get("expect", {}) and out.get("state") != turn["expect"]["state"]:
+                failures.append(f"turn {i + 1}: state {out.get('state')} != {turn['expect']['state']}")
+            history += [{"role": "user", "content": turn["message"]}]
+            if out.get("assistant_message"):
+                history += [{"role": "assistant", "content": out["assistant_message"]}]
             state = merged
         totals["cases"] += 1
         totals["passed"] += not failures
