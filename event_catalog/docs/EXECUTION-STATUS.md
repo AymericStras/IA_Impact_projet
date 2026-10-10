@@ -13,3 +13,8 @@ Unknown group capacity and availability remain unknown. No exhaustive regional
 coverage, universal source compatibility or automatic server refresh is claimed.
 Native browser visual verification was unavailable because the computer-use
 connection failed to initialize; HTTP and JavaScript checks were performed.
+
+The public website now serves the English account-free viewer. All 25 public
+HTTP checks passed without credentials, including search, details and CSV/JSON
+downloads. Write routes remain denied. Publication did not restart any existing
+business service or the gateway container.

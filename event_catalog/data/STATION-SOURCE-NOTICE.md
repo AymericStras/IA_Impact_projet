@@ -3,8 +3,10 @@
 Source: AymericStras, IA_Impact_projet, commit
 5029e9d0b5f64c12e2b01e931f4ab63ef887d747.
 
-Only a manifest and importer are committed here; the upstream CSV data and
-original license are retained under ignored runtime storage. The application
+The operational project keeps a manifest and importer; original upstream files
+remain in private runtime storage. The explicitly requested contribution to
+IA_Impact_projet also includes a derived 260-station SQLite/CSV subset, with
+upstream identity and attribution recorded in its distribution manifest. The application
 selects railway-served stations from the upstream multimodal dataset. See
 docs/WALKING-ACCESS.md for exact scope and limitations.
 
