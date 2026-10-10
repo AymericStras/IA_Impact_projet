@@ -1,5 +1,8 @@
 // Textes du diapo (français uniquement, à la demande) : une présentation-pub du site et de ses fonctionnalités.
 // Les <em> sont soulignés en rouge, comme le premier mot de la charte liO ; <b> met un mot en gras.
+import type { IconName } from "./components/primitives";
+import type { ColorName } from "./engine/util";
+
 export type WagonIcon = "route" | "train" | "window" | "pin" | "cube" | "school" | "chat";
 
 export const T = {
@@ -42,7 +45,7 @@ export const T = {
   routePerDay: (n: number) => `${n}/jour`,
   routeTotal: "Durée totale du trajet",
 
-  k4: "04 · Simulation",
+  k4: "Vivre le trajet · Le train",
   simTitle: "Suivez votre train <em>en direct</em>",
   simLead: "Le trajet se rejoue sur la carte : la caméra suit le train, le panneau dit où vous êtes.",
   simCard: "Trajet simulé",
@@ -52,7 +55,7 @@ export const T = {
   simArrived: (s: string) => `Arrivé à ${s}`,
   simNear: "À voir autour du train",
 
-  k5: "05 · Par la fenêtre",
+  k5: "Vivre le trajet · La fenêtre",
   windowTitle: "Le paysage <em>défile</em>",
   win1: "Ce qu'on verrait dehors, <b>au bon endroit du trajet</b> : étangs, vignes, Montagne Noire…",
   win2: "Le défilement suit le train : il <b>accélère</b>, <b>freine</b> et <b>s'arrête à quai</b>.",
@@ -82,13 +85,13 @@ export const T = {
   ideaTrain: (m: string, n: number) => `${m} de train · ${n === 0 ? "direct" : n + " corresp."}`,
   ideasTitle: "Idées pour votre classe",
 
-  k8: "08 · Assistant IA",
+  k8: "Demander · Le chatbot",
   assistantTitle: "Demandez, <em>il répond</em>",
-  assistantLead: "Le chat est déjà dans l'interface. Bientôt, il trouvera trajets et lieux à partir d'une simple phrase.",
+  assistantLead: "Une phrase, écrite ou dictée : il calcule le trajet avec le même moteur et l'affiche sur la carte.",
   chatHead: "Demandez à l'assistant",
   chatPh: "Écrivez un message…",
   chatUser: "Je pars de Toulouse samedi avec mes enfants, une idée de sortie en train ?",
-  chatBot: "Aperçu de la future réponse : un trajet, des lieux à voir à la descente du train.",
+  chatBot: "Toulouse → Carcassonne : 59 min, direct. À la descente : la Cité médiévale et le canal du Midi. Je l'affiche sur la carte ?",
 
   soon: "Bientôt",
 
@@ -97,6 +100,57 @@ export const T = {
   stat1: "gares",
   stat2: "missions TER liO",
   networkLead: "Construit sur les horaires officiels SNCF et liO en open data, reconstruits en 2 secondes à chaque mise à jour.",
+
+  // ── Le pitch : problématique, fonctionnalités classées, démo ──
+  pbKick: "01 · La problématique",
+  pbTitle: "Le TER, <em>simple et sûr</em> pour tous ?",
+  pillars: [
+    ["ter", "Charte adaptée SNCF", "Les couleurs, la typo et les codes de liO : on reconnaît le TER au premier coup d'œil."],
+    ["users", "Facile à tout âge", "Une seule question, de gros boutons, la voix : de l'élève de CM2 à son grand-père."],
+    ["bolt", "Efficace & efficient", "Le trajet le plus rapide en un instant, sur les vrais horaires, avec un calcul sobre."],
+  ] as [IconName, string, string][],
+
+  ftKick: "02 · Les fonctionnalités",
+  ftTitle: "7 fonctionnalités, <em>3 temps</em> du voyage",
+  groups: [
+    ["yellow", "Préparer", "Avant de partir", [
+      ["map", "La carte", "259 gares liO, tout le réseau d'un coup d'œil"],
+      ["route", "Dijkstra", "Le trajet le plus rapide, correspondances comprises"],
+      ["gauge", "Indice de confiance", "Une note sur 100 : ce train est-il sûr pour une classe ?"],
+    ]],
+    ["red", "Vivre le trajet", "Pendant le voyage", [
+      ["train", "Le train", "Un train 3D rejoue le trajet, arrêt par arrêt"],
+      ["window", "La fenêtre", "Le vrai paysage défile, au bon endroit du trajet"],
+      ["cube", "Immersion 3D", "La caméra suit la rame, les monuments se visitent en 3D"],
+    ]],
+    ["white", "Demander", "À tout moment", [
+      ["chat", "Le chatbot", "Une phrase, écrite ou dictée : il trouve trajet et lieux"],
+    ]],
+  ] as [ColorName, string, string, [IconName, string, string][]][],
+
+  mapKick: "Préparer · La carte",
+  mapTitle: "Tout le réseau, <em>d'un coup d'œil</em>",
+  mapLead: "Les gares desservies par les TER liO, par département : on voit tout de suite ce qui est accessible en train.",
+  mapStat3: "départements",
+
+  trustKick: "Préparer · Indice de confiance",
+  trustTitle: "Ce train est-il <em>sûr</em> pour ma classe ?",
+  trustPillars: [
+    ["Capacité & jauge", 40, 100],
+    ["Fiabilité ferroviaire", 30, 82],
+    ["Faisabilité terrain", 20, 75],
+    ["Pairs & confort", 10, 70],
+  ] as [string, number, number][],
+  trustVetos: ["50 voyageurs max par train", "≤ 20 min de marche", "≥ 15 min de marge", "trottoir sécurisé"],
+  trustVetoTag: "Vetos",
+  trustScore: "Indice de confiance",
+  trustLevel: "Serein",
+  trustDeps: [["08:12", 87], ["09:12", 74], ["10:12", 41]] as [string, number][],
+
+  demoKick: "03 · Démo",
+  demoTitle: "Place à la <em>démo</em>",
+  demoLead: "Le site, en direct : une recherche, un trajet, et le train qui part.",
+  demoLive: "En direct",
 
   qrTitle: "Essayez-le <em>maintenant</em>",
   qrLead: "Scannez le code avec votre téléphone : le site s'ouvre directement.",
@@ -126,7 +180,7 @@ export const T = {
   step1: "Garder les arrêts des <b>13 départements</b> d'Occitanie et découper chaque train en morceaux dans la région.",
   step2: "Regrouper les trains qui desservent les mêmes arrêts dans le même ordre en <b>missions</b>, aux temps médians.",
   step3: "Compter les trains de chaque mission un <b>jour de référence</b> : cette fréquence donne l'attente.",
-  engineKick: "Le moteur",
+  engineKick: "Préparer · Dijkstra",
   engineTitle: "Dijkstra sur les <em>trajets directs</em>",
   engineLead: "Chaque arête relie deux gares desservies par le même train, sans changer. Le coût d'un itinéraire :",
   fRide: "temps à bord", fRideSub: "horaires médians", fChanges: "par correspondance", fChange: "pour changer de quai",
@@ -146,6 +200,7 @@ export const T = {
   n3: "Réseaux urbains", n3s: "Métro de Toulouse, tram de Montpellier : de porte à porte, pas de gare à gare.",
   n4: "Empreinte carbone", n4s: "Montrer ce que le trajet économise par rapport à la voiture.",
   coverKicker2: "IA Impact · Le site",
+  follow3dKick: "Vivre le trajet · Immersion 3D",
 } as const;
 
 export type TextKey = { [K in keyof typeof T]: (typeof T)[K] extends string ? K : never }[keyof typeof T];

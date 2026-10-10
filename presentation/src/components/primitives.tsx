@@ -52,8 +52,11 @@ const ICONS = {
   school: <><path d="M4 18l20-10 20 10-20 10z" /><path d="M12 22v10c4 4 20 4 24 0V22M44 18v12" /></>,
   chat: <><path d="M8 10h32a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H22l-10 8v-8H8a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z" /><path d="M14 22h.01M24 22h.01M34 22h.01" /></>,
   ter: <><rect x="10" y="6" width="28" height="30" rx="7" /><path d="M10 24h28M17 14h14M15 36l-5 7M33 36l5 7" /></>,
+  users: <><circle cx="18" cy="15" r="7" /><path d="M5 40c0-8 6-13 13-13s13 5 13 13" /><circle cx="34" cy="18" r="5" /><path d="M33 28c6 0 10 4 10 11" /></>,
+  gauge: <><path d="M7 34a17 17 0 1 1 34 0" /><path d="M24 34l9-11" /><circle cx="24" cy="34" r="3" /><path d="M11 21l3 2M24 13v4M37 21l-3 2" /></>,
 };
+export type IconName = keyof typeof ICONS;
 
-export function Icon({ name, className }: { name: keyof typeof ICONS; className?: string }) {
+export function Icon({ name, className }: { name: IconName; className?: string }) {
   return <svg className={className} viewBox="0 0 48 48">{ICONS[name]}</svg>;
 }

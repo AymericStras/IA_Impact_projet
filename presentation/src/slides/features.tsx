@@ -270,7 +270,7 @@ export const assistant: SlideDef = {
       <div className="col">
         <div className="kicker" data-in="flap">{T.k8}</div>
         <Words className="title" data-d={1} text={T.assistantTitle} />
-        <span className="soon" data-in="pop" data-d={6} data-idle="pulse">{T.soon}</span>
+        <p className="lead" data-in="up" data-d={4} dangerouslySetInnerHTML={html(T.assistantLead)} />
       </div>
       <div className="chat" data-in="right" data-d={3}>
         <div className="chat-head"><i className="live" /><b>{T.chatHead}</b></div>
@@ -396,7 +396,7 @@ export const follow3d: SlideDef = {
   Body: () => (
     <>
       <div className="stage3d" />
-      <div className="chip-title" data-in="mask" data-d={4}><span className="chip-kick">En 3D</span>Suivez <em>le train</em></div>
+      <div className="chip-title" data-in="mask" data-d={4}><span className="chip-kick">{T.follow3dKick}</span>Suivez <em>le train</em></div>
       <div className="caption3d" />
     </>
   ),

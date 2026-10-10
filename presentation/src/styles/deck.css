@@ -549,3 +549,108 @@ kbd { font: 800 22px var(--font); border: 2px solid currentColor; border-radius:
 .qr-text .trame { margin-top: 56px; }
 .qr-card { flex: none; width: 600px; height: 600px; padding: 24px; background: #fff; border-radius: 40px; box-shadow: 0 40px 120px rgba(15,33,73,.45), 0 0 0 10px var(--yellow, #ffd500); }
 .qr-card img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+/* ═══ Le pitch ═══════════════════════════════════════════ */
+/* Couleur de groupe : Préparer = jaune, Vivre le trajet = rouge, Demander = blanc (marine sur fond clair) */
+.c-yellow { --c: var(--yellow); --ink: var(--navy); }
+.c-red { --c: var(--red); --ink: var(--white); }
+.c-white { --c: var(--white); --ink: var(--navy); }
+.light .c-white { --c: var(--navy); --ink: var(--white); }
+
+/* 01 · Problématique : la question, trois exigences en cartes */
+.s-pb .bignum { right: 120px; top: -40px; }
+.s-pb .title { position: relative; z-index: 2; font-size: 120px; max-width: 1300px; }
+.pillars { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 90px; }
+.pillar-in { position: relative; height: 100%; background: var(--navy); color: var(--white); border-radius: 40px; padding: 48px 44px 52px; box-shadow: 0 30px 70px rgba(15,33,73,.22); overflow: hidden; }
+.pillar:nth-child(2) .pillar-in { background: var(--red); }
+.pillar:nth-child(3) .pillar-in { background: var(--yellow); color: var(--navy); }
+.pillar-n { position: absolute; right: 34px; top: 18px; font: 800 120px/1 var(--font-title); opacity: .14; }
+.pillar h3 { font: 800 50px/1.02 var(--font-title); margin: 30px 0 18px; }
+.pillar p { font-size: 28px; line-height: 1.4; margin: 0; opacity: .9; }
+
+/* 02 · Les fonctionnalités : trois gares sur une ligne, le petit train qui la parcourt */
+.ft { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px; margin-top: 110px; }
+.ft-line { position: absolute; left: 0; right: 0; top: 16px; height: 6px; border-radius: var(--pill); background: rgba(255,255,255,.18); }
+.ft-train { position: absolute; left: -40px; top: -9px; width: 80px; height: 24px; border-radius: var(--pill); background: var(--yellow); box-shadow: -50px 0 0 -2px rgba(255,213,0,.45), -96px 0 0 -4px rgba(255,213,0,.2); }
+.ft-col { position: relative; }
+.ft-stop { display: block; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); border: 8px solid var(--c); transition: transform .4s var(--ease), background .4s; }
+.ft-col.hot .ft-stop { transform: scale(1.35); background: var(--c); }
+.ft-col header { display: flex; flex-direction: column; gap: 4px; margin: 30px 0 34px; }
+.ft-col header b { align-self: flex-start; font: 800 46px/1 var(--font-title); text-transform: uppercase; letter-spacing: .02em; background: var(--c); color: var(--ink); padding: 10px 24px 12px; border-radius: 16px; transition: transform .4s var(--ease); transform-origin: left; }
+.ft-col.hot header b { transform: scale(1.06); }
+.ft-col header small { font-size: 24px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .6; margin-top: 10px; }
+.ft-item { display: flex; gap: 22px; align-items: flex-start; padding: 20px 0; border-top: 2px solid rgba(255,255,255,.12); }
+.ft-item .ico { flex: none; width: 58px; height: 58px; color: var(--c); }
+.ft-item h4 { font: 800 36px/1.05 var(--font-title); margin: 2px 0 6px; }
+.ft-item p { font-size: 22px; line-height: 1.35; margin: 0; opacity: .75; }
+
+/* La ligne des sept stations, en haut des slides de fonctionnalité */
+.feat-rail { position: absolute; top: 40px; left: 0; right: 0; margin: 0 auto; width: max-content; z-index: 6; display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; border-radius: var(--pill); background: rgba(8,19,46,.55); color: var(--white); }
+.light .feat-rail { background: var(--grey); color: var(--navy); }
+.fr-gap { width: 26px; height: 3px; border-radius: 2px; background: currentColor; opacity: .3; }
+.fr-st { display: flex; align-items: center; gap: 10px; }
+.fr-st i { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--c); opacity: .55; }
+.fr-st.done i { background: var(--c); }
+.fr-st.on i { width: 22px; height: 22px; background: var(--c); opacity: 1; box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 30%, transparent); }
+.fr-st b { font: 800 22px/1 var(--font); letter-spacing: .1em; text-transform: uppercase; }
+
+/* Préparer · La carte */
+.s-map .stats.small { grid-template-columns: repeat(3, 1fr); width: 760px; }
+.s-map .stats.small .stat b { font-size: 96px; }
+
+/* Préparer · Indice de confiance */
+.rel-high { --c: #1e8a4c; } .rel-medium { --c: #c27a00; } .rel-low { --c: var(--red); }
+.s-trust .col { position: relative; z-index: 2; width: 980px; }
+.s-trust .title { font-size: 92px; }
+.tp { display: grid; gap: 22px; margin-top: 60px; }
+.tp-row { display: grid; grid-template-columns: 340px 80px 1fr 70px; align-items: center; gap: 20px; font-size: 28px; font-weight: 700; }
+.tp-w { font: 800 26px var(--font-title); color: var(--muted); text-align: right; }
+.tp-track { height: 26px; border-radius: var(--pill); background: var(--grey); overflow: hidden; }
+.tp-track i { display: block; height: 100%; border-radius: var(--pill); background: var(--c); transform-origin: left; }
+.tp-row > b { font: 800 40px var(--font-title); color: var(--c); text-align: right; }
+.tv { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 50px; }
+.tv-chip { border: 3px solid var(--navy); border-radius: var(--pill); padding: 8px 22px; font-size: 22px; font-weight: 700; }
+.gauge { position: absolute; right: 150px; top: 190px; width: 600px; display: flex; flex-direction: column; align-items: center; }
+.gauge-ring { position: relative; width: 460px; height: 460px; }
+.gauge-ring svg { width: 100%; height: 100%; rotate: -90deg; }
+.gauge-ring circle { fill: none; stroke-width: 18; }
+.g-bg { stroke: var(--grey); }
+.g-val { stroke: var(--c); stroke-linecap: round; stroke-dasharray: 1 1; }
+.g-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.g-num b { font: 800 190px/.9 var(--font-title); font-variant-numeric: tabular-nums; }
+.g-num small { font-size: 30px; font-weight: 700; color: var(--muted); }
+.g-level { display: flex; align-items: center; gap: 12px; margin-top: 26px; background: var(--c); color: var(--white); font: 800 34px var(--font-title); text-transform: uppercase; letter-spacing: .08em; padding: 10px 30px; border-radius: var(--pill); }
+.g-level i { width: 14px; height: 14px; border-radius: 50%; background: var(--white); }
+.g-label { margin-top: 14px; font-size: 22px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.g-deps { display: flex; gap: 16px; margin-top: 30px; }
+.g-dep { display: flex; flex-direction: column; align-items: center; min-width: 120px; padding: 12px 18px; border-radius: 20px; background: var(--grey); border: 3px solid transparent; }
+.g-dep.on { background: var(--white); border-color: var(--navy); }
+.g-dep strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.g-dep span { font-size: 22px; font-weight: 800; color: var(--c); }
+.g-dep span::before { content: "● "; font-size: 16px; }
+
+/* 03 · Démo : l'écran du site qui rejoue la simulation */
+.s-demo .col { position: relative; z-index: 2; width: 760px; margin-top: 120px; }
+.s-demo .title.huge { font-size: 180px; }
+.s-demo .lead { font-size: 34px; }
+.s-demo .trame { width: 460px; margin-top: 50px; }
+.demo-live { display: inline-flex; align-items: center; gap: 14px; margin-top: 40px; background: var(--white); color: var(--red); font: 800 30px var(--font-title); text-transform: uppercase; letter-spacing: .14em; padding: 12px 30px; border-radius: var(--pill); }
+.demo-screen { position: absolute; right: 110px; top: 220px; width: 960px; }
+.demo-float { border-radius: 26px; overflow: hidden; background: #08132e; box-shadow: 0 60px 120px rgba(15,33,73,.55), 0 0 0 10px var(--yellow); }
+.demo-float video { display: block; width: 960px; height: 540px; object-fit: cover; background: var(--white); }
+.s-ft .title { font-size: 92px; max-width: none; }
+.s-ft .ft { margin-top: 80px; }
+.s-ft .ft-col header { margin: 22px 0 18px; }
+.s-ft .ft-item { padding: 14px 0; }
+.s-ft .ft-item p { font-size: 21px; }
+.s-map .col { width: 700px; }
+.s-map .lead { max-width: 680px; }
+.s-map .stats.small { width: 680px; gap: 24px; }
+.s-map .stats.small .stat b { font-size: 84px; }
+.s-map .stats.small .stat span { font-size: 22px; }
+.s-demo .col { width: 700px; }
+.s-demo .title.huge { font-size: 150px; }
+.s-demo .lead { max-width: 640px; }
+.demo-screen { right: 100px; width: 920px; }
+.demo-float video { width: 920px; height: 518px; }
