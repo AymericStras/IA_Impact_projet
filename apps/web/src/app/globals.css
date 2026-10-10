@@ -1,0 +1,117 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-user-bubble: var(--user-bubble);
+  --color-user-bubble-foreground: var(--user-bubble-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+  Calm French public-service palette. The accent is a deep blue-teal inspired by
+  the liO identity; surfaces stay light and neutral, borders restrained.
+  All foreground/background pairs below keep a contrast ratio >= 4.5:1.
+*/
+:root {
+  --background: oklch(0.985 0.003 240);
+  --foreground: oklch(0.2 0.02 245);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 245);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 245);
+  --primary: oklch(0.42 0.1 222);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.008 235);
+  --secondary-foreground: oklch(0.28 0.03 235);
+  --muted: oklch(0.96 0.006 240);
+  --muted-foreground: oklch(0.46 0.02 240);
+  --accent: oklch(0.94 0.025 215);
+  --accent-foreground: oklch(0.3 0.07 222);
+  --destructive: oklch(0.5 0.19 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.47 0.12 152);
+  --success-foreground: oklch(0.99 0 0);
+  --success-soft: oklch(0.95 0.035 152);
+  --warning: oklch(0.6 0.13 70);
+  --user-bubble: oklch(0.42 0.1 222);
+  --user-bubble-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.01 240);
+  --input: oklch(0.62 0.015 240);
+  --ring: oklch(0.45 0.1 222);
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+  Focus indicator. Deliberately outside any cascade layer so it wins over the
+  `outline-none` utilities of the shadcn primitives: every focusable control gets the same
+  2px solid ring, on any background. `data-focus-inside` opts out a field whose wrapper
+  already draws the ring (the composer textarea).
+*/
+:focus-visible:not([data-focus-inside]) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@layer utilities {
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}

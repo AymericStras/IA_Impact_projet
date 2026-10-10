@@ -1,0 +1,182 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { InfoIcon, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useConversation } from "@/hooks/useConversation";
+import { fr } from "@/i18n/fr";
+import { isDemoMode } from "@/lib/env";
+import { TOUCH_TARGET } from "@/lib/ui";
+import type { ConversationService } from "@/services";
+import { ConfirmationCard } from "./ConfirmationCard";
+import { ConversationThread } from "./ConversationThread";
+import { ErrorMessage } from "./ErrorMessage";
+import { LoadingState } from "./LoadingState";
+import { MessageComposer } from "./MessageComposer";
+import { RequirementsPanel } from "./RequirementsPanel";
+import { TopBar } from "./TopBar";
+
+const PANEL_ID = "requirements-panel";
+
+interface ChatContainerProps {
+  /** Injectable service (tests); defaults to the one selected by NEXT_PUBLIC_DEMO_MODE. */
+  service?: ConversationService;
+}
+
+/**
+ * Orchestrates the page: top bar, conversation thread + composer,
+ * "Votre projet" panel. All business state comes from `useConversation`.
+ *
+ * The page is a fixed-height shell (`h-dvh`): only the thread (and, on desktop, the
+ * panel column) scrolls. The composer is a normal flex item below the thread, so it can
+ * never cover a message or the confirmation card.
+ */
+export function ChatContainer({ service }: ChatContainerProps) {
+  const chat = useConversation(service);
+  const [draft, setDraft] = useState("");
+  const [editRequest, setEditRequest] = useState(0);
+
+  const { conversation, config, pending, error, notice } = chat;
+  const busy = pending !== null;
+  const latestAssistant = conversation?.assistant_message ?? null;
+  const confirmed =
+    conversation?.state === "CONFIRMED" ? (conversation.confirmed_requirements ?? null) : null;
+
+  const sendText = useCallback(
+    async (content: string, source: "text" | "audio") => {
+      const outcome = await chat.send(content, source);
+      // Nothing was applied and no error block holds the text: give it back to the user.
+      if (outcome === "draft_kept") setDraft((current) => current || content);
+    },
+    [chat],
+  );
+
+  const dismissError = useCallback(() => {
+    if (error?.failedContent) setDraft((current) => current || (error.failedContent ?? ""));
+    chat.dismissError();
+  }, [chat, error]);
+
+  const footerKey = [
+    error ? "error" : "",
+    confirmed ? "confirmed" : conversation?.ready_for_confirmation ? "confirm" : "",
+  ].join("|");
+
+  return (
+    <TooltipProvider>
+      <div className="flex h-dvh flex-col overflow-hidden">
+        <a
+          href="#composer-input"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+        >
+          {fr.app.skipToComposer}
+        </a>
+        <TopBar onRestart={() => void chat.restart()} disabled={busy} />
+
+        {isDemoMode ? (
+          <p className="sr-only" role="note">
+            {fr.demo.description}
+          </p>
+        ) : null}
+
+        {/* Discreet announcement of the latest reply for screen readers. */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only" aria-label={fr.conversation.liveRegionLabel}>
+          {latestAssistant}
+        </div>
+
+        <main className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-4 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+          <aside className="thin-scrollbar shrink-0 pt-3 pb-1 lg:order-2 lg:min-h-0 lg:overflow-y-auto lg:py-6">
+            {conversation ? (
+              <RequirementsPanel
+                id={PANEL_ID}
+                requirements={conversation.requirements}
+                missingFields={conversation.missing_fields}
+                pendingClarification={conversation.pending_clarification ?? null}
+                state={conversation.state}
+                disabled={busy}
+                onEdit={chat.editField}
+                editRequest={editRequest}
+              />
+            ) : null}
+          </aside>
+
+          <section className="flex min-h-0 flex-1 flex-col lg:order-1" aria-label={fr.conversation.heading}>
+            {conversation ? (
+              <ConversationThread
+                className="flex-1"
+                messages={conversation.messages}
+                optimisticMessage={chat.optimisticMessage}
+                typing={pending === "message"}
+                optimisticFailed={Boolean(error && chat.optimisticMessage)}
+                footerKey={footerKey}
+              >
+                {error ? (
+                  <ErrorMessage
+                    detail={error.detail}
+                    onRetry={
+                      error.recovery === "retry"
+                        ? () => void chat.retry()
+                        : error.recovery === "restart"
+                          ? () => void chat.restart()
+                          : undefined
+                    }
+                    retryLabel={error.recovery === "restart" ? fr.app.newConversation : undefined}
+                    onDismiss={dismissError}
+                  />
+                ) : null}
+                <ConfirmationCard
+                  ready={conversation.ready_for_confirmation}
+                  confirmedRequirements={confirmed}
+                  onConfirm={() => void chat.confirm()}
+                  onEdit={() => setEditRequest((n) => n + 1)}
+                  pending={pending === "confirm"}
+                />
+              </ConversationThread>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto py-4">
+                {chat.status === "failed" ? (
+                  <ErrorMessage detail={error?.detail ?? fr.errors.initFailed} onRetry={() => void chat.retry()} />
+                ) : (
+                  <LoadingState />
+                )}
+              </div>
+            )}
+
+            <div className="shrink-0 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              {notice ? (
+                <div
+                  role="status"
+                  className="mb-2 flex items-start gap-2 rounded-xl border border-primary/20 bg-accent/50 px-3 py-2 text-sm"
+                  data-testid="notice"
+                >
+                  <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                  <p className="min-w-0 flex-1">{notice}</p>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    onClick={chat.dismissNotice}
+                    aria-label={fr.errors.dismiss}
+                    className={TOUCH_TARGET}
+                  >
+                    <XIcon aria-hidden="true" />
+                  </Button>
+                </div>
+              ) : null}
+              <MessageComposer
+                value={draft}
+                onChange={setDraft}
+                onSend={(content) => void sendText(content, "text")}
+                onSendTranscript={(content) => void sendText(content, "audio")}
+                onTranscribe={chat.transcribe}
+                disabled={busy || !conversation}
+                sending={pending === "message"}
+                maxLength={config.max_message_chars}
+                maxAudioSeconds={config.max_audio_seconds}
+              />
+            </div>
+          </section>
+        </main>
+      </div>
+    </TooltipProvider>
+  );
+}

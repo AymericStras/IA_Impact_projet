@@ -1,0 +1,20 @@
+# Keep host-specific and private files out of image build contexts.
+.git
+.env
+.env.*
+.local
+artifacts
+reports
+evals/results
+**/node_modules
+**/.next
+**/.next-*
+**/test-results
+**/playwright-report
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.tsbuildinfo
+apps/web/e2e
