@@ -5,11 +5,10 @@
   "tasks": [
     {
       "id": "RESTYLE-V3",
-      "status": "ready",
-      "priority": 1,
+      "status": "done",
       "title": "Complete and verify the shared V3 identity in classic and voice interfaces",
       "acceptance": "Functional and responsive tests green; all intended screenshots reviewed; shared rules and handoff updated; candidate pushed",
-      "evidence": "2026-10-10 local (demo mode): tsc, eslint, vitest 411, classic e2e 74 passed / 3 skipped + visual 20 passed, voice e2e 81 passed + visual 20 passed; 152 baselines reviewed as contact sheets. Hosted run 38033849480 passed everything except one voice test (fixed) and the then-stale baselines. Hosted run of the final commit pending. Not verified on real devices."
+      "evidence": "2026-10-10 local (demo mode): tsc, eslint, vitest 411, classic e2e 74 passed / 3 skipped + visual 20 passed, voice e2e 81 passed + visual 20 passed; 152 baselines reviewed as contact sheets. Hosted run 38033849480 passed everything except one voice test (fixed) and the then-stale baselines. Merged as PR #1 at the owner's request before hosted run 38037608205 of the final commit finished. Not verified on real devices."
     },
     {
       "id": "P0-FRAMEWORK",
@@ -79,7 +78,8 @@
       "title": "Publish the verified V3 interface through admitted deployment tooling",
       "acceptance": "Reviewed V3 interfaces serve publicly; target and neighbouring health verified; only unused task-authorized artifacts cleaned, with data preserved",
       "requires": [
-        "Verified host-guard admission and accounting for Docker import, runtime replacement and gateway transaction"
+        "Verified host-guard admission and accounting for Docker import, runtime replacement and gateway transaction",
+        "deploy/deploy.sh preflight returning allowed=true (refused on 2026-10-10 08:20 UTC: maintenance_or_unknown, resource_pressure, health_warmup)"
       ],
       "evidence": "2026-10-10 read-only inspection: live API/web a2d62efa4418; host preflight allowed offline_readonly_sandbox only. No deployment attempted."
     },
@@ -106,10 +106,10 @@
     },
     {
       "id": "CI-HOSTED",
-      "status": "ready",
-      "priority": 5,
+      "status": "done",
       "title": "First green run of .github/workflows/ci.yml on GitHub",
-      "acceptance": "All three jobs green on main; fix whatever differs from local"
+      "acceptance": "All three jobs green on main; fix whatever differs from local",
+      "evidence": "Run 38029514774 on main (a2d62ef): guards, API and web jobs green."
     },
     {
       "id": "MODEL-COMPARE",
@@ -127,6 +127,12 @@
         "deployment and privacy requirements from the owner"
       ],
       "acceptance": "Each item implemented and tested; none ticked from code inspection"
+    },
+    {
+      "id": "DEPLOY-GUARDRAILS",
+      "status": "done",
+      "title": "Strict readiness and transactional gateway configuration helpers",
+      "evidence": "8 deployment helper tests; bash -n; stream byte/timing check; no live deployment performed"
     }
   ]
 }

@@ -6,7 +6,7 @@ machine; the server only runs two small containers.
 
 ## Current release gate — 2026-10-10
 
-The V3 restyle is being verified on hosted development runners; it is not deployed. A read-only inspection found the live API and web containers using `a2d62efa4418`. The host's 768 MiB preflight returned `allowed=true` for `offline_readonly_sandbox` only: this is not admission for Docker image import, container replacement or gateway mutation. Those operations still need the verified shared deployment transaction described by host-guard. Do not run the historical server-build or `--owner-approved` paths below. Deployment hardening is tracked separately on `fix/deploy-guardrails`; this UI task does not modify or activate it.
+The V3 restyle is merged on `main` (PR #1) and **not deployed**. On 2026-10-10 around 08:20 UTC `deploy/deploy.sh preflight` returned `allowed=false` (`health_warmup`, `maintenance_or_unknown`, `resource_pressure`) while `host-guard status` reported `maintenance_active` (`repair-workflow-external-backup.service`) and `io_pressure`; nothing was built, shipped or started. An earlier read-only inspection found the live containers on `a2d62efa4418`. The server-build and `--owner-approved` paths were removed from `deploy/deploy.sh` with the guardrails merge: there is no override. The release evidence further down describes an earlier release built with the removed server-build path.
 
 ## Layout on the server (host conventions)
 
@@ -27,31 +27,23 @@ The V3 restyle is being verified on hosted development runners; it is not deploy
 | `api` (FastAPI, 1 worker) | 384 MiB | 1 | 185 MiB after a text and an audio request (amd64 image under emulation) |
 | `web` (Next.js standalone) | 384 MiB | 1 | about 100–180 MiB |
 
-Images: API 288 MB (Alpine + ffmpeg). Root filesystem on the host is tight (about 26 GiB free on 2026-10-10; the host rule wants 25 GiB): prune old `sncf-chatbot-*` images after a successful release.
+Images: API 288 MB (Alpine + ffmpeg). Docker and containerd storage are already backed by `/data`; pruning their images does not reclaim the root filesystem. Root cleanup belongs to the host maintenance workflow.
 
-## Historical commands (superseded; do not execute)
+## Commands
 
 ```sh
-deploy/deploy.sh preflight                 # read-only admission check
-deploy/deploy.sh remote [commit]           # build ON the server from a pushed commit (preferred)
-deploy/deploy.sh up --yes                  # start/replace this stack only
-deploy/deploy.sh route --yes               # gateway block: backup, nginx -t, graceful reload, public smoke test
+deploy/deploy.sh preflight     # read-only admission check
+deploy/deploy.sh build         # local linux/amd64 images, tagged with the commit
+deploy/deploy.sh ship          # docker save | ssh docker load, compose file, release env
+deploy/deploy.sh up --yes      # start/replace this stack only (preflight must pass)
+deploy/deploy.sh route --yes   # gateway block: backup, nginx -t, graceful reload, public smoke test
 deploy/deploy.sh status
-deploy/deploy.sh down --yes                # remove the route, stop this stack, keep the data
-deploy/deploy.sh build && deploy/deploy.sh ship   # alternative: build locally and upload (slow uplink: ~500 MB)
+deploy/deploy.sh down --yes    # remove the route, stop this stack, keep the data
 ```
 
-**Updating**: push to GitHub, then `deploy/deploy.sh remote && RELEASE=<short sha> deploy/deploy.sh up --yes`. The route does not change between releases.
+Preflight delegates every admission decision to `host-guard preflight --memory-mb 768`. It requires an explicit `allowed=true`, no refusal reasons, the exact budget, a successful exit and valid JSON; missing, malformed and timed-out protection fails closed. Occupied ports must belong to this stack. There is no override flag.
 
-### Building on the server
-
-`deploy/remote-build.sh` runs on the server: it exports the commit from the GitHub checkout (`~/Developer/sncf-chatbot`, cloned with the host's `gh` login) into `/data/services/sncf-chatbot/build/<sha>`, runs the heavy steps in throw-away containers capped at 1500 MiB (no swap), 1 CPU and 512 PIDs, keeps package caches under `/data/services/sncf-chatbot/cache`, then assembles small runtime images that only copy prebuilt files. A lock allows one build at a time. The running version keeps serving during the build.
-
-Measured on 2026-10-10 (two builds): `next build` reached the 1500 MiB cap (the figure includes page cache; the build completed without being killed), `uv sync` peaked at 316–328 MiB; host memory pressure stayed at 0 and available memory above 8 GiB. Switching containers caused one failed public probe out of 25 (a few seconds).
-
-### Preflight and the owner override
-
-The preflight always blocks on resources: memory PSI `full` at or above 1 %, less than 6 GiB available after this stack's budget, root filesystem under 25 GiB or 10 % free, ports taken by something else, or `host-guard` reporting `resource_pressure`. These cannot be skipped. A refusal that comes only from `host-guard`'s own health bookkeeping (`production_health_unavailable_or_failed`, which on 2026-10-10 reflected the restart history of an unrelated ClamAV container, not a current fault) can be overridden with `--owner-approved`, which the owner must ask for explicitly each time.
+This check establishes current readiness only. It does not reserve the host-guard task slot or prove that the shared Docker daemon's image-import work is inside the task budget. `ship` now caps its uncompressed stream at 2 MiB/s and checks readiness first, but **production ship/up remain pending a guarded deployment transaction that covers daemon work and verifies actual container cgroups**. Do not treat preflight alone as authorization to run them.
 
 ## Routing details
 
@@ -73,3 +65,6 @@ The URL is public and, at the owner's request, there is no rate limiting and no 
 - The deployed web is the last committed frontend: the conversation handles the departure station, but the side panel does not yet show it as a fifth row, and the simulated journey after confirmation has no interface yet.
 - Not verified: real phones and real microphones on the public URL; behaviour under concurrent users; a rollback (`.env.previous` is kept, the previous images are still on the host, but the path has not been exercised).
 - Disk: root filesystem at 26 GiB free, close to the host's 25 GiB floor. Each release adds about 700 MB of images; remove images of releases older than the previous one.
+- Host diagnosis corrected: the controller repeatedly created TLS contexts and hit its own `memory.high`; caching the opener reduced controller memory to about 17 MiB and host memory PSI to 0. ClamAV has a separate socket-startup mismatch; it was not proven to cause the observed pressure.
+- Deployment script fixes verified locally: all refusal reasons honored, ports checked individually, managed block passed separately from Python stdin, same-inode gateway updates restored after validation/reload failure, and failed route removal cannot proceed to stopping containers. No live gateway changes made.
+- Building on the server is possible later only if the host rules allow it; today they suspend full builds on that machine.
