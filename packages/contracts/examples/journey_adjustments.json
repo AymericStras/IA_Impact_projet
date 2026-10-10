@@ -1,0 +1,271 @@
+{
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "stage": "adjustments",
+  "requirements_version": 1,
+  "planner_mode": "simulated",
+  "simulated": true,
+  "departure_stations": [
+    "Toulouse Matabiau",
+    "Toulouse Saint-Cyprien-Arènes",
+    "Toulouse Saint-Agne"
+  ],
+  "notices": [
+    "Simulation : destinations, horaires, lieux et réservation sont illustratifs, sans disponibilité réelle.",
+    "Les durées de trajet simulées ne dépendent pas de la gare de départ indiquée."
+  ],
+  "message": "Aucun itinéraire ne correspond exactement à votre demande. Voici ce qui deviendrait possible ; rien n'est modifié sans votre accord.",
+  "destinations": [
+    {
+      "id": "carcassonne",
+      "city": "Carcassonne",
+      "station": "Carcassonne",
+      "title": "Cité médiévale de Carcassonne",
+      "theme_match": "Une cité fortifiée pour aborder le Moyen Âge sur le terrain.",
+      "travel_minutes": 55,
+      "places": [
+        {
+          "title": "Cité et remparts",
+          "walk_minutes": 20,
+          "note": "Accueil des groupes sur réservation ; horaires à confirmer."
+        },
+        {
+          "title": "Château comtal",
+          "walk_minutes": 22,
+          "note": "Visite commentée possible pour les scolaires."
+        }
+      ],
+      "activities": [
+        {
+          "id": "carcassonne-1",
+          "title": "Visite guidée des remparts",
+          "description": "Parcours commenté des fortifications.",
+          "duration_minutes": 90
+        },
+        {
+          "id": "carcassonne-2",
+          "title": "Atelier « vie au Moyen Âge »",
+          "description": "Atelier pédagogique en demi-groupes.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "carcassonne-3",
+          "title": "Jeu de piste dans la cité",
+          "description": "Enquête par équipes dans les ruelles.",
+          "duration_minutes": 60
+        }
+      ]
+    },
+    {
+      "id": "albi",
+      "city": "Albi",
+      "station": "Albi-Ville",
+      "title": "Albi, cité épiscopale",
+      "theme_match": "Un ensemble en brique pour travailler l'architecture et le patrimoine.",
+      "travel_minutes": 65,
+      "places": [
+        {
+          "title": "Cathédrale Sainte-Cécile",
+          "walk_minutes": 12,
+          "note": "Entrée libre ; visite de groupe à annoncer."
+        },
+        {
+          "title": "Musée Toulouse-Lautrec",
+          "walk_minutes": 14,
+          "note": "Créneaux scolaires sur réservation."
+        }
+      ],
+      "activities": [
+        {
+          "id": "albi-1",
+          "title": "Lecture d'architecture à la cathédrale",
+          "description": "Observation guidée du gothique méridional.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "albi-2",
+          "title": "Parcours dans la cité épiscopale",
+          "description": "Croquis et relevés en petits groupes.",
+          "duration_minutes": 90
+        },
+        {
+          "id": "albi-3",
+          "title": "Atelier au musée",
+          "description": "Analyse d'œuvres avec un médiateur.",
+          "duration_minutes": 60
+        }
+      ]
+    },
+    {
+      "id": "sete",
+      "city": "Sète",
+      "station": "Sète",
+      "title": "Sète et l'étang de Thau",
+      "theme_match": "Un milieu lagunaire pour étudier la biodiversité et les écosystèmes.",
+      "travel_minutes": 125,
+      "places": [
+        {
+          "title": "Étang de Thau",
+          "walk_minutes": 18,
+          "note": "Site naturel ; accès libre, médiation sur réservation."
+        },
+        {
+          "title": "Musée de la mer",
+          "walk_minutes": 20,
+          "note": "Accueil des classes en matinée."
+        }
+      ],
+      "activities": [
+        {
+          "id": "sete-1",
+          "title": "Découverte de l'étang de Thau",
+          "description": "Observation du milieu avec un médiateur.",
+          "duration_minutes": 105
+        },
+        {
+          "id": "sete-2",
+          "title": "Atelier d'analyse de l'eau",
+          "description": "Mesures simples et interprétation.",
+          "duration_minutes": 75
+        }
+      ]
+    },
+    {
+      "id": "castelnaudary",
+      "city": "Castelnaudary",
+      "station": "Castelnaudary",
+      "title": "Canal du Midi à Castelnaudary",
+      "theme_match": "Un ouvrage d'aménagement pour relier géographie, histoire et technique.",
+      "travel_minutes": 40,
+      "places": [
+        {
+          "title": "Grand Bassin",
+          "walk_minutes": 10,
+          "note": "Accès libre toute l'année."
+        },
+        {
+          "title": "Écluses de Saint-Roch",
+          "walk_minutes": 15,
+          "note": "Démonstration possible selon la navigation."
+        }
+      ],
+      "activities": [
+        {
+          "id": "castelnaudary-1",
+          "title": "Le Grand Bassin et les écluses",
+          "description": "Lecture de paysage et fonctionnement des écluses.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "castelnaudary-2",
+          "title": "Atelier cartographie",
+          "description": "Tracé du canal et repérage sur carte.",
+          "duration_minutes": 60
+        }
+      ]
+    }
+  ],
+  "selected_destination_id": "carcassonne",
+  "selected_activity_ids": [
+    "carcassonne-1",
+    "carcassonne-2"
+  ],
+  "itineraries": [],
+  "adjustments": [
+    {
+      "id": "adj_762b46e27f",
+      "kind": "return_later",
+      "label": "Retour à 17 h 30 au lieu de 17 h 00",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [
+        {
+          "field": "return",
+          "before": "17:00",
+          "after": "17:30"
+        }
+      ],
+      "destination_id": null,
+      "activity_ids": null,
+      "unlocks": 1
+    },
+    {
+      "id": "adj_1e936aa10c",
+      "kind": "departure_earlier",
+      "label": "Départ à 7 h 30 au lieu de 8 h 00",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [
+        {
+          "field": "departure",
+          "before": "08:00",
+          "after": "07:30"
+        }
+      ],
+      "destination_id": null,
+      "activity_ids": null,
+      "unlocks": 1
+    },
+    {
+      "id": "adj_887176826b",
+      "kind": "fewer_activities",
+      "label": "Une seule activité : Atelier « vie au Moyen Âge »",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [],
+      "destination_id": null,
+      "activity_ids": [
+        "carcassonne-2"
+      ],
+      "unlocks": 3
+    },
+    {
+      "id": "adj_624d7104a1",
+      "kind": "other_destination",
+      "label": "Une destination plus proche : Canal du Midi à Castelnaudary (40 min de trajet)",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [],
+      "destination_id": "castelnaudary",
+      "activity_ids": [
+        "castelnaudary-1"
+      ],
+      "unlocks": 3
+    },
+    {
+      "id": "adj_337d904a37",
+      "kind": "return_later",
+      "label": "Retour à 18 h 00 au lieu de 17 h 00",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [
+        {
+          "field": "return",
+          "before": "17:00",
+          "after": "18:00"
+        }
+      ],
+      "destination_id": null,
+      "activity_ids": null,
+      "unlocks": 2
+    },
+    {
+      "id": "adj_a2ebaadc15",
+      "kind": "return_later",
+      "label": "Retour à 18 h 30 au lieu de 17 h 00",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [
+        {
+          "field": "return",
+          "before": "17:00",
+          "after": "18:30"
+        }
+      ],
+      "destination_id": null,
+      "activity_ids": null,
+      "unlocks": 3
+    }
+  ],
+  "accepted_adjustments": [],
+  "selected_itinerary_id": null,
+  "booking": null,
+  "alternatives": [],
+  "feedback": null,
+  "search_scenario": "adjustments",
+  "booking_scenario": "confirmed",
+  "strict_minutes": 195
+}

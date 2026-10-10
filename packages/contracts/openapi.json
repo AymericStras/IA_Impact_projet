@@ -431,13 +431,13 @@
         }
       }
     },
-    "/api/v1/conversations/{conversation_id}/plan": {
+    "/api/v1/conversations/{conversation_id}/journey": {
       "post": {
         "tags": [
           "conversations"
         ],
-        "summary": "Plan",
-        "operationId": "plan_api_v1_conversations__conversation_id__plan_post",
+        "summary": "Start Journey",
+        "operationId": "start_journey_api_v1_conversations__conversation_id__journey_post",
         "parameters": [
           {
             "name": "conversation_id",
@@ -455,7 +455,7 @@
               "schema": {
                 "anyOf": [
                   {
-                    "$ref": "#/components/schemas/PlanRequest"
+                    "$ref": "#/components/schemas/StartJourneyRequest"
                   },
                   {
                     "type": "null"
@@ -472,7 +472,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlanResult"
+                  "$ref": "#/components/schemas/Journey"
                 }
               }
             }
@@ -493,8 +493,8 @@
         "tags": [
           "conversations"
         ],
-        "summary": "Get Plan",
-        "operationId": "get_plan_api_v1_conversations__conversation_id__plan_get",
+        "summary": "Get Journey",
+        "operationId": "get_journey_api_v1_conversations__conversation_id__journey_get",
         "parameters": [
           {
             "name": "conversation_id",
@@ -512,7 +512,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlanResult"
+                  "$ref": "#/components/schemas/Journey"
                 }
               }
             }
@@ -530,13 +530,13 @@
         }
       }
     },
-    "/api/v1/conversations/{conversation_id}/plan/select": {
+    "/api/v1/conversations/{conversation_id}/journey/destination": {
       "post": {
         "tags": [
           "conversations"
         ],
-        "summary": "Select Proposal",
-        "operationId": "select_proposal_api_v1_conversations__conversation_id__plan_select_post",
+        "summary": "Choose Destination",
+        "operationId": "choose_destination_api_v1_conversations__conversation_id__journey_destination_post",
         "parameters": [
           {
             "name": "conversation_id",
@@ -553,7 +553,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SelectProposalRequest"
+                "$ref": "#/components/schemas/ChooseDestinationRequest"
               }
             }
           }
@@ -564,7 +564,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlanResult"
+                  "$ref": "#/components/schemas/Journey"
                 }
               }
             }
@@ -582,13 +582,117 @@
         }
       }
     },
-    "/api/v1/conversations/{conversation_id}/handoff": {
-      "get": {
+    "/api/v1/conversations/{conversation_id}/journey/adjustment": {
+      "post": {
         "tags": [
           "conversations"
         ],
-        "summary": "Handoff",
-        "operationId": "handoff_api_v1_conversations__conversation_id__handoff_get",
+        "summary": "Accept Adjustment",
+        "operationId": "accept_adjustment_api_v1_conversations__conversation_id__journey_adjustment_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptAdjustmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Journey"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/journey/itinerary": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Choose Itinerary",
+        "operationId": "choose_itinerary_api_v1_conversations__conversation_id__journey_itinerary_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChooseItineraryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Journey"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/journey/booking": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Submit Booking",
+        "operationId": "submit_booking_api_v1_conversations__conversation_id__journey_booking_post",
         "parameters": [
           {
             "name": "conversation_id",
@@ -606,7 +710,143 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Handoff"
+                  "$ref": "#/components/schemas/Journey"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/journey/booking/check": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Check Booking",
+        "operationId": "check_booking_api_v1_conversations__conversation_id__journey_booking_check_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Journey"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/journey/travel-file": {
+      "get": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Travel File",
+        "operationId": "travel_file_api_v1_conversations__conversation_id__journey_travel_file_get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/journey/feedback": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Give Feedback",
+        "operationId": "give_feedback_api_v1_conversations__conversation_id__journey_feedback_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Feedback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Journey"
                 }
               }
             }
@@ -627,8 +867,27 @@
   },
   "components": {
     "schemas": {
-      "Activity": {
+      "AcceptAdjustmentRequest": {
         "properties": {
+          "adjustment_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Adjustment Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "adjustment_id"
+        ],
+        "title": "AcceptAdjustmentRequest"
+      },
+      "ActivityOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
           "title": {
             "type": "string",
             "title": "Title"
@@ -637,26 +896,102 @@
             "type": "string",
             "title": "Description"
           },
-          "start": {
-            "type": "string",
-            "title": "Start",
-            "description": "Local ISO date-time with offset"
-          },
-          "end": {
-            "type": "string",
-            "title": "End",
-            "description": "Local ISO date-time with offset"
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 15.0,
+            "title": "Duration Minutes"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "id",
           "title",
           "description",
-          "start",
-          "end"
+          "duration_minutes"
         ],
-        "title": "Activity"
+        "title": "ActivityOption"
+      },
+      "Adjustment": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "return_later",
+              "departure_earlier",
+              "fewer_activities",
+              "other_destination"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "French sentence: what changes"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "French sentence: why the request does not fit as asked"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/RequirementChange"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Changes to the confirmed requirements, if any"
+          },
+          "destination_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Id",
+            "description": "For other_destination"
+          },
+          "activity_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Ids",
+            "description": "For fewer_activities"
+          },
+          "unlocks": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Unlocks",
+            "description": "Number of itineraries that become feasible"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "reason",
+          "changes",
+          "unlocks"
+        ],
+        "title": "Adjustment",
+        "description": "One way to make the request feasible. Nothing is applied until the teacher accepts it."
       },
       "Body_transcribe_audio_api_v1_conversations__conversation_id__audio_post": {
         "properties": {
@@ -671,6 +1006,84 @@
           "file"
         ],
         "title": "Body_transcribe_audio_api_v1_conversations__conversation_id__audio_post"
+      },
+      "Booking": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "refused"
+            ],
+            "title": "Status"
+          },
+          "itinerary_id": {
+            "type": "string",
+            "title": "Itinerary Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "French status line for the teacher"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reference",
+          "status",
+          "itinerary_id",
+          "message",
+          "simulated"
+        ],
+        "title": "Booking"
+      },
+      "ChooseDestinationRequest": {
+        "properties": {
+          "destination_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Destination Id"
+          },
+          "activity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Activity Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "destination_id"
+        ],
+        "title": "ChooseDestinationRequest"
+      },
+      "ChooseItineraryRequest": {
+        "properties": {
+          "itinerary_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Itinerary Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "itinerary_id"
+        ],
+        "title": "ChooseItineraryRequest"
       },
       "ClientConfig": {
         "properties": {
@@ -995,6 +1408,63 @@
         ],
         "title": "DateTimeRequirement"
       },
+      "DestinationOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "station": {
+            "type": "string",
+            "title": "Station"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "theme_match": {
+            "type": "string",
+            "title": "Theme Match",
+            "description": "Why it fits the teacher's subject or theme"
+          },
+          "travel_minutes": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Travel Minutes"
+          },
+          "places": {
+            "items": {
+              "$ref": "#/components/schemas/Place"
+            },
+            "type": "array",
+            "title": "Places"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityOption"
+            },
+            "type": "array",
+            "title": "Activities"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "city",
+          "station",
+          "title",
+          "theme_match",
+          "travel_minutes",
+          "places",
+          "activities"
+        ],
+        "title": "DestinationOption"
+      },
       "EditRequirementRequest": {
         "properties": {
           "field": {
@@ -1043,6 +1513,54 @@
         ],
         "title": "EditRequirementRequest"
       },
+      "FeasibilityCheck": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "French label of what was checked"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label",
+          "ok"
+        ],
+        "title": "FeasibilityCheck"
+      },
+      "Feedback": {
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "Feedback"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1056,29 +1574,55 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "Handoff": {
+      "Itinerary": {
         "properties": {
-          "schema_version": {
+          "id": {
             "type": "string",
-            "const": "1.0",
-            "title": "Schema Version",
-            "default": "1.0"
+            "title": "Id"
           },
-          "conversation_id": {
+          "destination_id": {
             "type": "string",
-            "title": "Conversation Id"
+            "title": "Destination Id"
           },
-          "booking_status": {
+          "title": {
             "type": "string",
-            "const": "NOT_RESERVED",
-            "title": "Booking Status",
-            "default": "NOT_RESERVED"
+            "title": "Title"
           },
-          "requirements": {
-            "$ref": "#/components/schemas/CompleteRequirements"
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "What distinguishes this option, e.g. « Journée complète »"
           },
-          "proposal": {
-            "$ref": "#/components/schemas/Proposal"
+          "outbound": {
+            "$ref": "#/components/schemas/TrainLeg"
+          },
+          "return": {
+            "$ref": "#/components/schemas/TrainLeg"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/TimedActivity"
+            },
+            "type": "array",
+            "title": "Activities"
+          },
+          "free_minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Free Minutes",
+            "description": "Time on site not taken by activities or walking"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/FeasibilityCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "participants_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Participants Count"
           },
           "simulated": {
             "type": "boolean",
@@ -1088,13 +1632,207 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "conversation_id",
-          "requirements",
-          "proposal",
+          "id",
+          "destination_id",
+          "title",
+          "label",
+          "outbound",
+          "return",
+          "activities",
+          "free_minutes",
+          "checks",
+          "participants_count",
           "simulated"
         ],
-        "title": "Handoff",
-        "description": "Final payload for the booking step, which is not part of this project."
+        "title": "Itinerary"
+      },
+      "Journey": {
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "destinations",
+              "itineraries",
+              "adjustments",
+              "no_match",
+              "review",
+              "booking_pending",
+              "booked",
+              "booking_refused",
+              "closed"
+            ],
+            "title": "Stage"
+          },
+          "requirements_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Requirements Version"
+          },
+          "planner_mode": {
+            "type": "string",
+            "enum": [
+              "simulated",
+              "http"
+            ],
+            "title": "Planner Mode"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          },
+          "departure_stations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Departure Stations",
+            "description": "Stations the departure may use (a city is expanded)"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notices",
+            "description": "French notes for the teacher (simulation label, assumptions)"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "French line describing the current stage"
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/DestinationOption"
+            },
+            "type": "array",
+            "title": "Destinations"
+          },
+          "selected_destination_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Destination Id"
+          },
+          "selected_activity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Selected Activity Ids"
+          },
+          "itineraries": {
+            "items": {
+              "$ref": "#/components/schemas/Itinerary"
+            },
+            "type": "array",
+            "title": "Itineraries"
+          },
+          "adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/Adjustment"
+            },
+            "type": "array",
+            "title": "Adjustments"
+          },
+          "accepted_adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/Adjustment"
+            },
+            "type": "array",
+            "title": "Accepted Adjustments"
+          },
+          "selected_itinerary_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Itinerary Id"
+          },
+          "booking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Booking"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/Itinerary"
+            },
+            "type": "array",
+            "title": "Alternatives",
+            "description": "Offered after a refused booking"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Feedback"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search_scenario": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "adjustments",
+              "no_match",
+              "error"
+            ],
+            "title": "Search Scenario",
+            "default": "auto"
+          },
+          "booking_scenario": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "refused",
+              "error"
+            ],
+            "title": "Booking Scenario",
+            "default": "confirmed"
+          },
+          "strict_minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Strict Minutes",
+            "description": "Simulation lever: extra time required on site to exercise the adjustment branch",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "stage",
+          "requirements_version",
+          "planner_mode",
+          "simulated",
+          "departure_stations",
+          "notices",
+          "message"
+        ],
+        "title": "Journey",
+        "description": "Server state of everything after confirmation. The client renders it; it decides nothing."
       },
       "Message": {
         "properties": {
@@ -1368,179 +2106,62 @@
         ],
         "title": "PendingClarification"
       },
-      "PlanRequest": {
+      "Place": {
         "properties": {
-          "scenario": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "match",
-                  "no_match",
-                  "error"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scenario",
-            "description": "Simulation only: force a scenario to exercise the interface"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "PlanRequest"
-      },
-      "PlanResult": {
-        "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
-          },
-          "conversation_id": {
-            "type": "string",
-            "title": "Conversation Id"
-          },
-          "requirements_version": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Requirements Version",
-            "description": "Version of the requirements this plan answers"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "proposals",
-              "no_match"
-            ],
-            "title": "Status"
-          },
-          "proposals": {
-            "items": {
-              "$ref": "#/components/schemas/Proposal"
-            },
-            "type": "array",
-            "title": "Proposals"
-          },
-          "selected_proposal_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Selected Proposal Id"
-          },
-          "planner_mode": {
-            "type": "string",
-            "enum": [
-              "simulated",
-              "http"
-            ],
-            "title": "Planner Mode"
-          },
-          "simulated": {
-            "type": "boolean",
-            "title": "Simulated"
-          },
-          "assumptions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Assumptions",
-            "description": "French notes shown to the teacher, e.g. the assumed departure station"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "request_id",
-          "conversation_id",
-          "requirements_version",
-          "status",
-          "proposals",
-          "planner_mode",
-          "simulated"
-        ],
-        "title": "PlanResult",
-        "description": "What the planner answers for one confirmed set of requirements."
-      },
-      "Proposal": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
           "title": {
             "type": "string",
             "title": "Title"
           },
-          "destination": {
-            "type": "string",
-            "title": "Destination"
-          },
-          "theme_match": {
-            "type": "string",
-            "title": "Theme Match",
-            "description": "Why this proposal fits the teacher's subject or theme"
-          },
-          "outbound": {
-            "$ref": "#/components/schemas/TrainLeg"
-          },
-          "return": {
-            "$ref": "#/components/schemas/TrainLeg"
-          },
-          "activities": {
-            "items": {
-              "$ref": "#/components/schemas/Activity"
-            },
-            "type": "array",
-            "title": "Activities"
-          },
-          "participants_count": {
+          "walk_minutes": {
             "type": "integer",
-            "minimum": 1.0,
-            "title": "Participants Count"
+            "minimum": 0.0,
+            "title": "Walk Minutes",
+            "description": "Walking time from the arrival station"
           },
-          "simulated": {
-            "type": "boolean",
-            "title": "Simulated",
-            "description": "True when produced by the built-in simulation, never real availability"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "destination",
-          "theme_match",
-          "outbound",
-          "return",
-          "activities",
-          "participants_count",
-          "simulated"
-        ],
-        "title": "Proposal"
-      },
-      "SelectProposalRequest": {
-        "properties": {
-          "proposal_id": {
+          "note": {
             "type": "string",
-            "minLength": 1,
-            "title": "Proposal Id"
+            "title": "Note",
+            "description": "Opening hours, group access, booking conditions — illustrative in simulation"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "proposal_id"
+          "title",
+          "walk_minutes",
+          "note"
         ],
-        "title": "SelectProposalRequest"
+        "title": "Place"
+      },
+      "RequirementChange": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "departure",
+              "return"
+            ],
+            "title": "Field"
+          },
+          "before": {
+            "type": "string",
+            "title": "Before",
+            "description": "HH:MM currently requested"
+          },
+          "after": {
+            "type": "string",
+            "title": "After",
+            "description": "HH:MM proposed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "field",
+          "before",
+          "after"
+        ],
+        "title": "RequirementChange"
       },
       "SendMessageRequest": {
         "properties": {
@@ -1573,6 +2194,47 @@
           "client_message_id"
         ],
         "title": "SendMessageRequest"
+      },
+      "StartJourneyRequest": {
+        "properties": {
+          "search_scenario": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "adjustments",
+                  "no_match",
+                  "error"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Scenario"
+          },
+          "booking_scenario": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "confirmed",
+                  "refused",
+                  "error"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Scenario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StartJourneyRequest",
+        "description": "Scenario switches exist in simulation only, to exercise every branch of the interface."
       },
       "TeachingType": {
         "properties": {
@@ -1652,12 +2314,36 @@
         "title": "TimeConstraint",
         "description": "exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h »."
       },
+      "TimedActivity": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start",
+          "end"
+        ],
+        "title": "TimedActivity"
+      },
       "TrainLeg": {
         "properties": {
           "line": {
             "type": "string",
             "title": "Line",
-            "description": "Line label, e.g. 'liO Toulouse – Carcassonne'. No train number in simulation."
+            "description": "Line label. No train number in simulation."
           },
           "from_station": {
             "type": "string",
@@ -1688,6 +2374,81 @@
           "arrival"
         ],
         "title": "TrainLeg"
+      },
+      "TravelFile": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CompleteRequirements"
+          },
+          "itinerary": {
+            "$ref": "#/components/schemas/Itinerary"
+          },
+          "places": {
+            "items": {
+              "$ref": "#/components/schemas/Place"
+            },
+            "type": "array",
+            "title": "Places"
+          },
+          "schedule": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Schedule",
+            "description": "French lines of the day's timetable"
+          },
+          "safety_advice": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Safety Advice"
+          },
+          "useful_contacts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Useful Contacts"
+          },
+          "official_links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Official Links",
+            "description": "Empty in simulation: real links come from the real modules"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reference",
+          "title",
+          "requirements",
+          "itinerary",
+          "places",
+          "schedule",
+          "safety_advice",
+          "useful_contacts",
+          "official_links",
+          "simulated"
+        ],
+        "title": "TravelFile",
+        "description": "The travel file given to the teacher once the booking is confirmed."
       },
       "ValidationError": {
         "properties": {

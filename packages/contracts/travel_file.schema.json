@@ -1,39 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sncf-lio-chatbot/contracts/handoff.schema.json",
-  "description": "Final payload for the booking step, which is not part of this project.",
+  "$id": "https://sncf-lio-chatbot/contracts/travel_file.schema.json",
+  "description": "The travel file given to the teacher once the booking is confirmed.",
   "$defs": {
-    "Activity": {
-      "additionalProperties": false,
-      "properties": {
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "description": {
-          "title": "Description",
-          "type": "string"
-        },
-        "start": {
-          "description": "Local ISO date-time with offset",
-          "title": "Start",
-          "type": "string"
-        },
-        "end": {
-          "description": "Local ISO date-time with offset",
-          "title": "End",
-          "type": "string"
-        }
-      },
-      "required": [
-        "title",
-        "description",
-        "start",
-        "end"
-      ],
-      "title": "Activity",
-      "type": "object"
-    },
     "CompleteRequirements": {
       "additionalProperties": false,
       "properties": {
@@ -138,6 +107,98 @@
       "title": "DateTimeRequirement",
       "type": "object"
     },
+    "FeasibilityCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "description": "French label of what was checked",
+          "title": "Label",
+          "type": "string"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label",
+        "ok"
+      ],
+      "title": "FeasibilityCheck",
+      "type": "object"
+    },
+    "Itinerary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "label": {
+          "description": "What distinguishes this option, e.g. « Journée complète »",
+          "title": "Label",
+          "type": "string"
+        },
+        "outbound": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "return": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/TimedActivity"
+          },
+          "title": "Activities",
+          "type": "array"
+        },
+        "free_minutes": {
+          "description": "Time on site not taken by activities or walking",
+          "minimum": 0,
+          "title": "Free Minutes",
+          "type": "integer"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/FeasibilityCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "participants_count": {
+          "minimum": 1,
+          "title": "Participants Count",
+          "type": "integer"
+        },
+        "simulated": {
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "destination_id",
+        "title",
+        "label",
+        "outbound",
+        "return",
+        "activities",
+        "free_minutes",
+        "checks",
+        "participants_count",
+        "simulated"
+      ],
+      "title": "Itinerary",
+      "type": "object"
+    },
     "ParticipantsBreakdown": {
       "additionalProperties": false,
       "properties": {
@@ -171,62 +232,31 @@
       "title": "ParticipantsBreakdown",
       "type": "object"
     },
-    "Proposal": {
+    "Place": {
       "additionalProperties": false,
       "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
         "title": {
           "title": "Title",
           "type": "string"
         },
-        "destination": {
-          "title": "Destination",
-          "type": "string"
-        },
-        "theme_match": {
-          "description": "Why this proposal fits the teacher's subject or theme",
-          "title": "Theme Match",
-          "type": "string"
-        },
-        "outbound": {
-          "$ref": "#/$defs/TrainLeg"
-        },
-        "return": {
-          "$ref": "#/$defs/TrainLeg"
-        },
-        "activities": {
-          "items": {
-            "$ref": "#/$defs/Activity"
-          },
-          "title": "Activities",
-          "type": "array"
-        },
-        "participants_count": {
-          "minimum": 1,
-          "title": "Participants Count",
+        "walk_minutes": {
+          "description": "Walking time from the arrival station",
+          "minimum": 0,
+          "title": "Walk Minutes",
           "type": "integer"
         },
-        "simulated": {
-          "description": "True when produced by the built-in simulation, never real availability",
-          "title": "Simulated",
-          "type": "boolean"
+        "note": {
+          "description": "Opening hours, group access, booking conditions — illustrative in simulation",
+          "title": "Note",
+          "type": "string"
         }
       },
       "required": [
-        "id",
         "title",
-        "destination",
-        "theme_match",
-        "outbound",
-        "return",
-        "activities",
-        "participants_count",
-        "simulated"
+        "walk_minutes",
+        "note"
       ],
-      "title": "Proposal",
+      "title": "Place",
       "type": "object"
     },
     "TimeConstraint": {
@@ -240,11 +270,35 @@
       "title": "TimeConstraint",
       "type": "string"
     },
+    "TimedActivity": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "start",
+        "end"
+      ],
+      "title": "TimedActivity",
+      "type": "object"
+    },
     "TrainLeg": {
       "additionalProperties": false,
       "properties": {
         "line": {
-          "description": "Line label, e.g. 'liO Toulouse – Carcassonne'. No train number in simulation.",
+          "description": "Line label. No train number in simulation.",
           "title": "Line",
           "type": "string"
         },
@@ -280,27 +334,56 @@
   },
   "additionalProperties": false,
   "properties": {
-    "schema_version": {
-      "const": "1.0",
-      "default": "1.0",
-      "title": "Schema Version",
+    "reference": {
+      "title": "Reference",
       "type": "string"
     },
-    "conversation_id": {
-      "title": "Conversation Id",
-      "type": "string"
-    },
-    "booking_status": {
-      "const": "NOT_RESERVED",
-      "default": "NOT_RESERVED",
-      "title": "Booking Status",
+    "title": {
+      "title": "Title",
       "type": "string"
     },
     "requirements": {
       "$ref": "#/$defs/CompleteRequirements"
     },
-    "proposal": {
-      "$ref": "#/$defs/Proposal"
+    "itinerary": {
+      "$ref": "#/$defs/Itinerary"
+    },
+    "places": {
+      "items": {
+        "$ref": "#/$defs/Place"
+      },
+      "title": "Places",
+      "type": "array"
+    },
+    "schedule": {
+      "description": "French lines of the day's timetable",
+      "items": {
+        "type": "string"
+      },
+      "title": "Schedule",
+      "type": "array"
+    },
+    "safety_advice": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Safety Advice",
+      "type": "array"
+    },
+    "useful_contacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Useful Contacts",
+      "type": "array"
+    },
+    "official_links": {
+      "description": "Empty in simulation: real links come from the real modules",
+      "items": {
+        "type": "string"
+      },
+      "title": "Official Links",
+      "type": "array"
     },
     "simulated": {
       "title": "Simulated",
@@ -308,11 +391,17 @@
     }
   },
   "required": [
-    "conversation_id",
+    "reference",
+    "title",
     "requirements",
-    "proposal",
+    "itinerary",
+    "places",
+    "schedule",
+    "safety_advice",
+    "useful_contacts",
+    "official_links",
     "simulated"
   ],
-  "title": "Handoff",
+  "title": "TravelFile",
   "type": "object"
 }

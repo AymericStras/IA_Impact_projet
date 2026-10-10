@@ -16,7 +16,15 @@ from app.schemas.conversation import (
     EditRequirementRequest,
     SendMessageRequest,
 )
-from app.schemas.planning import Handoff, PlanRequest, PlanResult, SelectProposalRequest
+from app.schemas.planning import (
+    AcceptAdjustmentRequest,
+    ChooseDestinationRequest,
+    ChooseItineraryRequest,
+    Feedback,
+    Journey,
+    StartJourneyRequest,
+    TravelFile,
+)
 from app.schemas.requirements import ConfirmedRequirements
 from app.services.audio import inspect_audio, suffix_for
 from app.services.conversation import ConversationService
@@ -146,32 +154,65 @@ def export(
     return service.export(conversation_id)
 
 
-# ----- planning: the teammates' module, or its clearly labelled simulation ------------------------
+# ----- journey after confirmation: teammates' modules, simulated and labelled as such -------------
 
 
-@router.post("/conversations/{conversation_id}/plan", response_model=PlanResult)
-def plan(
+@router.post("/conversations/{conversation_id}/journey", response_model=Journey)
+def start_journey(
     conversation_id: str,
-    body: PlanRequest | None = None,
+    body: StartJourneyRequest | None = None,
     service: ConversationService = Depends(get_service),
-) -> PlanResult:
-    return service.plan(conversation_id, scenario=body.scenario if body else None)
+) -> Journey:
+    return service.start_journey(
+        conversation_id,
+        search_scenario=body.search_scenario if body else None,
+        booking_scenario=body.booking_scenario if body else None,
+    )
 
 
-@router.get("/conversations/{conversation_id}/plan", response_model=PlanResult)
-def get_plan(conversation_id: str, service: ConversationService = Depends(get_service)) -> PlanResult:
-    return service.get_plan(conversation_id)
+@router.get("/conversations/{conversation_id}/journey", response_model=Journey)
+def get_journey(conversation_id: str, service: ConversationService = Depends(get_service)) -> Journey:
+    return service.get_journey(conversation_id)
 
 
-@router.post("/conversations/{conversation_id}/plan/select", response_model=PlanResult)
-def select_proposal(
-    conversation_id: str,
-    body: SelectProposalRequest,
-    service: ConversationService = Depends(get_service),
-) -> PlanResult:
-    return service.select_proposal(conversation_id, body.proposal_id)
+@router.post("/conversations/{conversation_id}/journey/destination", response_model=Journey)
+def choose_destination(
+    conversation_id: str, body: ChooseDestinationRequest, service: ConversationService = Depends(get_service)
+) -> Journey:
+    return service.choose_destination(conversation_id, body.destination_id, body.activity_ids)
 
 
-@router.get("/conversations/{conversation_id}/handoff", response_model=Handoff)
-def handoff(conversation_id: str, service: ConversationService = Depends(get_service)) -> Handoff:
-    return service.handoff(conversation_id)
+@router.post("/conversations/{conversation_id}/journey/adjustment", response_model=Journey)
+def accept_adjustment(
+    conversation_id: str, body: AcceptAdjustmentRequest, service: ConversationService = Depends(get_service)
+) -> Journey:
+    return service.accept_adjustment(conversation_id, body.adjustment_id)
+
+
+@router.post("/conversations/{conversation_id}/journey/itinerary", response_model=Journey)
+def choose_itinerary(
+    conversation_id: str, body: ChooseItineraryRequest, service: ConversationService = Depends(get_service)
+) -> Journey:
+    return service.choose_itinerary(conversation_id, body.itinerary_id)
+
+
+@router.post("/conversations/{conversation_id}/journey/booking", response_model=Journey)
+def submit_booking(conversation_id: str, service: ConversationService = Depends(get_service)) -> Journey:
+    return service.submit_booking(conversation_id)
+
+
+@router.post("/conversations/{conversation_id}/journey/booking/check", response_model=Journey)
+def check_booking(conversation_id: str, service: ConversationService = Depends(get_service)) -> Journey:
+    return service.check_booking(conversation_id)
+
+
+@router.get("/conversations/{conversation_id}/journey/travel-file", response_model=TravelFile)
+def travel_file(conversation_id: str, service: ConversationService = Depends(get_service)) -> TravelFile:
+    return service.travel_file(conversation_id)
+
+
+@router.post("/conversations/{conversation_id}/journey/feedback", response_model=Journey)
+def give_feedback(
+    conversation_id: str, body: Feedback, service: ConversationService = Depends(get_service)
+) -> Journey:
+    return service.give_feedback(conversation_id, body)

@@ -1,0 +1,259 @@
+{
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "stage": "booked",
+  "requirements_version": 2,
+  "planner_mode": "simulated",
+  "simulated": true,
+  "departure_stations": [
+    "Toulouse Matabiau",
+    "Toulouse Saint-Cyprien-Arènes",
+    "Toulouse Saint-Agne"
+  ],
+  "notices": [
+    "Simulation : destinations, horaires, lieux et réservation sont illustratifs, sans disponibilité réelle.",
+    "Les durées de trajet simulées ne dépendent pas de la gare de départ indiquée."
+  ],
+  "message": "Votre réservation est confirmée. Votre dossier de voyage est prêt.",
+  "destinations": [
+    {
+      "id": "carcassonne",
+      "city": "Carcassonne",
+      "station": "Carcassonne",
+      "title": "Cité médiévale de Carcassonne",
+      "theme_match": "Une cité fortifiée pour aborder le Moyen Âge sur le terrain.",
+      "travel_minutes": 55,
+      "places": [
+        {
+          "title": "Cité et remparts",
+          "walk_minutes": 20,
+          "note": "Accueil des groupes sur réservation ; horaires à confirmer."
+        },
+        {
+          "title": "Château comtal",
+          "walk_minutes": 22,
+          "note": "Visite commentée possible pour les scolaires."
+        }
+      ],
+      "activities": [
+        {
+          "id": "carcassonne-1",
+          "title": "Visite guidée des remparts",
+          "description": "Parcours commenté des fortifications.",
+          "duration_minutes": 90
+        },
+        {
+          "id": "carcassonne-2",
+          "title": "Atelier « vie au Moyen Âge »",
+          "description": "Atelier pédagogique en demi-groupes.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "carcassonne-3",
+          "title": "Jeu de piste dans la cité",
+          "description": "Enquête par équipes dans les ruelles.",
+          "duration_minutes": 60
+        }
+      ]
+    },
+    {
+      "id": "albi",
+      "city": "Albi",
+      "station": "Albi-Ville",
+      "title": "Albi, cité épiscopale",
+      "theme_match": "Un ensemble en brique pour travailler l'architecture et le patrimoine.",
+      "travel_minutes": 65,
+      "places": [
+        {
+          "title": "Cathédrale Sainte-Cécile",
+          "walk_minutes": 12,
+          "note": "Entrée libre ; visite de groupe à annoncer."
+        },
+        {
+          "title": "Musée Toulouse-Lautrec",
+          "walk_minutes": 14,
+          "note": "Créneaux scolaires sur réservation."
+        }
+      ],
+      "activities": [
+        {
+          "id": "albi-1",
+          "title": "Lecture d'architecture à la cathédrale",
+          "description": "Observation guidée du gothique méridional.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "albi-2",
+          "title": "Parcours dans la cité épiscopale",
+          "description": "Croquis et relevés en petits groupes.",
+          "duration_minutes": 90
+        },
+        {
+          "id": "albi-3",
+          "title": "Atelier au musée",
+          "description": "Analyse d'œuvres avec un médiateur.",
+          "duration_minutes": 60
+        }
+      ]
+    },
+    {
+      "id": "sete",
+      "city": "Sète",
+      "station": "Sète",
+      "title": "Sète et l'étang de Thau",
+      "theme_match": "Un milieu lagunaire pour étudier la biodiversité et les écosystèmes.",
+      "travel_minutes": 125,
+      "places": [
+        {
+          "title": "Étang de Thau",
+          "walk_minutes": 18,
+          "note": "Site naturel ; accès libre, médiation sur réservation."
+        },
+        {
+          "title": "Musée de la mer",
+          "walk_minutes": 20,
+          "note": "Accueil des classes en matinée."
+        }
+      ],
+      "activities": [
+        {
+          "id": "sete-1",
+          "title": "Découverte de l'étang de Thau",
+          "description": "Observation du milieu avec un médiateur.",
+          "duration_minutes": 105
+        },
+        {
+          "id": "sete-2",
+          "title": "Atelier d'analyse de l'eau",
+          "description": "Mesures simples et interprétation.",
+          "duration_minutes": 75
+        }
+      ]
+    },
+    {
+      "id": "castelnaudary",
+      "city": "Castelnaudary",
+      "station": "Castelnaudary",
+      "title": "Canal du Midi à Castelnaudary",
+      "theme_match": "Un ouvrage d'aménagement pour relier géographie, histoire et technique.",
+      "travel_minutes": 40,
+      "places": [
+        {
+          "title": "Grand Bassin",
+          "walk_minutes": 10,
+          "note": "Accès libre toute l'année."
+        },
+        {
+          "title": "Écluses de Saint-Roch",
+          "walk_minutes": 15,
+          "note": "Démonstration possible selon la navigation."
+        }
+      ],
+      "activities": [
+        {
+          "id": "castelnaudary-1",
+          "title": "Le Grand Bassin et les écluses",
+          "description": "Lecture de paysage et fonctionnement des écluses.",
+          "duration_minutes": 75
+        },
+        {
+          "id": "castelnaudary-2",
+          "title": "Atelier cartographie",
+          "description": "Tracé du canal et repérage sur carte.",
+          "duration_minutes": 60
+        }
+      ]
+    }
+  ],
+  "selected_destination_id": "carcassonne",
+  "selected_activity_ids": [
+    "carcassonne-1",
+    "carcassonne-2"
+  ],
+  "itineraries": [
+    {
+      "id": "iti_9f11c4f37d",
+      "destination_id": "carcassonne",
+      "title": "Cité médiévale de Carcassonne",
+      "label": "Journée complète",
+      "outbound": {
+        "line": "liO Toulouse Matabiau – Carcassonne (horaire simulé)",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T09:00+01:00"
+      },
+      "return": {
+        "line": "liO Carcassonne – Toulouse Matabiau (horaire simulé)",
+        "from_station": "Carcassonne",
+        "to_station": "Toulouse Matabiau",
+        "departure": "2026-11-12T16:25+01:00",
+        "arrival": "2026-11-12T17:20+01:00"
+      },
+      "activities": [
+        {
+          "title": "Visite guidée des remparts",
+          "start": "2026-11-12T09:37+01:00",
+          "end": "2026-11-12T11:07+01:00"
+        },
+        {
+          "title": "Atelier « vie au Moyen Âge »",
+          "start": "2026-11-12T12:07+01:00",
+          "end": "2026-11-12T13:22+01:00"
+        }
+      ],
+      "free_minutes": 221,
+      "checks": [
+        {
+          "label": "Horaires de départ et de retour respectés",
+          "ok": true
+        },
+        {
+          "label": "Capacité pour 30 participants (simulée)",
+          "ok": true
+        },
+        {
+          "label": "Lieux à 22 minutes à pied de la gare au plus",
+          "ok": true
+        },
+        {
+          "label": "Temps sur place suffisant pour les activités choisies",
+          "ok": true
+        }
+      ],
+      "participants_count": 30,
+      "simulated": true
+    }
+  ],
+  "adjustments": [],
+  "accepted_adjustments": [
+    {
+      "id": "adj_762b46e27f",
+      "kind": "return_later",
+      "label": "Retour à 17 h 30 au lieu de 17 h 00",
+      "reason": "Le temps disponible à Carcassonne entre l'arrivée et le départ du train de retour est trop court pour les activités choisies.",
+      "changes": [
+        {
+          "field": "return",
+          "before": "17:00",
+          "after": "17:30"
+        }
+      ],
+      "destination_id": null,
+      "activity_ids": null,
+      "unlocks": 1
+    }
+  ],
+  "selected_itinerary_id": "iti_9f11c4f37d",
+  "booking": {
+    "reference": "SIM-050033B9",
+    "status": "confirmed",
+    "itinerary_id": "iti_9f11c4f37d",
+    "message": "Réservation confirmée (simulation). Référence SIM-050033B9.",
+    "simulated": true
+  },
+  "alternatives": [],
+  "feedback": null,
+  "search_scenario": "adjustments",
+  "booking_scenario": "confirmed",
+  "strict_minutes": 195
+}

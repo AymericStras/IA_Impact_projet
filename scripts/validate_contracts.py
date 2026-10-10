@@ -25,8 +25,8 @@ SCHEMA_FOR_PREFIX = {
     "confirmed_requirements": "requirements.schema.json",
     "conversation_response": "conversation_response.schema.json",
     "requirement_patch": "requirement_patch.schema.json",
-    "plan_result": "plan_result.schema.json",
-    "handoff": "handoff.schema.json",
+    "journey": "journey.schema.json",
+    "travel_file": "travel_file.schema.json",
 }
 
 

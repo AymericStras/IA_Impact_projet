@@ -36,8 +36,6 @@ class Settings(BaseSettings):
     # Trip planning belongs to teammates: 'simulated' = built-in test double,
     # 'http' = their service, 'off' = hidden.
     planner_mode: Literal["off", "simulated", "http"] = "simulated"
-    planner_base_url: str | None = None
-    planner_api_key: str | None = None
     log_level: str = "INFO"
 
     @property

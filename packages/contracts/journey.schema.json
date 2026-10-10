@@ -1,0 +1,645 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sncf-lio-chatbot/contracts/journey.schema.json",
+  "description": "Server state of everything after confirmation. The client renders it; it decides nothing.",
+  "$defs": {
+    "ActivityOption": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "duration_minutes": {
+          "minimum": 15,
+          "title": "Duration Minutes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "duration_minutes"
+      ],
+      "title": "ActivityOption",
+      "type": "object"
+    },
+    "Adjustment": {
+      "additionalProperties": false,
+      "description": "One way to make the request feasible. Nothing is applied until the teacher accepts it.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "return_later",
+            "departure_earlier",
+            "fewer_activities",
+            "other_destination"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "description": "French sentence: what changes",
+          "title": "Label",
+          "type": "string"
+        },
+        "reason": {
+          "description": "French sentence: why the request does not fit as asked",
+          "title": "Reason",
+          "type": "string"
+        },
+        "changes": {
+          "description": "Changes to the confirmed requirements, if any",
+          "items": {
+            "$ref": "#/$defs/RequirementChange"
+          },
+          "title": "Changes",
+          "type": "array"
+        },
+        "destination_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For other_destination",
+          "title": "Destination Id"
+        },
+        "activity_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For fewer_activities",
+          "title": "Activity Ids"
+        },
+        "unlocks": {
+          "description": "Number of itineraries that become feasible",
+          "minimum": 1,
+          "title": "Unlocks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label",
+        "reason",
+        "changes",
+        "unlocks"
+      ],
+      "title": "Adjustment",
+      "type": "object"
+    },
+    "Booking": {
+      "additionalProperties": false,
+      "properties": {
+        "reference": {
+          "title": "Reference",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "confirmed",
+            "refused"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "itinerary_id": {
+          "title": "Itinerary Id",
+          "type": "string"
+        },
+        "message": {
+          "description": "French status line for the teacher",
+          "title": "Message",
+          "type": "string"
+        },
+        "simulated": {
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "reference",
+        "status",
+        "itinerary_id",
+        "message",
+        "simulated"
+      ],
+      "title": "Booking",
+      "type": "object"
+    },
+    "DestinationOption": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "city": {
+          "title": "City",
+          "type": "string"
+        },
+        "station": {
+          "title": "Station",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "theme_match": {
+          "description": "Why it fits the teacher's subject or theme",
+          "title": "Theme Match",
+          "type": "string"
+        },
+        "travel_minutes": {
+          "minimum": 1,
+          "title": "Travel Minutes",
+          "type": "integer"
+        },
+        "places": {
+          "items": {
+            "$ref": "#/$defs/Place"
+          },
+          "title": "Places",
+          "type": "array"
+        },
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/ActivityOption"
+          },
+          "title": "Activities",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "city",
+        "station",
+        "title",
+        "theme_match",
+        "travel_minutes",
+        "places",
+        "activities"
+      ],
+      "title": "DestinationOption",
+      "type": "object"
+    },
+    "FeasibilityCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "description": "French label of what was checked",
+          "title": "Label",
+          "type": "string"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label",
+        "ok"
+      ],
+      "title": "FeasibilityCheck",
+      "type": "object"
+    },
+    "Feedback": {
+      "additionalProperties": false,
+      "properties": {
+        "rating": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Rating",
+          "type": "integer"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        }
+      },
+      "required": [
+        "rating"
+      ],
+      "title": "Feedback",
+      "type": "object"
+    },
+    "Itinerary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "label": {
+          "description": "What distinguishes this option, e.g. « Journée complète »",
+          "title": "Label",
+          "type": "string"
+        },
+        "outbound": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "return": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/TimedActivity"
+          },
+          "title": "Activities",
+          "type": "array"
+        },
+        "free_minutes": {
+          "description": "Time on site not taken by activities or walking",
+          "minimum": 0,
+          "title": "Free Minutes",
+          "type": "integer"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/FeasibilityCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "participants_count": {
+          "minimum": 1,
+          "title": "Participants Count",
+          "type": "integer"
+        },
+        "simulated": {
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "destination_id",
+        "title",
+        "label",
+        "outbound",
+        "return",
+        "activities",
+        "free_minutes",
+        "checks",
+        "participants_count",
+        "simulated"
+      ],
+      "title": "Itinerary",
+      "type": "object"
+    },
+    "Place": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "walk_minutes": {
+          "description": "Walking time from the arrival station",
+          "minimum": 0,
+          "title": "Walk Minutes",
+          "type": "integer"
+        },
+        "note": {
+          "description": "Opening hours, group access, booking conditions — illustrative in simulation",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "walk_minutes",
+        "note"
+      ],
+      "title": "Place",
+      "type": "object"
+    },
+    "RequirementChange": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "departure",
+            "return"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "before": {
+          "description": "HH:MM currently requested",
+          "title": "Before",
+          "type": "string"
+        },
+        "after": {
+          "description": "HH:MM proposed",
+          "title": "After",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "before",
+        "after"
+      ],
+      "title": "RequirementChange",
+      "type": "object"
+    },
+    "TimedActivity": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "start",
+        "end"
+      ],
+      "title": "TimedActivity",
+      "type": "object"
+    },
+    "TrainLeg": {
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "description": "Line label. No train number in simulation.",
+          "title": "Line",
+          "type": "string"
+        },
+        "from_station": {
+          "title": "From Station",
+          "type": "string"
+        },
+        "to_station": {
+          "title": "To Station",
+          "type": "string"
+        },
+        "departure": {
+          "description": "Local ISO date-time with offset (Europe/Paris)",
+          "title": "Departure",
+          "type": "string"
+        },
+        "arrival": {
+          "description": "Local ISO date-time with offset (Europe/Paris)",
+          "title": "Arrival",
+          "type": "string"
+        }
+      },
+      "required": [
+        "line",
+        "from_station",
+        "to_station",
+        "departure",
+        "arrival"
+      ],
+      "title": "TrainLeg",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "destinations",
+        "itineraries",
+        "adjustments",
+        "no_match",
+        "review",
+        "booking_pending",
+        "booked",
+        "booking_refused",
+        "closed"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "requirements_version": {
+      "minimum": 0,
+      "title": "Requirements Version",
+      "type": "integer"
+    },
+    "planner_mode": {
+      "enum": [
+        "simulated",
+        "http"
+      ],
+      "title": "Planner Mode",
+      "type": "string"
+    },
+    "simulated": {
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "departure_stations": {
+      "description": "Stations the departure may use (a city is expanded)",
+      "items": {
+        "type": "string"
+      },
+      "title": "Departure Stations",
+      "type": "array"
+    },
+    "notices": {
+      "description": "French notes for the teacher (simulation label, assumptions)",
+      "items": {
+        "type": "string"
+      },
+      "title": "Notices",
+      "type": "array"
+    },
+    "message": {
+      "description": "French line describing the current stage",
+      "title": "Message",
+      "type": "string"
+    },
+    "destinations": {
+      "items": {
+        "$ref": "#/$defs/DestinationOption"
+      },
+      "title": "Destinations",
+      "type": "array"
+    },
+    "selected_destination_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Destination Id"
+    },
+    "selected_activity_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Selected Activity Ids",
+      "type": "array"
+    },
+    "itineraries": {
+      "items": {
+        "$ref": "#/$defs/Itinerary"
+      },
+      "title": "Itineraries",
+      "type": "array"
+    },
+    "adjustments": {
+      "items": {
+        "$ref": "#/$defs/Adjustment"
+      },
+      "title": "Adjustments",
+      "type": "array"
+    },
+    "accepted_adjustments": {
+      "items": {
+        "$ref": "#/$defs/Adjustment"
+      },
+      "title": "Accepted Adjustments",
+      "type": "array"
+    },
+    "selected_itinerary_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Itinerary Id"
+    },
+    "booking": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Booking"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "alternatives": {
+      "description": "Offered after a refused booking",
+      "items": {
+        "$ref": "#/$defs/Itinerary"
+      },
+      "title": "Alternatives",
+      "type": "array"
+    },
+    "feedback": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Feedback"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "search_scenario": {
+      "default": "auto",
+      "enum": [
+        "auto",
+        "adjustments",
+        "no_match",
+        "error"
+      ],
+      "title": "Search Scenario",
+      "type": "string"
+    },
+    "booking_scenario": {
+      "default": "confirmed",
+      "enum": [
+        "confirmed",
+        "refused",
+        "error"
+      ],
+      "title": "Booking Scenario",
+      "type": "string"
+    },
+    "strict_minutes": {
+      "default": 0,
+      "description": "Simulation lever: extra time required on site to exercise the adjustment branch",
+      "minimum": 0,
+      "title": "Strict Minutes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "stage",
+    "requirements_version",
+    "planner_mode",
+    "simulated",
+    "departure_stations",
+    "notices",
+    "message"
+  ],
+  "title": "Journey",
+  "type": "object"
+}

@@ -34,14 +34,22 @@ from app.schemas.patch import (
     TeachingTypePatch,
     UserIntent,
 )
-from app.schemas.planning import Handoff, PlanResult, PlanScenario
+from app.schemas.planning import (
+    Adjustment,
+    Booking,
+    BookingScenario,
+    Feedback,
+    Journey,
+    SearchScenario,
+    TravelFile,
+)
 from app.schemas.requirements import (
     CompleteRequirements,
     ConfirmedRequirements,
     PartialRequirements,
 )
+from app.services import planner
 from app.services.extraction import ExtractionService
-from app.services.planner import SIMULATION_NOTICE, TRAVEL_TIME_ASSUMPTION, PlannerClient
 from app.services.providers.base import ProviderError, TranscriptionProvider
 
 
@@ -88,9 +96,9 @@ class ConversationService:
         extraction: ExtractionService,
         transcription: TranscriptionProvider,
         clock: Clock,
-        planner: PlannerClient | None = None,
+        planner_mode: str = "off",
     ) -> None:
-        self._planner = planner
+        self._planner_mode = planner_mode
         self._session = session
         self._extraction = extraction
         self._transcription = transcription
@@ -345,81 +353,271 @@ class ConversationService:
             raise InvalidStateError("Le projet n'est pas encore confirmé.")
         return ConfirmedRequirements.model_validate(row.confirmed)
 
-    # ----- planning (teammates' module, or its simulation) --------------------------------------
+    # ----- journey after confirmation: teammates' modules, simulated (docs/PLANNER_CONTRACT.md) ---
 
-    def _planner_or_fail(self) -> PlannerClient:
-        if self._planner is None:
+    _OPEN_STAGES = ("destinations", "itineraries", "adjustments", "no_match", "review", "booking_refused")
+
+    def _require_simulation(self) -> None:
+        if self._planner_mode == "off":
             raise InvalidStateError("La planification n'est pas activée sur ce service.")
-        return self._planner
+        if self._planner_mode != "simulated":
+            raise AppError(
+                501, "PLANNER_NOT_CONNECTED", "Le module de planification réel n'est pas encore connecté."
+            )
 
-    def plan(self, conversation_id: str, *, scenario: PlanScenario | None = None) -> PlanResult:
-        planner = self._planner_or_fail()
-        row = self._load(conversation_id)
+    def _confirmed(self, row: ConversationRow) -> ConfirmedRequirements:
         if row.confirmed is None:
             raise InvalidStateError(
-                "Confirmez d'abord les quatre informations avant de rechercher des propositions."
+                "Confirmez d'abord vos informations avant de rechercher des propositions."
             )
-        if scenario is not None and planner.mode != "simulated":
-            raise InvalidStateError("Les scénarios de test ne sont disponibles qu'en mode simulation.")
-        confirmed = ConfirmedRequirements.model_validate(row.confirmed)
-        version = row.version
-        self._session.rollback()  # no transaction held while the planner works
+        return ConfirmedRequirements.model_validate(row.confirmed)
 
-        proposals = planner.plan(confirmed, scenario)
+    def _journey(self, row: ConversationRow) -> Journey:
+        if row.plan is None or row.confirmed is None:
+            raise InvalidStateError("Aucune recherche n'est en cours pour ce projet.")
+        return Journey.model_validate(row.plan)
 
-        row = self._load(conversation_id, lock=True)
-        if row.confirmed is None or row.version != version:
-            raise ConcurrentUpdateError(conversation_id)
-        simulated = planner.mode == "simulated"
-        result = PlanResult(
-            request_id=_new_id("plan"),
-            conversation_id=row.id,
-            requirements_version=version,
-            status="proposals" if proposals else "no_match",
-            proposals=proposals,
-            planner_mode="simulated" if simulated else "http",
-            simulated=simulated,
-            assumptions=[SIMULATION_NOTICE, TRAVEL_TIME_ASSUMPTION] if simulated else [],
-        )
-        row.plan = result.model_dump(mode="json", by_alias=True)
+    def _save_journey(self, row: ConversationRow, journey: Journey) -> Journey:
+        row.plan = journey.model_dump(mode="json", by_alias=True)
         row.updated_at = self._clock.now()
         self._session.commit()
-        return result
+        return journey
 
-    def get_plan(self, conversation_id: str) -> PlanResult:
-        row = self._load(conversation_id)
-        if row.plan is None:
-            raise InvalidStateError("Aucune proposition n'a encore été recherchée pour ce projet.")
-        return PlanResult.model_validate(row.plan)
-
-    def select_proposal(self, conversation_id: str, proposal_id: str) -> PlanResult:
-        row = self._load(conversation_id, lock=True)
-        if row.plan is None or row.confirmed is None:
-            raise InvalidStateError("Aucune proposition n'est disponible pour ce projet.")
-        result = PlanResult.model_validate(row.plan)
-        if all(p.id != proposal_id for p in result.proposals):
-            raise InvalidStateError("Cette proposition n'existe plus. Relancez la recherche.")
-        result.selected_proposal_id = proposal_id
-        row.plan = result.model_dump(mode="json", by_alias=True)
-        row.updated_at = self._clock.now()
-        self._session.commit()
-        return result
-
-    def handoff(self, conversation_id: str) -> Handoff:
-        row = self._load(conversation_id)
-        if row.plan is None or row.confirmed is None:
-            raise InvalidStateError("Aucune proposition n'a été choisie.")
-        result = PlanResult.model_validate(row.plan)
-        chosen = next((p for p in result.proposals if p.id == result.selected_proposal_id), None)
-        if chosen is None:
-            raise InvalidStateError("Aucune proposition n'a été choisie.")
-        confirmed = ConfirmedRequirements.model_validate(row.confirmed)
-        return Handoff(
-            conversation_id=row.id,
-            requirements=confirmed.requirements,
-            proposal=chosen,
-            simulated=result.simulated,
+    def _search(self, journey: Journey, requirements: CompleteRequirements) -> None:
+        """Itineraries for the current choice, or the adjustments that would make it work."""
+        destination_id = journey.selected_destination_id or ""
+        activities = journey.selected_activity_ids
+        strict = journey.strict_minutes
+        journey.itineraries = planner.build_itineraries(
+            requirements, destination_id, activities, strict_minutes=strict
         )
+        journey.adjustments = []
+        journey.selected_itinerary_id = None
+        journey.booking = None
+        journey.alternatives = []
+        if journey.itineraries:
+            journey.stage = "itineraries"
+            count = len(journey.itineraries)
+            journey.message = (
+                f"{count} itinéraire{'s' if count > 1 else ''} possible{'s' if count > 1 else ''}. "
+                "Choisissez celui qui vous convient."
+            )
+            return
+        journey.adjustments = planner.propose_adjustments(
+            requirements, destination_id, activities, strict_minutes=strict
+        )
+        if journey.adjustments:
+            journey.stage = "adjustments"
+            journey.message = (
+                "Aucun itinéraire ne correspond exactement à votre demande. "
+                "Voici ce qui deviendrait possible ; rien n'est modifié sans votre accord."
+            )
+        else:
+            journey.stage = "no_match"
+            journey.message = (
+                "Aucun itinéraire n'a été trouvé pour ce choix, même avec des ajustements raisonnables. "
+                "Choisissez une autre destination ou modifiez votre demande."
+            )
+
+    def start_journey(
+        self,
+        conversation_id: str,
+        *,
+        search_scenario: SearchScenario | None = None,
+        booking_scenario: BookingScenario | None = None,
+    ) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        confirmed = self._confirmed(row)
+        scenario = search_scenario or "auto"
+        if scenario == "error":
+            raise planner.planner_error()
+        requirements = confirmed.requirements
+        journey = Journey(
+            conversation_id=row.id,
+            stage="destinations",
+            requirements_version=row.version,
+            planner_mode="simulated",
+            simulated=True,
+            departure_stations=planner.departure_stations(requirements.departure_station),
+            notices=[planner.SIMULATION_NOTICE, planner.TRAVEL_TIME_NOTICE],
+            message="Voici des destinations adaptées à votre thème. Choisissez une destination et vos activités.",
+            search_scenario=scenario,
+            booking_scenario=booking_scenario or "confirmed",
+        )
+        if scenario == "no_match":
+            journey.stage = "no_match"
+            journey.message = (
+                "Aucune destination ne correspond à votre demande. Vos informations sont conservées ; "
+                "vous pouvez les modifier et relancer la recherche."
+            )
+        else:
+            journey.destinations = planner.recommend_destinations(requirements)
+        return self._save_journey(row, journey)
+
+    def get_journey(self, conversation_id: str) -> Journey:
+        return self._journey(self._load(conversation_id))
+
+    def choose_destination(
+        self, conversation_id: str, destination_id: str, activity_ids: list[str]
+    ) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        if journey.stage not in self._OPEN_STAGES:
+            raise InvalidStateError(
+                "Une demande de réservation est en cours : ce choix ne peut plus être modifié."
+            )
+        if all(d.id != destination_id for d in journey.destinations):
+            raise InvalidStateError("Cette destination n'est plus proposée. Relancez la recherche.")
+        requirements = self._confirmed(row).requirements
+        journey.selected_destination_id = destination_id
+        journey.selected_activity_ids = activity_ids
+        journey.strict_minutes = 0
+        if journey.search_scenario == "adjustments" and not journey.accepted_adjustments:
+            # Test lever: raise the time needed on site just enough that nothing fits as asked.
+            for extra in range(15, 601, 15):
+                if not planner.build_itineraries(
+                    requirements, destination_id, activity_ids, strict_minutes=extra
+                ):
+                    journey.strict_minutes = extra
+                    break
+        self._search(journey, requirements)
+        return self._save_journey(row, journey)
+
+    def accept_adjustment(self, conversation_id: str, adjustment_id: str) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        chosen = next((a for a in journey.adjustments if a.id == adjustment_id), None)
+        if journey.stage != "adjustments" or chosen is None:
+            raise InvalidStateError("Cet ajustement n'est plus proposé. Relancez la recherche.")
+        if chosen.destination_id is not None:
+            journey.selected_destination_id = chosen.destination_id
+        if chosen.activity_ids is not None:
+            journey.selected_activity_ids = chosen.activity_ids
+        if chosen.changes:
+            self._apply_accepted_changes(row, chosen)
+            journey.requirements_version = row.version
+        journey.accepted_adjustments.append(chosen)
+        self._search(journey, self._confirmed(row).requirements)
+        return self._save_journey(row, journey)
+
+    def _apply_accepted_changes(self, row: ConversationRow, adjustment: Adjustment) -> None:
+        """An accepted adjustment is an explicit consent to its before/after values: the requirements
+
+        change and stay confirmed. Nothing else may change requirements without a new confirmation.
+        """
+        reqs = self._requirements(row)
+        for change in adjustment.changes:
+            current = reqs.return_ if change.field == "return" else reqs.departure
+            if current is None or current.time != change.before:
+                raise InvalidStateError(
+                    "Votre demande a changé depuis cette proposition. Relancez la recherche."
+                )
+            updated = current.model_copy(update={"time": change.after})
+            if change.field == "return":
+                reqs.return_ = updated
+            else:
+                reqs.departure = updated
+        now = self._clock.now()
+        row.version += 1
+        row.requirements = reqs.model_dump(mode="json", by_alias=True)
+        self._session.add(
+            SnapshotRow(
+                conversation_id=row.id, version=row.version, requirements=row.requirements, created_at=now
+            )
+        )
+        row.confirmed = self._build_confirmed(row, reqs, now)
+        self._add_message(row, "user", f"Ajustement accepté : {adjustment.label}.", "edit")
+        self._add_message(
+            row, "assistant", f"C'est noté : {adjustment.label}. Votre demande a été mise à jour."
+        )
+
+    def choose_itinerary(self, conversation_id: str, itinerary_id: str) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        offered = journey.itineraries + journey.alternatives
+        if journey.stage not in ("itineraries", "review", "booking_refused") or all(
+            i.id != itinerary_id for i in offered
+        ):
+            raise InvalidStateError("Cet itinéraire n'est plus proposé. Relancez la recherche.")
+        journey.selected_itinerary_id = itinerary_id
+        journey.booking = None
+        journey.stage = "review"
+        journey.message = (
+            "Vérifiez une dernière fois l'itinéraire avant d'envoyer la demande de réservation. "
+            "Rien n'est réservé tant que vous n'avez pas envoyé la demande."
+        )
+        return self._save_journey(row, journey)
+
+    def submit_booking(self, conversation_id: str) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        if journey.stage != "review" or journey.selected_itinerary_id is None:
+            raise InvalidStateError("Choisissez d'abord un itinéraire à réserver.")
+        if journey.booking_scenario == "error":
+            raise planner.booking_error()
+        journey.booking = Booking(
+            reference=planner.booking_reference(row.id, journey.selected_itinerary_id),
+            status="pending",
+            itinerary_id=journey.selected_itinerary_id,
+            message="Demande envoyée au service de réservation. En attente de confirmation.",
+            simulated=True,
+        )
+        journey.stage = "booking_pending"
+        journey.message = journey.booking.message
+        return self._save_journey(row, journey)
+
+    def check_booking(self, conversation_id: str) -> Journey:
+        self._require_simulation()
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        if journey.stage != "booking_pending" or journey.booking is None:
+            return journey  # nothing to wait for: the stage already tells what happened
+        if journey.booking_scenario == "refused":
+            journey.booking.status = "refused"
+            journey.booking.message = (
+                "La demande n'a pas pu être confirmée (simulation : plus de places pour ce groupe)."
+            )
+            journey.alternatives = [i for i in journey.itineraries if i.id != journey.booking.itinerary_id]
+            journey.stage = "booking_refused"
+            journey.message = "La réservation n'a pas été confirmée. " + (
+                "Voici d'autres itinéraires possibles ; vous pouvez aussi modifier votre demande."
+                if journey.alternatives
+                else "Choisissez une autre destination ou modifiez votre demande."
+            )
+            journey.booking_scenario = "confirmed"  # the simulated refusal happens once
+        else:
+            journey.booking.status = "confirmed"
+            journey.booking.message = (
+                f"Réservation confirmée (simulation). Référence {journey.booking.reference}."
+            )
+            journey.stage = "booked"
+            journey.message = "Votre réservation est confirmée. Votre dossier de voyage est prêt."
+        return self._save_journey(row, journey)
+
+    def travel_file(self, conversation_id: str) -> TravelFile:
+        row = self._load(conversation_id)
+        journey = self._journey(row)
+        if journey.stage not in ("booked", "closed") or journey.booking is None:
+            raise InvalidStateError("Le dossier de voyage est disponible une fois la réservation confirmée.")
+        itinerary = next(
+            i for i in journey.itineraries + journey.alternatives if i.id == journey.booking.itinerary_id
+        )
+        return planner.travel_file(self._confirmed(row).requirements, itinerary, journey.booking.reference)
+
+    def give_feedback(self, conversation_id: str, feedback: Feedback) -> Journey:
+        row = self._load(conversation_id, lock=True)
+        journey = self._journey(row)
+        if journey.stage not in ("booked", "closed"):
+            raise InvalidStateError("Le retour d'expérience se donne après la sortie.")
+        journey.feedback = feedback
+        journey.stage = "closed"
+        journey.message = "Merci pour votre retour d'expérience."
+        return self._save_journey(row, journey)
 
     def _build_confirmed(
         self, row: ConversationRow, reqs: PartialRequirements, now: datetime

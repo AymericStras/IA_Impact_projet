@@ -120,9 +120,9 @@ Tests present and green; `./scripts/check.sh` green; user-facing text in French;
 - `gpt request` calls the Responses API and requires an explicit model. `stitch call` can modify remote resources: only write what the current task requires. This setup does not authorize modifying the existing Medici projects.
 - These commands load credentials; they isolate nothing. The host's safety rules apply before any development, build, test or deployment.
 
-## 11b. Planner simulation (test mode)
+## 11b. Simulated journey after confirmation (test mode)
 
-Trip planning (destinations, liO trains, itinerary) is the teammates' module and stays out of scope. `PLANNER_MODE=simulated` enables a deterministic stand-in behind the `PlannerClient` boundary so the whole flow can be tested; see `docs/PLANNER_CONTRACT.md`. Rules: the simulation is plain code (never a model), every result is flagged `simulated` and shown as such in the UI, no train number, price or availability is invented, a planner failure is never shown as "no proposal", and nothing is ever booked (`booking_status` is always `NOT_RESERVED`). Do not grow the simulation into a real planner.
+Destinations, activities, liO trains, itineraries, booking and the travel file are teammates' modules and stay out of scope. With `PLANNER_MODE=simulated` (default) the API simulates them as a staged journey so the whole process can be tested end to end; see `docs/PLANNER_CONTRACT.md`. Rules: the simulation is plain deterministic code (never a model); every result is flagged `simulated` and every screen showing it carries the simulation label; no train number, price or availability is invented; when nothing fits, several adjustments are offered and none is applied without the teacher's acceptance; the teacher can change preferences at any time; a technical failure is never shown as "no result"; nothing is ever really booked. Do not grow the simulation into a real planner.
 
 ## 12. Takeover, task board and evidence
 

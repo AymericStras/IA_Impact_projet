@@ -43,15 +43,15 @@
     {
       "id": "PLANNER-SIM-API",
       "status": "done",
-      "title": "Planner boundary and simulation in the API (test mode): plan, select, handoff, scenarios",
-      "evidence": "services/api tests/test_planner.py; contracts plan_result + handoff with examples"
+      "title": "Full simulated journey in the API (test mode): destinations, itineraries, adjustments, booking, travel file, feedback",
+      "evidence": "services/api tests/test_planner.py (10 tests); contracts journey + travel_file with three examples; 92 backend tests"
     },
     {
       "id": "PLANNER-SIM-UI",
       "status": "ready",
       "priority": 2,
-      "title": "Proposals stage in both frontends (classic chat and /vocal), with the simulation label and scenario switch",
-      "acceptance": "After confirmation the teacher sees proposals, a distinct no-match state and a distinct technical-error state, selects one and reaches a NOT_RESERVED handoff; hidden when planner_mode is off"
+      "title": "Journey stages in both frontends (classic chat and /vocal), with the simulation label and scenario switches",
+      "acceptance": "After confirmation the teacher goes through destinations, itineraries or adjustments, review, booking (confirmed and refused), travel file and feedback; errors are distinct from no-result; preferences can be changed at any stage; hidden when planner_mode is off"
     },
     {
       "id": "DEPLOY-001",
