@@ -45,7 +45,7 @@ export function ItineraryView({ itinerary, testId }: ItineraryViewProps) {
   return (
     <article className="grid gap-4 rounded-2xl border bg-card p-4 @2xl/voice:p-6" data-testid={testId ?? `itinerary-${itinerary.id}`}>
       <div className="grid gap-1">
-        <h2 className={cn("text-[clamp(1.5rem,6cqi,2.25rem)] font-semibold leading-tight tracking-tight text-foreground", WRAP_ANYWHERE)}>
+        <h2 className={cn("text-[clamp(1.5rem,6cqi,2.25rem)] font-heading font-extrabold leading-tight tracking-tight text-foreground", WRAP_ANYWHERE)}>
           {itinerary.label}
         </h2>
         <p className={cn("text-lg text-foreground", WRAP_ANYWHERE)}>{itinerary.title}</p>

@@ -687,7 +687,12 @@ test("controls remain legible and keyboard focus visible on light and navy surfa
   await tapTalk(page);
   await expectStage(page, "listen");
   expect(await contrast("talk-disc")).toBeGreaterThanOrEqual(4.5);
+  // The pointer tap above switched the browser to pointer modality, where a scripted focus()
+  // does not match :focus-visible. Leave and come back with the keyboard, as a user would.
   await page.getByTestId("listen-cancel").focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByTestId("listen-cancel")).toBeFocused();
   await expect(page.getByTestId("listen-cancel")).toHaveCSS("outline-style", "solid");
   await expect(page.getByTestId("listen-cancel")).not.toHaveCSS("box-shadow", "none");
   await page.getByTestId("listen-cancel").click();
