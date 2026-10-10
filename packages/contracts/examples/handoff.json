@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "booking_status": "NOT_RESERVED",
+  "requirements": {
+    "participants_count": 30,
+    "participants_breakdown": null,
+    "departure": {
+      "date": "2026-11-12",
+      "time": "08:00",
+      "constraint": "approximate"
+    },
+    "return": {
+      "date": "2026-11-12",
+      "time": "17:00",
+      "constraint": "latest"
+    },
+    "teaching_type": {
+      "subject": "Histoire",
+      "theme": "Moyen Âge"
+    }
+  },
+  "proposal": {
+    "id": "sim_carcassonne_example1",
+    "title": "Cité médiévale de Carcassonne",
+    "destination": "Carcassonne",
+    "theme_match": "Une cité fortifiée pour aborder le Moyen Âge sur le terrain.",
+    "outbound": {
+      "line": "liO Toulouse Matabiau – Carcassonne (horaire simulé)",
+      "from_station": "Toulouse Matabiau",
+      "to_station": "Carcassonne",
+      "departure": "2026-11-12T08:05+01:00",
+      "arrival": "2026-11-12T09:00+01:00"
+    },
+    "return": {
+      "line": "liO Carcassonne – Toulouse Matabiau (horaire simulé)",
+      "from_station": "Carcassonne",
+      "to_station": "Toulouse Matabiau",
+      "departure": "2026-11-12T15:55+01:00",
+      "arrival": "2026-11-12T16:50+01:00"
+    },
+    "activities": [
+      {
+        "title": "Visite guidée des remparts",
+        "description": "Parcours commenté des fortifications et du château comtal.",
+        "start": "2026-11-12T09:20+01:00",
+        "end": "2026-11-12T12:25+01:00"
+      },
+      {
+        "title": "Atelier « vie au Moyen Âge »",
+        "description": "Atelier pédagogique en demi-groupes.",
+        "start": "2026-11-12T12:25+01:00",
+        "end": "2026-11-12T15:35+01:00"
+      }
+    ],
+    "participants_count": 30,
+    "simulated": true
+  },
+  "simulated": true
+}

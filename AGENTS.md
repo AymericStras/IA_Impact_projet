@@ -119,6 +119,10 @@ Tests present and green; `./scripts/check.sh` green; user-facing text in French;
 - `gpt request` calls the Responses API and requires an explicit model. `stitch call` can modify remote resources: only write what the current task requires. This setup does not authorize modifying the existing Medici projects.
 - These commands load credentials; they isolate nothing. The host's safety rules apply before any development, build, test or deployment.
 
+## 11b. Planner simulation (test mode)
+
+Trip planning (destinations, liO trains, itinerary) is the teammates' module and stays out of scope. `PLANNER_MODE=simulated` enables a deterministic stand-in behind the `PlannerClient` boundary so the whole flow can be tested; see `docs/PLANNER_CONTRACT.md`. Rules: the simulation is plain code (never a model), every result is flagged `simulated` and shown as such in the UI, no train number, price or availability is invented, a planner failure is never shown as "no proposal", and nothing is ever booked (`booking_status` is always `NOT_RESERVED`). Do not grow the simulation into a real planner.
+
 ## 12. Takeover, task board and evidence
 
 - Start every session with the `project-takeover` skill (or paste `docs/TAKEOVER.md`). Never rely on an earlier conversation: the repository is the memory.

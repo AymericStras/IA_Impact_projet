@@ -86,3 +86,4 @@ class ClientConfig(ContractModel):
     max_audio_bytes: int
     max_message_chars: int
     timezone: str
+    planner_mode: Literal["off", "simulated", "http"] = "off"

@@ -34,12 +34,14 @@ from app.schemas.patch import (
     TeachingTypePatch,
     UserIntent,
 )
+from app.schemas.planning import Handoff, PlanResult, PlanScenario
 from app.schemas.requirements import (
     CompleteRequirements,
     ConfirmedRequirements,
     PartialRequirements,
 )
 from app.services.extraction import ExtractionService
+from app.services.planner import ORIGIN_ASSUMPTION, SIMULATION_NOTICE, PlannerClient
 from app.services.providers.base import ProviderError, TranscriptionProvider
 
 
@@ -86,7 +88,9 @@ class ConversationService:
         extraction: ExtractionService,
         transcription: TranscriptionProvider,
         clock: Clock,
+        planner: PlannerClient | None = None,
     ) -> None:
+        self._planner = planner
         self._session = session
         self._extraction = extraction
         self._transcription = transcription
@@ -194,6 +198,7 @@ class ConversationService:
             )
             if row.confirmed is not None:
                 row.confirmed = None  # any modification invalidates the previous confirmation
+                row.plan = None  # ...and the proposals computed for it
         if result.decision.state == ConversationState.CONFIRMED and row.confirmed is None:
             row.confirmed = self._build_confirmed(row, result.requirements, now)
         row.state = result.decision.state.value
@@ -339,6 +344,82 @@ class ConversationService:
         if row.confirmed is None:
             raise InvalidStateError("Le projet n'est pas encore confirmé.")
         return ConfirmedRequirements.model_validate(row.confirmed)
+
+    # ----- planning (teammates' module, or its simulation) --------------------------------------
+
+    def _planner_or_fail(self) -> PlannerClient:
+        if self._planner is None:
+            raise InvalidStateError("La planification n'est pas activée sur ce service.")
+        return self._planner
+
+    def plan(self, conversation_id: str, *, scenario: PlanScenario | None = None) -> PlanResult:
+        planner = self._planner_or_fail()
+        row = self._load(conversation_id)
+        if row.confirmed is None:
+            raise InvalidStateError(
+                "Confirmez d'abord les quatre informations avant de rechercher des propositions."
+            )
+        if scenario is not None and planner.mode != "simulated":
+            raise InvalidStateError("Les scénarios de test ne sont disponibles qu'en mode simulation.")
+        confirmed = ConfirmedRequirements.model_validate(row.confirmed)
+        version = row.version
+        self._session.rollback()  # no transaction held while the planner works
+
+        proposals = planner.plan(confirmed, scenario)
+
+        row = self._load(conversation_id, lock=True)
+        if row.confirmed is None or row.version != version:
+            raise ConcurrentUpdateError(conversation_id)
+        simulated = planner.mode == "simulated"
+        result = PlanResult(
+            request_id=_new_id("plan"),
+            conversation_id=row.id,
+            requirements_version=version,
+            status="proposals" if proposals else "no_match",
+            proposals=proposals,
+            planner_mode="simulated" if simulated else "http",
+            simulated=simulated,
+            assumptions=[SIMULATION_NOTICE, ORIGIN_ASSUMPTION] if simulated else [],
+        )
+        row.plan = result.model_dump(mode="json", by_alias=True)
+        row.updated_at = self._clock.now()
+        self._session.commit()
+        return result
+
+    def get_plan(self, conversation_id: str) -> PlanResult:
+        row = self._load(conversation_id)
+        if row.plan is None:
+            raise InvalidStateError("Aucune proposition n'a encore été recherchée pour ce projet.")
+        return PlanResult.model_validate(row.plan)
+
+    def select_proposal(self, conversation_id: str, proposal_id: str) -> PlanResult:
+        row = self._load(conversation_id, lock=True)
+        if row.plan is None or row.confirmed is None:
+            raise InvalidStateError("Aucune proposition n'est disponible pour ce projet.")
+        result = PlanResult.model_validate(row.plan)
+        if all(p.id != proposal_id for p in result.proposals):
+            raise InvalidStateError("Cette proposition n'existe plus. Relancez la recherche.")
+        result.selected_proposal_id = proposal_id
+        row.plan = result.model_dump(mode="json", by_alias=True)
+        row.updated_at = self._clock.now()
+        self._session.commit()
+        return result
+
+    def handoff(self, conversation_id: str) -> Handoff:
+        row = self._load(conversation_id)
+        if row.plan is None or row.confirmed is None:
+            raise InvalidStateError("Aucune proposition n'a été choisie.")
+        result = PlanResult.model_validate(row.plan)
+        chosen = next((p for p in result.proposals if p.id == result.selected_proposal_id), None)
+        if chosen is None:
+            raise InvalidStateError("Aucune proposition n'a été choisie.")
+        confirmed = ConfirmedRequirements.model_validate(row.confirmed)
+        return Handoff(
+            conversation_id=row.id,
+            requirements=confirmed.requirements,
+            proposal=chosen,
+            simulated=result.simulated,
+        )
 
     def _build_confirmed(
         self, row: ConversationRow, reqs: PartialRequirements, now: datetime

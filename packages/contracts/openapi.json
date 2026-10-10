@@ -430,10 +430,234 @@
           }
         }
       }
+    },
+    "/api/v1/conversations/{conversation_id}/plan": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Plan",
+        "operationId": "plan_api_v1_conversations__conversation_id__plan_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PlanRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Get Plan",
+        "operationId": "get_plan_api_v1_conversations__conversation_id__plan_get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/plan/select": {
+      "post": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Select Proposal",
+        "operationId": "select_proposal_api_v1_conversations__conversation_id__plan_select_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectProposalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/handoff": {
+      "get": {
+        "tags": [
+          "conversations"
+        ],
+        "summary": "Handoff",
+        "operationId": "handoff_api_v1_conversations__conversation_id__handoff_get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Handoff"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "Activity": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "description": "Local ISO date-time with offset"
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "description": "Local ISO date-time with offset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "start",
+          "end"
+        ],
+        "title": "Activity"
+      },
       "Body_transcribe_audio_api_v1_conversations__conversation_id__audio_post": {
         "properties": {
           "file": {
@@ -465,6 +689,16 @@
           "timezone": {
             "type": "string",
             "title": "Timezone"
+          },
+          "planner_mode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "simulated",
+              "http"
+            ],
+            "title": "Planner Mode",
+            "default": "off"
           }
         },
         "additionalProperties": false,
@@ -809,6 +1043,46 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "Handoff": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1.0",
+            "title": "Schema Version",
+            "default": "1.0"
+          },
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "booking_status": {
+            "type": "string",
+            "const": "NOT_RESERVED",
+            "title": "Booking Status",
+            "default": "NOT_RESERVED"
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CompleteRequirements"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/Proposal"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "requirements",
+          "proposal",
+          "simulated"
+        ],
+        "title": "Handoff",
+        "description": "Final payload for the booking step, which is not part of this project."
+      },
       "Message": {
         "properties": {
           "id": {
@@ -1067,6 +1341,180 @@
         ],
         "title": "PendingClarification"
       },
+      "PlanRequest": {
+        "properties": {
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "match",
+                  "no_match",
+                  "error"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario",
+            "description": "Simulation only: force a scenario to exercise the interface"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PlanRequest"
+      },
+      "PlanResult": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "requirements_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Requirements Version",
+            "description": "Version of the requirements this plan answers"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposals",
+              "no_match"
+            ],
+            "title": "Status"
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/Proposal"
+            },
+            "type": "array",
+            "title": "Proposals"
+          },
+          "selected_proposal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Proposal Id"
+          },
+          "planner_mode": {
+            "type": "string",
+            "enum": [
+              "simulated",
+              "http"
+            ],
+            "title": "Planner Mode"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Assumptions",
+            "description": "French notes shown to the teacher, e.g. the assumed departure station"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "conversation_id",
+          "requirements_version",
+          "status",
+          "proposals",
+          "planner_mode",
+          "simulated"
+        ],
+        "title": "PlanResult",
+        "description": "What the planner answers for one confirmed set of requirements."
+      },
+      "Proposal": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "destination": {
+            "type": "string",
+            "title": "Destination"
+          },
+          "theme_match": {
+            "type": "string",
+            "title": "Theme Match",
+            "description": "Why this proposal fits the teacher's subject or theme"
+          },
+          "outbound": {
+            "$ref": "#/components/schemas/TrainLeg"
+          },
+          "return": {
+            "$ref": "#/components/schemas/TrainLeg"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "type": "array",
+            "title": "Activities"
+          },
+          "participants_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Participants Count"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated",
+            "description": "True when produced by the built-in simulation, never real availability"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "destination",
+          "theme_match",
+          "outbound",
+          "return",
+          "activities",
+          "participants_count",
+          "simulated"
+        ],
+        "title": "Proposal"
+      },
+      "SelectProposalRequest": {
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Proposal Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "proposal_id"
+        ],
+        "title": "SelectProposalRequest"
+      },
       "SendMessageRequest": {
         "properties": {
           "content": {
@@ -1176,6 +1624,43 @@
         ],
         "title": "TimeConstraint",
         "description": "exact = « à 8 h »; approximate = « vers 8 h »; earliest = « après 8 h »; latest = « avant 17 h »."
+      },
+      "TrainLeg": {
+        "properties": {
+          "line": {
+            "type": "string",
+            "title": "Line",
+            "description": "Line label, e.g. 'liO Toulouse – Carcassonne'. No train number in simulation."
+          },
+          "from_station": {
+            "type": "string",
+            "title": "From Station"
+          },
+          "to_station": {
+            "type": "string",
+            "title": "To Station"
+          },
+          "departure": {
+            "type": "string",
+            "title": "Departure",
+            "description": "Local ISO date-time with offset (Europe/Paris)"
+          },
+          "arrival": {
+            "type": "string",
+            "title": "Arrival",
+            "description": "Local ISO date-time with offset (Europe/Paris)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "line",
+          "from_station",
+          "to_station",
+          "departure",
+          "arrival"
+        ],
+        "title": "TrainLeg"
       },
       "ValidationError": {
         "properties": {

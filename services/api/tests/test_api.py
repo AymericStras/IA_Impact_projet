@@ -516,6 +516,7 @@ def test_security_headers_error_codes_and_client_config(client: TestClient) -> N
         "max_audio_bytes": 10485760,
         "max_message_chars": 4000,
         "timezone": "Europe/Paris",
+        "planner_mode": "simulated",
     }
     huge = client.post(
         "/api/v1/conversations",

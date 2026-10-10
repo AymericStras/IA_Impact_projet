@@ -21,6 +21,7 @@ class ConversationRow(Base):
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     requirements: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     confirmed: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    plan: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

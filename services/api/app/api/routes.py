@@ -16,6 +16,7 @@ from app.schemas.conversation import (
     EditRequirementRequest,
     SendMessageRequest,
 )
+from app.schemas.planning import Handoff, PlanRequest, PlanResult, SelectProposalRequest
 from app.schemas.requirements import ConfirmedRequirements
 from app.services.audio import inspect_audio, suffix_for
 from app.services.conversation import ConversationService
@@ -47,6 +48,7 @@ def client_config(settings: Settings = Depends(get_settings)) -> ClientConfig:
         max_audio_bytes=settings.max_audio_bytes,
         max_message_chars=MAX_MESSAGE_CHARS,
         timezone=settings.app_timezone,
+        planner_mode=settings.planner_mode,
     )
 
 
@@ -142,3 +144,34 @@ def export(
     conversation_id: str, service: ConversationService = Depends(get_service)
 ) -> ConfirmedRequirements:
     return service.export(conversation_id)
+
+
+# ----- planning: the teammates' module, or its clearly labelled simulation ------------------------
+
+
+@router.post("/conversations/{conversation_id}/plan", response_model=PlanResult)
+def plan(
+    conversation_id: str,
+    body: PlanRequest | None = None,
+    service: ConversationService = Depends(get_service),
+) -> PlanResult:
+    return service.plan(conversation_id, scenario=body.scenario if body else None)
+
+
+@router.get("/conversations/{conversation_id}/plan", response_model=PlanResult)
+def get_plan(conversation_id: str, service: ConversationService = Depends(get_service)) -> PlanResult:
+    return service.get_plan(conversation_id)
+
+
+@router.post("/conversations/{conversation_id}/plan/select", response_model=PlanResult)
+def select_proposal(
+    conversation_id: str,
+    body: SelectProposalRequest,
+    service: ConversationService = Depends(get_service),
+) -> PlanResult:
+    return service.select_proposal(conversation_id, body.proposal_id)
+
+
+@router.get("/conversations/{conversation_id}/handoff", response_model=Handoff)
+def handoff(conversation_id: str, service: ConversationService = Depends(get_service)) -> Handoff:
+    return service.handoff(conversation_id)

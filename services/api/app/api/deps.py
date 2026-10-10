@@ -11,9 +11,11 @@ from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
+from app.core.errors import AppError
 from app.domain.clock import Clock, SystemClock
 from app.services.conversation import ConversationService
 from app.services.extraction import ExtractionService, load_transcription_context
+from app.services.planner import HttpPlanner, PlannerClient, SimulatedPlanner
 from app.services.providers.base import ExtractionProvider, TranscriptionProvider
 from app.services.providers.openai_provider import OpenAIProvider
 
@@ -56,6 +58,16 @@ def get_transcription_provider(settings: Settings = Depends(get_settings)) -> Tr
     )
 
 
+def get_planner(settings: Settings = Depends(get_settings)) -> PlannerClient | None:
+    if settings.planner_mode == "simulated":
+        return SimulatedPlanner()
+    if settings.planner_mode == "http":
+        if not settings.planner_base_url:
+            raise AppError(500, "PLANNER_NOT_CONFIGURED", "Le module de planification n'est pas configuré.")
+        return HttpPlanner(settings.planner_base_url, settings.planner_api_key)
+    return None
+
+
 def get_session(request: Request) -> Iterator[Session]:
     session: Session = request.app.state.session_factory()
     try:
@@ -69,8 +81,11 @@ def get_service(
     extraction: ExtractionProvider = Depends(get_extraction_provider),
     transcription: TranscriptionProvider = Depends(get_transcription_provider),
     clock: Clock = Depends(get_clock),
+    planner: PlannerClient | None = Depends(get_planner),
 ) -> ConversationService:
-    return ConversationService(session, ExtractionService(extraction, clock), transcription, clock)
+    return ConversationService(
+        session, ExtractionService(extraction, clock), transcription, clock, planner=planner
+    )
 
 
 class RateLimiter:

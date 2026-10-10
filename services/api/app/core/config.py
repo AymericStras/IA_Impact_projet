@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,6 +33,11 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 30.0
     # Per-conversation limit on messages per minute; 0 disables it (the default: no rate limiting).
     rate_limit_per_minute: int = 0
+    # Trip planning belongs to teammates: 'simulated' = built-in test double,
+    # 'http' = their service, 'off' = hidden.
+    planner_mode: Literal["off", "simulated", "http"] = "simulated"
+    planner_base_url: str | None = None
+    planner_api_key: str | None = None
     log_level: str = "INFO"
 
     @property

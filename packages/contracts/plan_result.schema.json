@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sncf-lio-chatbot/contracts/plan_result.schema.json",
+  "description": "What the planner answers for one confirmed set of requirements.",
+  "$defs": {
+    "Activity": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "start": {
+          "description": "Local ISO date-time with offset",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "description": "Local ISO date-time with offset",
+          "title": "End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "start",
+        "end"
+      ],
+      "title": "Activity",
+      "type": "object"
+    },
+    "Proposal": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "destination": {
+          "title": "Destination",
+          "type": "string"
+        },
+        "theme_match": {
+          "description": "Why this proposal fits the teacher's subject or theme",
+          "title": "Theme Match",
+          "type": "string"
+        },
+        "outbound": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "return": {
+          "$ref": "#/$defs/TrainLeg"
+        },
+        "activities": {
+          "items": {
+            "$ref": "#/$defs/Activity"
+          },
+          "title": "Activities",
+          "type": "array"
+        },
+        "participants_count": {
+          "minimum": 1,
+          "title": "Participants Count",
+          "type": "integer"
+        },
+        "simulated": {
+          "description": "True when produced by the built-in simulation, never real availability",
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "destination",
+        "theme_match",
+        "outbound",
+        "return",
+        "activities",
+        "participants_count",
+        "simulated"
+      ],
+      "title": "Proposal",
+      "type": "object"
+    },
+    "TrainLeg": {
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "description": "Line label, e.g. 'liO Toulouse – Carcassonne'. No train number in simulation.",
+          "title": "Line",
+          "type": "string"
+        },
+        "from_station": {
+          "title": "From Station",
+          "type": "string"
+        },
+        "to_station": {
+          "title": "To Station",
+          "type": "string"
+        },
+        "departure": {
+          "description": "Local ISO date-time with offset (Europe/Paris)",
+          "title": "Departure",
+          "type": "string"
+        },
+        "arrival": {
+          "description": "Local ISO date-time with offset (Europe/Paris)",
+          "title": "Arrival",
+          "type": "string"
+        }
+      },
+      "required": [
+        "line",
+        "from_station",
+        "to_station",
+        "departure",
+        "arrival"
+      ],
+      "title": "TrainLeg",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "requirements_version": {
+      "description": "Version of the requirements this plan answers",
+      "minimum": 0,
+      "title": "Requirements Version",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "proposals",
+        "no_match"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "proposals": {
+      "items": {
+        "$ref": "#/$defs/Proposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "selected_proposal_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Proposal Id"
+    },
+    "planner_mode": {
+      "enum": [
+        "simulated",
+        "http"
+      ],
+      "title": "Planner Mode",
+      "type": "string"
+    },
+    "simulated": {
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "assumptions": {
+      "description": "French notes shown to the teacher, e.g. the assumed departure station",
+      "items": {
+        "type": "string"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "request_id",
+    "conversation_id",
+    "requirements_version",
+    "status",
+    "proposals",
+    "planner_mode",
+    "simulated"
+  ],
+  "title": "PlanResult",
+  "type": "object"
+}

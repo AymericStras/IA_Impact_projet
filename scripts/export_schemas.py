@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "services" / "api"))
 
 from app.schemas import ConfirmedRequirements, ConversationResponse, RequirementPatch  # noqa: E402
+from app.schemas.planning import Handoff, PlanResult  # noqa: E402
 
 CONTRACTS = ROOT / "packages" / "contracts"
 BASE_ID = "https://sncf-lio-chatbot/contracts/"
@@ -30,6 +31,16 @@ EXPORTS: dict[str, tuple[type, str, str]] = {
         ConversationResponse,
         "serialization",
         "Response of all conversation endpoints; the client renders it without recomputing.",
+    ),
+    "plan_result.schema.json": (
+        PlanResult,
+        "serialization",
+        "Answer of the trip-planning module (teammates' service, or the built-in simulation) for confirmed requirements.",
+    ),
+    "handoff.schema.json": (
+        Handoff,
+        "serialization",
+        "Selected proposal handed to the booking step. booking_status is always NOT_RESERVED: nothing is booked here.",
     ),
     "requirement_patch.schema.json": (
         RequirementPatch,

@@ -1,0 +1,123 @@
+{
+  "request_id": "plan_example",
+  "conversation_id": "conv_01J9ZK3Q8X4N2M7P",
+  "requirements_version": 2,
+  "status": "proposals",
+  "proposals": [
+    {
+      "id": "sim_carcassonne_example1",
+      "title": "Cité médiévale de Carcassonne",
+      "destination": "Carcassonne",
+      "theme_match": "Une cité fortifiée pour aborder le Moyen Âge sur le terrain.",
+      "outbound": {
+        "line": "liO Toulouse Matabiau – Carcassonne (horaire simulé)",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T09:00+01:00"
+      },
+      "return": {
+        "line": "liO Carcassonne – Toulouse Matabiau (horaire simulé)",
+        "from_station": "Carcassonne",
+        "to_station": "Toulouse Matabiau",
+        "departure": "2026-11-12T15:55+01:00",
+        "arrival": "2026-11-12T16:50+01:00"
+      },
+      "activities": [
+        {
+          "title": "Visite guidée des remparts",
+          "description": "Parcours commenté des fortifications et du château comtal.",
+          "start": "2026-11-12T09:20+01:00",
+          "end": "2026-11-12T12:25+01:00"
+        },
+        {
+          "title": "Atelier « vie au Moyen Âge »",
+          "description": "Atelier pédagogique en demi-groupes.",
+          "start": "2026-11-12T12:25+01:00",
+          "end": "2026-11-12T15:35+01:00"
+        }
+      ],
+      "participants_count": 30,
+      "simulated": true
+    },
+    {
+      "id": "sim_albi_example2",
+      "title": "Albi, cité épiscopale",
+      "destination": "Albi",
+      "theme_match": "Un ensemble architectural en brique pour travailler l'architecture et le patrimoine.",
+      "outbound": {
+        "line": "liO Toulouse Matabiau – Albi (horaire simulé)",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Albi-Ville",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T09:10+01:00"
+      },
+      "return": {
+        "line": "liO Albi – Toulouse Matabiau (horaire simulé)",
+        "from_station": "Albi-Ville",
+        "to_station": "Toulouse Matabiau",
+        "departure": "2026-11-12T15:45+01:00",
+        "arrival": "2026-11-12T16:50+01:00"
+      },
+      "activities": [
+        {
+          "title": "Cathédrale Sainte-Cécile",
+          "description": "Lecture d'architecture gothique méridionale.",
+          "start": "2026-11-12T09:30+01:00",
+          "end": "2026-11-12T12:25+01:00"
+        },
+        {
+          "title": "Parcours dans la cité épiscopale",
+          "description": "Observation et croquis en petits groupes.",
+          "start": "2026-11-12T12:25+01:00",
+          "end": "2026-11-12T15:25+01:00"
+        }
+      ],
+      "participants_count": 30,
+      "simulated": true
+    },
+    {
+      "id": "sim_sète_example3",
+      "title": "Sète et l'étang de Thau",
+      "destination": "Sète",
+      "theme_match": "Un milieu lagunaire pour étudier la biodiversité et les écosystèmes.",
+      "outbound": {
+        "line": "liO Toulouse Matabiau – Sète (horaire simulé)",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Sète",
+        "departure": "2026-11-12T08:05+01:00",
+        "arrival": "2026-11-12T10:10+01:00"
+      },
+      "return": {
+        "line": "liO Sète – Toulouse Matabiau (horaire simulé)",
+        "from_station": "Sète",
+        "to_station": "Toulouse Matabiau",
+        "departure": "2026-11-12T14:45+01:00",
+        "arrival": "2026-11-12T16:50+01:00"
+      },
+      "activities": [
+        {
+          "title": "Découverte de l'étang de Thau",
+          "description": "Observation du milieu et des espèces avec un médiateur.",
+          "start": "2026-11-12T10:30+01:00",
+          "end": "2026-11-12T12:25+01:00"
+        },
+        {
+          "title": "Atelier d'analyse de l'eau",
+          "description": "Mesures simples et interprétation.",
+          "start": "2026-11-12T12:25+01:00",
+          "end": "2026-11-12T14:25+01:00"
+        }
+      ],
+      "participants_count": 30,
+      "simulated": true
+    }
+  ],
+  "selected_proposal_id": "sim_carcassonne_example1",
+  "planner_mode": "simulated",
+  "simulated": true,
+  "assumptions": [
+    "Propositions simulées : horaires, lieux et activités illustratifs, sans disponibilité réelle.",
+    "Gare de départ supposée pour la démonstration : Toulouse Matabiau (cette information n'est pas collectée)."
+  ]
+}

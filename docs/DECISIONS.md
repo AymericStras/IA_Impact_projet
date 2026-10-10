@@ -68,3 +68,6 @@ The reference kit also implements recommendation selection, schedule-adjustment 
 ## ADR-022 — 2026-10-10 — Deployment by prebuilt images; no rate limiting
 Images are built on the developer machine and loaded on zhao-zenbook; the stack is hard-capped (2 × 384 MiB, no swap) and `deploy.sh up` refuses while the host is under memory pressure, following the host's own safety plan. At the owner's request there is no rate limiting and no cap on model calls; the risk (a public URL spending the key's quota) is recorded in `docs/DEPLOYMENT.md`.
 
+## ADR-023 — 2026-10-10 — Planner boundary with a labelled simulation (test mode)
+Requested by the owner: the teammates' interfaces are not connected yet, so the flow stopped at the confirmed JSON. A `PlannerClient` boundary now exists with `SimulatedPlanner` (default) and `HttpPlanner`. The simulation is deterministic code, not a model: no generated train facts, everything flagged `simulated`, an assumed departure station stated explicitly. Speech-to-text and extraction stay real. This refines ADR-020: we still do not implement recommendation or itinerary logic; we simulate the neighbour so the end-to-end flow and its error paths can be tested, and we publish the response shape as a proposal (`docs/PLANNER_CONTRACT.md`).
+

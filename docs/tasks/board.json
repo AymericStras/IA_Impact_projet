@@ -41,6 +41,19 @@
       "acceptance": "pnpm test:e2e green with committed baselines; DESIGN.md matches the code; standalone build serves under /sncf-chatbot"
     },
     {
+      "id": "PLANNER-SIM-API",
+      "status": "done",
+      "title": "Planner boundary and simulation in the API (test mode): plan, select, handoff, scenarios",
+      "evidence": "services/api tests/test_planner.py; contracts plan_result + handoff with examples"
+    },
+    {
+      "id": "PLANNER-SIM-UI",
+      "status": "ready",
+      "priority": 2,
+      "title": "Proposals stage in both frontends (classic chat and /vocal), with the simulation label and scenario switch",
+      "acceptance": "After confirmation the teacher sees proposals, a distinct no-match state and a distinct technical-error state, selects one and reaches a NOT_RESERVED handoff; hidden when planner_mode is off"
+    },
+    {
       "id": "DEPLOY-001",
       "status": "blocked",
       "priority": 2,
