@@ -107,6 +107,9 @@ const lonLat = (p: Place): [number, number] => [p.lon, p.lat];
 
 const BASE = `${location.origin}${import.meta.env.BASE_URL}basemap`;
 const STATION_LAYERS = ["lio-stops", ...TIERS.map((t) => `st-${t}`), "st-route", "st-important"];
+const routePadding = (map: MlMap) => map.getContainer().clientWidth < 600
+  ? { top: 65, bottom: 65, left: 40, right: 110 }
+  : { top: 90, bottom: 85, left: 45, right: 45 };
 
 function buildStyle(): maplibregl.StyleSpecification {
   // The optional offline archive is not tracked in Git. A fresh checkout must still display a map.
@@ -115,7 +118,7 @@ function buildStyle(): maplibregl.StyleSpecification {
     glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
     sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19,
       attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>' } },
-    layers: [{ id: "osm", type: "raster", source: "osm", paint: { "raster-saturation": -0.8, "raster-opacity": 0.8 } }],
+    layers: [{ id: "osm", type: "raster", source: "osm", paint: { "raster-saturation": -0.2, "raster-opacity": 0.95 } }],
   };
   return {
     version: 8,
@@ -301,7 +304,7 @@ function MapCanvas({ places, edges, byId, route, selected, onSelect, onPick, onO
         const place = latest.current.byId.get(id);
         if (place) bounds.extend(lonLat(place));
       }
-      if (!bounds.isEmpty()) m.fitBounds(bounds, { padding: { top: 90, bottom: 85, left: 45, right: 45 }, duration: 0 });
+      if (!bounds.isEmpty()) m.fitBounds(bounds, { padding: routePadding(m), duration: 0 });
     });
     resize.observe(box.current!);
     return () => {
@@ -423,7 +426,7 @@ function MapCanvas({ places, edges, byId, route, selected, onSelect, onPick, onO
         const p = byId.get(id);
         if (p) bounds.extend(lonLat(p));
       }
-      if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: { top: 90, bottom: 85, left: 45, right: 45 }, duration: 800 });
+      if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: routePadding(map), duration: 800 });
     }
   }, [map, route, selected, byId]);
 

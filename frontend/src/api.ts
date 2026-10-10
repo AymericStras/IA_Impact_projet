@@ -1,5 +1,6 @@
 // Client du backend FastAPI. En dev, Vite relaie /api vers uvicorn (voir vite.config.ts) ;
 // en prod, VITE_API_URL pointe vers l'API déployée.
+export const PUBLIC_SNAPSHOT = import.meta.env.VITE_PUBLIC_SNAPSHOT === "true";
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export type Place = {
@@ -51,6 +52,7 @@ export class ApiError extends Error {
 }
 
 async function get<T>(path: string, params?: URLSearchParams, signal?: AbortSignal): Promise<T> {
+  if (PUBLIC_SNAPSHOT) return (await import("./snapshot-api")).getSnapshot<T>(path, params, signal);
   const qs = params ? "?" + params : "";
   let res: Response;
   const timeout = new AbortController();

@@ -1,10 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { api, ApiError, type Edge, type Place, type Route } from "../api";
+import { api, ApiError, PUBLIC_SNAPSHOT, type Edge, type Place, type Route } from "../api";
 import { DISCOVERIES, creditOf, imageOf, type Discovery } from "../data/discoveries";
 import { CLASSES, FEATURED, INITIAL_PROJECT, SCHOOL_SOURCES, THEMES, dateLabel, duration, loadRequests, saveFeedback, saveRequest, searchSchoolTrips, validateProject, type Proposal, type SchoolProject, type SchoolRequest } from "../school";
 import MapView from "./MapView";
+import { estimateSchoolFare, groupFare, GROUP_FARE_CHECKED, GROUP_FARE_SOURCE, GROUP_FARE_TIERS } from "../school-fares";
 
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
+export function BrandTracks() {
+  return <svg className="brand-tracks" viewBox="0 0 160 30" fill="none" aria-hidden="true"><g strokeWidth="5" strokeLinecap="round"><path d="M5 7h20m20 0h7m31 0h22m24 0h25" stroke="#ffd500" /><path d="M17 16h34m21 0h8m19 0h38" stroke="#c90c0f" /><path d="M4 25h9m22 0h30m24 0h20m20 0h25" stroke="currentColor" /></g><circle cx="34" cy="7" r="2.5" fill="#c90c0f" /><circle cx="148" cy="16" r="2.5" fill="#ffd500" /><circle cx="75" cy="25" r="2.5" fill="#c90c0f" /></svg>;
+}
+
+export function Smile() {
+  return <svg viewBox="0 0 48 48" className="brand-smile" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="#ffd500" /><circle cx="17" cy="19" r="2" fill="#0f2149" /><circle cx="31" cy="19" r="2" fill="#0f2149" /><path d="M15 28c4 7 14 7 18 0" fill="none" stroke="#0f2149" strokeWidth="2.5" strokeLinecap="round" /></svg>;
+}
+
+export function TrainIllustration() {
+  return <svg className="project-train" viewBox="0 0 240 90" fill="none" aria-hidden="true"><path d="M2 75h220" stroke="#8a98b4" strokeWidth="2" /><path d="M15 26h145c23 0 34 17 50 34H15V26Z" fill="white" /><path d="M15 54h190l9 10H15V54Z" fill="#e01a20" /><path d="M43 29v34m73-34v34" stroke="#0f2149" strokeWidth="2" /><g fill="#213b69"><rect x="22" y="33" width="14" height="14" rx="2" /><rect x="52" y="33" width="23" height="14" rx="3" /><rect x="81" y="33" width="23" height="14" rx="3" /><rect x="126" y="33" width="22" height="14" rx="3" /><path d="M157 33h8c13 0 20 6 25 14h-33V33Z" /></g><path d="M181 59h24" stroke="#ffd500" strokeWidth="3" /><g fill="#0f2149" stroke="white" strokeWidth="2"><circle cx="37" cy="67" r="5" /><circle cx="100" cy="67" r="5" /><circle cx="143" cy="67" r="5" /><circle cx="185" cy="67" r="5" /></g><path d="M102 24l12-11h16l-10 11" stroke="white" strokeWidth="2" /><path d="M20 9h47m-58 9h28m160-5h19" stroke="#ffd500" strokeWidth="3" strokeLinecap="round" /></svg>;
+}
+
+export function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
     arrow: <><path d="M4 12h15m-6-6 6 6-6 6" /></>,
     train: <><rect x="5" y="3" width="14" height="15" rx="4" /><path d="M5 11h14M12 3v8M8 18l-2 3m10-3 2 3" /><path d="M8 14h1m6 0h1" /></>,
@@ -22,7 +35,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] ?? paths.pin}</svg>;
 }
 
-function Modal({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
+export function Modal({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => { const d = ref.current!; d.showModal(); return () => d.close(); }, []);
   return <dialog ref={ref} className={`school-dialog ${wide ? "wide" : ""}`} onCancel={(e) => { e.preventDefault(); onClose(); }} aria-labelledby="dialog-title">
@@ -31,7 +44,7 @@ function Modal({ title, children, onClose, wide = false }: { title: string; chil
   </dialog>;
 }
 
-function Photo({ d, className = "" }: { d: Discovery; className?: string }) {
+export function Photo({ d, className = "" }: { d: Discovery; className?: string }) {
   const credit = creditOf(d);
   return <div className={`school-photo ${className}`}><img src={imageOf(d)} alt={d.title.fr} loading="lazy" />{credit && <a className="photo-credit" href={credit.source} target="_blank" rel="noreferrer" title={`${credit.author} · ${credit.license}`}>© {credit.author} · {credit.license}</a>}</div>;
 }
@@ -53,13 +66,21 @@ function VerificationNotes() {
   </div>;
 }
 
-function Recap({ project, proposal, request }: { project: SchoolProject; proposal: Proposal; request?: SchoolRequest | null }) {
+export function FareEstimate({ project, proposal, compact = false }: { project: SchoolProject; proposal: Proposal; compact?: boolean }) {
+  const fare = estimateSchoolFare(project.students, project.adults, proposal.outbound, proposal.inbound);
+  if (!fare) return <p className="microcopy">Tarif du groupe à établir par devis.</p>;
+  if (compact) return <div className="card-fare"><strong>≈ {fare.total} € <span>A/R pour le groupe</span></strong><small>{fare.outboundTrains + fare.inboundTrains} trains × {fare.perTrain} € · sous conditions</small></div>;
+  return <section className="recap-fare" aria-label="Estimation du tarif scolaire"><div><p className="eyebrow">LE TRAIN POUR TOUTE LA CLASSE</p><strong>≈ {fare.total} € <span>aller-retour pour le groupe</span></strong><p>Aller : {fare.outboundTrains} train{fare.outboundTrains > 1 ? "s" : ""} × {fare.perTrain} € = {fare.outbound} € · Retour : {fare.inboundTrains} train{fare.inboundTrains > 1 ? "s" : ""} × {fare.perTrain} € = {fare.inbound} €.</p><small>Élèves et accompagnateurs compris. Transport seul, hors visites. Estimation selon les segments proposés, sous réserve d’éligibilité et du devis SNCF.</small><a href={GROUP_FARE_SOURCE} target="_blank" rel="noreferrer">Barème et conditions SNCF ↗</a></div><Smile /></section>;
+}
+
+export function Recap({ project, proposal, request }: { project: SchoolProject; proposal: Proposal; request?: SchoolRequest | null }) {
   return <div className="recap"><p className="eyebrow">{request ? request.id : "MON PROJET DE SORTIE"}</p><h2>{proposal.discovery.title.fr}</h2>
     <p>{project.establishment} · {project.className} · {project.students + project.adults} voyageurs</p>
     <dl className="recap-grid"><div><dt>Date souhaitée</dt><dd>{dateLabel(project.date)}</dd></div><div><dt>Thème</dt><dd>{project.theme}</dd></div>
       <div><dt>Départ réel</dt><dd>{project.establishment}</dd></div><div><dt>Gare choisie</dt><dd>{project.origin}</dd></div>
       <div><dt>Créneau souhaité</dt><dd>{project.departure} — {project.returnBy}</dd></div><div><dt>Effectif</dt><dd>{project.students} élèves + {project.adults} adultes</dd></div>
       <div><dt>Budget total</dt><dd>{project.budget ? `${project.budget} € (souhaité, non vérifié)` : "Non renseigné"}</dd></div><div><dt>Accessibilité</dt><dd>{project.accessibility || "À préciser avec le groupe"}</dd></div></dl>
+    <FareEstimate project={project} proposal={proposal} />
     <div className="journey-columns"><TripLegs title="Aller" route={proposal.outbound} /><TripLegs title="Retour" route={proposal.inbound} /></div>
     <VerificationNotes />
     <p className="notice">Demande d’étude de démonstration. Aucune place réservée, aucun envoi à SNCF. Les accès établissement–gare, les marches, l’accueil du lieu, les horaires, le délai de devis de 21 jours et le créneau de l’offre restent à vérifier.</p>
@@ -68,7 +89,7 @@ function Recap({ project, proposal, request }: { project: SchoolProject; proposa
   </div>;
 }
 
-function Assistant({ project, onApply }: { project: SchoolProject; onApply: (p: SchoolProject) => void }) {
+export function Assistant({ project, onApply }: { project: SchoolProject; onApply: (p: SchoolProject) => void }) {
   const [text, setText] = useState("Une sortie patrimoine au départ de Toulouse pour une seconde, avec 30 élèves et 3 accompagnateurs.");
   const [suggestion, setSuggestion] = useState<SchoolProject | null>(null);
   function analyze() {
@@ -97,7 +118,7 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
   const [loadingData, setLoadingData] = useState(true), [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Proposal[] | null>(null), [error, setError] = useState("");
   const [active, setActive] = useState<Proposal | null>(null), [selectedStation, setSelectedStation] = useState<string | null>(null);
-  const [modal, setModal] = useState<"assistant" | "compare" | "details" | "about" | "feedback" | null>(null);
+  const [modal, setModal] = useState<"assistant" | "compare" | "details" | "about" | "feedback" | "fares" | null>(null);
   const [discovery, setDiscovery] = useState<Discovery | null>(null);
   const [view, setView] = useState<"prepare" | "requests" | "agent">("prepare");
   const [requests, setRequests] = useState<SchoolRequest[]>([]), [saved, setSaved] = useState<SchoolRequest | null>(null);
@@ -124,6 +145,7 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
   }
   function change<K extends keyof SchoolProject>(key: K, value: SchoolProject[K]) { update({ ...project, [key]: value }); }
   const total = project.students + project.adults;
+  const farePerTrain = groupFare(project.students, project.adults);
   async function search() {
     const invalid = validateProject(project);
     if (invalid) { setError(invalid); return; }
@@ -165,15 +187,16 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
       <nav aria-label="Navigation principale"><button className={view === "prepare" ? "selected" : ""} onClick={() => setView("prepare")}>Préparer une sortie</button><button className={view === "requests" ? "selected" : ""} onClick={() => { setView("requests"); refreshRequests(); }}>Mes demandes{requests.length > 0 && <span className="count">{requests.length}</span>}</button></nav>
       <button className={`agent-link ${view === "agent" ? "selected" : ""}`} onClick={() => { setView("agent"); refreshRequests(); }}><Icon name="shield" size={18} /><span>Espace agent</span><small>DÉMO</small></button>
     </header>
-    <div className="prototype-strip"><span><i />Prototype du hackathon · aucune réservation réelle</span><button onClick={() => setModal("about")}>À propos des données <span aria-hidden="true">↗</span></button></div>
+    <div className="prototype-strip"><span><i />{PUBLIC_SNAPSHOT ? "Démo · trajets précalculés · aucune réservation" : "Prototype du hackathon · aucune réservation réelle"}</span><button onClick={() => setModal("about")}>À propos des données <span aria-hidden="true">↗</span></button></div>
 
     {view === "prepare" ? <main id="school-main" className="school-main">
       <section className="school-intro"><div><p className="eyebrow">APPRENDRE AILLEURS, VOYAGER ENSEMBLE</p><h1>La prochaine leçon<br />se passe <span>en Occitanie<i /></span>.</h1><p>Un projet pédagogique. Des idées de sorties. Le train pour les relier.</p></div>
-        <div className="intro-signature"><Icon name="train" size={28} /><div>Le voyage fait<br /><strong>partie de la découverte.</strong></div></div></section>
+        <button className="fare-teaser" onClick={() => setModal("fares")} aria-label="À partir de 1 euro par personne : consulter le tarif scolaire"><div><span className="fare-kicker">PETITS PRIX, GRANDES DÉCOUVERTES</span><div className="fare-teaser-price"><span>À partir de</span><strong>1<small>€</small></strong><span>par personne*<br />en train liO</span><Smile /></div><span className="fare-teaser-note">*Forfait groupe, par train emprunté. <u>Voir les conditions ↗</u></span></div></button></section>
       <ol className="school-progress" aria-label="Étapes de préparation">{["Mon projet", "Mes idées de sorties", "Le récapitulatif", "Ma demande"].map((label, index) => <li key={label} className={index <= step ? "current" : ""} aria-current={index === step ? "step" : undefined}><span>{index < step ? <Icon name="check" size={14} /> : `0${index + 1}`}</span>{label}</li>)}</ol>
       <div className="planner-grid">
         <aside className="project-panel" aria-labelledby="project-title">
-          <div className="panel-title"><span className="icon-tile"><Icon name="book" /></span><div><h2 id="project-title">Votre projet</h2><p>On commence par votre classe.</p></div></div>
+          <div className="project-cover"><div className="panel-title"><div><p className="cover-kicker">ET SI ON SORTAIT DE LA CLASSE ?</p><h2 id="project-title">Votre projet</h2><p>La découverte commence ici.</p></div><Smile /></div><TrainIllustration /><BrandTracks /></div>
+          <div className="project-body">
           <button className="assistant-entry" onClick={() => setModal("assistant")}><Icon name="spark" /><span>Décrire mon projet<small>Avec l’assistant de démonstration</small></span><Icon name="arrow" size={17} /></button>
           {loadError && <div className="school-alert" role="alert">Le moteur de trajets ne répond pas.<button onClick={() => void loadData()}>Réessayer la connexion</button></div>}
           <form onSubmit={(e) => { e.preventDefault(); void search(); }}>
@@ -186,20 +209,22 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
             <label className="school-field">Ce que vous voulez explorer<select value={project.theme} onChange={(e) => change("theme", e.target.value)}>{THEMES.map((v) => <option key={v}>{v}</option>)}</select></label>
             <div className="form-row"><label className="school-field">Élèves<input type="number" required min="1" max="50" value={project.students} onChange={(e) => change("students", e.target.valueAsNumber)} /></label><label className="school-field">Accompagnateurs<input type="number" required min="1" max="50" value={project.adults} onChange={(e) => change("adults", e.target.valueAsNumber)} /></label></div>
             <p className={`group-total ${total > 50 || total < 6 ? "invalid" : ""}`} aria-live="polite"><Icon name="group" size={16} />{Number.isFinite(total) ? total : "—"} voyageurs au total <span>6 à 50 maximum</span></p>
+            <div className="group-fare" aria-live="polite"><span className="group-fare-icon"><Icon name="train" size={21} /></span><div><span>Forfait indicatif du groupe</span><strong>{farePerTrain === null ? "Effectif à compléter" : `${farePerTrain} € par train emprunté`}</strong><small>Élèves et accompagnateurs compris.</small></div><button type="button" onClick={() => setModal("fares")} aria-label="Comprendre le tarif du groupe">i</button></div>
             <label className="school-field">Date souhaitée<input type="date" required value={project.date} onInput={(e) => change("date", e.currentTarget.value)} /></label>
             <div className="form-row"><label className="school-field">Départ après<input type="time" required value={project.departure} onInput={(e) => change("departure", e.currentTarget.value)} /></label><label className="school-field">Retour avant<input type="time" required value={project.returnBy} onInput={(e) => change("returnBy", e.currentTarget.value)} /></label></div>
             <details className="more-preferences"><summary>Budget & besoins particuliers <span>+</span></summary><label className="school-field">Budget total souhaité (€)<input type="number" min="0" value={project.budget} placeholder="Facultatif" onChange={(e) => change("budget", e.target.value)} /></label><label className="school-field">Besoins d’accessibilité<textarea rows={2} placeholder="Sans noms ni données médicales" value={project.accessibility} onChange={(e) => change("accessibility", e.target.value)} /></label></details>
             {error && <p role="alert" className="school-alert">{error}</p>}
-            <button className="primary-btn find-trips" type="submit" disabled={loading || loadingData}>{loading ? "Recherche des aller-retours…" : loadingData ? "Connexion au réseau…" : "Trouver des idées de sorties"}{loading ? <span className="spinner" /> : <Icon name="arrow" size={19} />}</button>
+            <button className="primary-btn find-trips" type="submit" disabled={loading || loadingData}>{loading ? "Simulation en cours…" : loadingData ? "Connexion au réseau…" : "Simuler ma sortie"}{loading ? <span className="spinner" /> : <Icon name="arrow" size={19} />}</button>
             <p className="form-footnote">Exemple fictif avec un lycée réel.<br />La date et le retour restent à valider par l’équipe.</p>
           </form>
+          </div>
         </aside>
 
         <section className="exploration" aria-label="Carte et idées de sorties">
           <div className="mobile-view-switch"><button className={!mobileMap ? "selected" : ""} onClick={() => setMobileMap(false)}>Les idées de sorties</button><button className={mobileMap ? "selected" : ""} onClick={() => setMobileMap(true)}>Voir la carte</button></div>
           <div className={`school-map-wrap ${mobileMap ? "show-mobile" : ""}`}><MapView places={places} edges={edges} byId={byId} route={active?.outbound ?? null} selected={selectedStation} onSelect={setSelectedStation} onPick={pick} onOpenDiscovery={openDiscovery} discoveries={mapDiscoveries} />
             <div className="map-label"><span className="map-label-icon"><Icon name="train" /></span><div><strong>L’Occitanie en train liO</strong><small>{places.length ? `${places.length} gares dans le jeu de données` : "Explorez la région"}</small></div></div>
-            <div className="map-legend"><span><i className="legend-line" />Liaisons schématiques</span><span><i className="legend-dot" />Lieux à découvrir</span><button onClick={onNetwork}>Explorer le réseau ↗</button></div>
+            <div className="map-legend"><span><i className={`legend-line ${active ? "route" : ""}`} />{active ? "Trajet aller · schématique" : "Liaisons schématiques"}</span><span><i className="legend-dot" />Lieux à découvrir</span><button onClick={onNetwork}>Explorer le réseau ↗</button></div>
           </div>
           {saved ? <section className="saved-panel" aria-live="polite"><span className="success-icon"><Icon name="check" size={26} /></span><p className="eyebrow">VOTRE PROJET EST CONSERVÉ</p><h2>Une nouvelle sortie se dessine.</h2><p>La demande <strong>{saved.id}</strong> est enregistrée dans ce navigateur, avec le statut « À examiner ».</p><p className="microcopy">Démonstration locale : aucun dossier transmis à SNCF, aucune place réservée.</p><div className="button-row"><button className="primary-btn" onClick={() => { setView("agent"); refreshRequests(); }}>Retrouver le dossier agent <Icon name="arrow" /></button><button className="secondary-btn" onClick={() => window.print()}><Icon name="print" />Imprimer</button></div></section> : <>
             <div className="results-title"><div><p className="eyebrow">{results ? "VOS PREMIÈRES PISTES" : "L’OCCITANIE COMME SALLE DE CLASSE"}</p><h2 ref={resultsHeading} tabIndex={-1}>{results ? `${results.length} idée${results.length > 1 ? "s" : ""} pour votre classe` : "Des découvertes à portée de train"}</h2></div><span className="region-tag">100 % Occitanie</span></div>
@@ -208,6 +233,7 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
               const proposal = visible.find((p) => p.discovery.id === d.id);
               return <article className={`proposal-card ${active?.discovery.id === d.id ? "active" : ""}`} key={d.id}><div className="card-image"><Photo d={d} /><span className="card-category">{d.category === "museum" ? "Arts & culture" : "Patrimoine & histoire"}</span></div><div className="card-content"><span className="card-location"><Icon name="pin" size={13} />{byId.get(d.stationId)?.commune ?? "Occitanie"}<span>0{index + 1}</span></span><h3>{d.title.fr}</h3><p>{d.summary.fr}</p>
                 {proposal ? <><div className="trip-meta"><span><Icon name="train" size={16} />≈ {duration(proposal.outbound.minutes)}</span><span>{proposal.outbound.transfers ? `${proposal.outbound.transfers} correspondance(s)` : "Trajet direct"}</span></div><span className="verification-tag">Horaires & accueil à vérifier</span></> : <div className="inspiration-label">Une idée pour nourrir votre projet</div>}
+                {proposal && <FareEstimate project={project} proposal={proposal} compact />}
                 <div className="card-actions"><button onClick={() => proposal ? inspect(proposal) : openDiscovery(d)}>{proposal ? "Voir cette sortie" : "Découvrir le lieu"}<Icon name="arrow" size={17} /></button>{proposal && <label className="compare-check"><input type="checkbox" checked={compare.includes(d.id)} disabled={compare.length === 2 && !compare.includes(d.id)} onChange={() => setCompare((old) => old.includes(d.id) ? old.filter((id) => id !== d.id) : [...old, d.id].slice(0, 2))} aria-label={`Comparer ${d.title.fr}`} /><span>Comparer</span></label>}</div>
               </div></article>;
             })}</div>}
@@ -221,10 +247,11 @@ export default function SchoolPlanner({ onNetwork }: { onNetwork: () => void }) 
       {storageError && <p className="school-alert" role="alert">{storageError}</p>}
       {!requests.length ? <div className="empty-state"><Icon name="book" size={36} /><h2>Votre première sortie vous attend.</h2><p>Préparez un projet et enregistrez une demande de démonstration.</p><button className="primary-btn" onClick={() => setView("prepare")}>Préparer une sortie <Icon name="arrow" /></button></div> : <div className="request-list">{requests.map((r) => <article className="request-card" key={r.id}><img src={imageOf(r.proposal.discovery)} alt="" /><div><p className="eyebrow">{r.id} <span className="verification-tag">{r.status}</span></p><h2>{r.proposal.discovery.title.fr}</h2><p>{r.project.establishment} · {r.project.className}</p><p className="microcopy">{dateLabel(r.project.date)} · {r.project.students + r.project.adults} voyageurs · retour souhaité avant {r.project.returnBy}</p>{view === "agent" && <p className="agent-checklist">À vérifier : trains datés, capacité groupe, accueil, accès à pied et devis.</p>}</div><div className="request-actions"><button className="secondary-btn" onClick={() => reviewRequest(r)}>Consulter le dossier <Icon name="arrow" /></button><button className="text-button" onClick={() => { setFeedbackTarget(r); setFeedbackSaved(false); setModal("feedback"); }}>{r.feedback ? "Revoir mon retour" : "Simuler le retour enseignant"}</button></div></article>)}</div>}
     </main>}
-    <footer className="school-footer"><span><strong>liO</strong> · Le train, le lien, la découverte.</span><button onClick={() => setModal("about")}>Sources & limites du prototype</button><span>Hackathon IA & mobilité · 2026</span></footer>
+    <footer className="school-footer"><span><strong>liO</strong> · Le train, le lien, la découverte.</span><a href="/mobile">Essayer la version mobile ↗</a><button onClick={() => setModal("about")}>Sources & limites du prototype</button><span>Hackathon IA & mobilité · 2026</span></footer>
 
     {modal === "assistant" && <Modal title="Racontez-nous votre projet." onClose={() => setModal(null)}><Assistant project={project} onApply={(p) => { update(p); setModal(null); }} /></Modal>}
-    {modal === "about" && <Modal title="Un prototype, des informations transparentes." onClose={() => setModal(null)}><div className="about-copy"><h3>Ce qui fonctionne</h3><p>Le formulaire, la carte, les durées aller-retour issues de l’API Python de votre équipe, la comparaison, l’impression et les dossiers enregistrés localement.</p><h3>Ce qui reste à connecter</h3><p>Le chatbot IA, la sauvegarde serveur, les horaires datés, le catalogue pédagogique validé, les scores de confiance et le calcul carbone.</p><h3>Le scénario et ses sources</h3><p>Exemple fictif d’une seconde du <a href="https://bellevue-toulouse.mon-ent-occitanie.fr/le-lycee-bellevue/adresse/" target="_blank" rel="noreferrer">lycée Bellevue à Toulouse</a>. Le lycée existe ; il ne participe pas à une réservation dans cette démonstration.</p><p>Date suggérée : 5 novembre 2026, jour de référence du jeu de données présent dans le dépôt. Source GTFS : {source ?? "indisponible"}. Le moteur estime les durées et ne garantit aucun départ à cette date. La démonstration historique prévue au printemps 2026 reste à raccorder aux données historiques.</p><p>Les descriptions et photos proviennent du catalogue du dépôt. Les durées de marche, conditions scolaires et visites historiques ne sont pas vérifiées. Crédits photographiques disponibles sur chaque image.</p><h3>La direction artistique</h3><p>Inspirée de <a href="https://arnaudfuret-design.fr/project/lio/" target="_blank" rel="noreferrer">l’identité liO présentée par Arnaud Furet</a>. Prototype du hackathon, sans validation officielle SNCF.</p></div></Modal>}
+    {modal === "fares" && <Modal title="Un petit prix pour de grandes découvertes." onClose={() => setModal(null)}><div className="fare-modal-intro"><Smile /><p><strong>Élèves, professeurs, accompagnateurs : tout le groupe compte.</strong><br />Le prix dépend de l’effectif total et du nombre de trains empruntés.</p></div><table className="fare-table"><caption>Forfait pour le groupe, par train liO emprunté</caption><thead><tr><th scope="col">Voyageurs</th><th scope="col">Prix</th></tr></thead><tbody>{GROUP_FARE_TIERS.map((tier) => <tr key={tier.min} className={total >= tier.min && total <= tier.max ? "current" : ""}><th scope="row">{tier.min} à {tier.max} personnes{total >= tier.min && total <= tier.max && <span>Votre groupe</span>}</th><td>{tier.price} €</td></tr>)}</tbody></table><p className="notice">Avec 30 élèves et 3 accompagnateurs : 40 € par train. Un train à l’aller et un au retour donnent 80 € estimés. Une correspondance avec changement de train augmente ce montant.</p><h3>Les repères pour préparer votre sortie</h3><ul className="fare-conditions"><li>Établissement scolaire d’Occitanie, de 6 à 50 voyageurs au total.</li><li>Trains liO en Occitanie, entre 9 h et 16 h, hors vacances scolaires. Certaines lignes et dates sont exclues : consultez les conditions complètes.</li><li>Demande de devis entre 3 mois et 21 jours avant le voyage, au <a href="tel:+33970823220">09 70 82 32 20</a> (prix d’un appel local).</li><li>Trains ouverts aux groupes et disponibilité à confirmer. Places assises non garanties.</li></ul><p className="microcopy">Le prototype donne une estimation du transport, hors visites et autres frais. Il ne valide ni votre éligibilité ni une réservation.</p><a className="secondary-btn fare-source" href={GROUP_FARE_SOURCE} target="_blank" rel="noreferrer">Consulter l’offre officielle SNCF ↗</a><p className="microcopy fare-checked">Informations vérifiées le {GROUP_FARE_CHECKED}.</p></Modal>}
+    {modal === "about" && <Modal title="Un prototype, des informations transparentes." onClose={() => setModal(null)}><div className="about-copy"><h3>Ce qui fonctionne</h3><p>Le formulaire, la carte, les durées aller-retour calculées par le moteur Python de votre équipe, la comparaison, l’impression et les dossiers enregistrés localement.</p>{PUBLIC_SNAPSHOT && <p>Cette version publique utilise des trajets précalculés avec le jeu de données affiché ci-dessous. Les noms complets des gares et des communes sont reconnus. Aucun horaire ni disponibilité en temps réel. Les dossiers restent dans votre navigateur.</p>}<h3>Ce qui reste à connecter</h3><p>Le chatbot IA, la sauvegarde serveur, les horaires datés, le catalogue pédagogique validé, les scores de confiance et le calcul carbone.</p><h3>Le scénario et ses sources</h3><p>Exemple fictif d’une seconde du <a href="https://bellevue-toulouse.mon-ent-occitanie.fr/le-lycee-bellevue/adresse/" target="_blank" rel="noreferrer">lycée Bellevue à Toulouse</a>. Le lycée existe ; il ne participe pas à une réservation dans cette démonstration.</p><p>Date suggérée : 5 novembre 2026, jour de référence du jeu de données présent dans le dépôt. Source GTFS : {source ?? "indisponible"}. Le moteur estime les durées et ne garantit aucun départ à cette date. La démonstration historique prévue au printemps 2026 reste à raccorder aux données historiques.</p><p>Les descriptions et photos proviennent du catalogue du dépôt. Les durées de marche, conditions scolaires et visites historiques ne sont pas vérifiées. Crédits photographiques disponibles sur chaque image.</p><h3>La direction artistique</h3><p>Inspirée de <a href="https://arnaudfuret-design.fr/project/lio/" target="_blank" rel="noreferrer">l’identité liO présentée par Arnaud Furet</a>. Prototype du hackathon, sans validation officielle SNCF.</p></div></Modal>}
     {modal === "compare" && <Modal title="Deux idées. À vous de choisir." onClose={() => setModal(null)} wide><div className="comparison">{selectedResults.map((p) => <article key={p.discovery.id}><Photo d={p.discovery} /><h3>{p.discovery.title.fr}</h3><p>{p.discovery.summary.fr}</p><dl><div><dt>Aller estimé</dt><dd>{duration(p.outbound.minutes)}</dd></div><div><dt>Retour estimé</dt><dd>{duration(p.inbound.minutes)}</dd></div><div><dt>Correspondances aller / retour</dt><dd>{p.outbound.transfers} / {p.inbound.transfers}</dd></div><div><dt>Marche / accueil scolaire</dt><dd>À vérifier</dd></div><div><dt>Capacité / horaires datés</dt><dd>À vérifier</dd></div><div><dt>Confiance / carbone</dt><dd>Non calculés</dd></div></dl><button className="primary-btn" onClick={() => inspect(p)}>Explorer cette sortie <Icon name="arrow" /></button></article>)}</div></Modal>}
     {modal === "details" && discovery && <Modal title={saved && active?.discovery.id === discovery.id ? "Votre dossier de démonstration" : "Une idée de sortie pour votre classe"} onClose={() => setModal(null)} wide><Photo d={discovery} className="detail-photo" />
       {active?.discovery.id === discovery.id ? <><Recap project={project} proposal={active} request={saved} />{storageError && <p role="alert" className="school-alert">{storageError}</p>}<div className="detail-actions"><button className="secondary-btn" onClick={() => window.print()}><Icon name="print" />Imprimer le récapitulatif</button>{!saved && <button className="primary-btn" onClick={register}>Enregistrer la demande de démo <Icon name="arrow" /></button>}{saved && <span className="verification-tag">{saved.status} · sauvegarde locale</span>}</div></> : <div className="inspiration-detail"><p className="eyebrow">IDÉE À EXPLORER · {discovery.era.fr}</p><h2>{discovery.title.fr}</h2><p className="page-lead">{discovery.summary.fr}</p>{discovery.description.map((p, i) => <p key={i}>{p.fr}</p>)}<p className="notice">Contenu du catalogue de démonstration. Accueil scolaire, activités, ouverture et accès gare–site restent à documenter. Lancez une recherche pour obtenir des estimations de trajet.</p><button className="primary-btn" onClick={() => { setModal(null); void search(); }}>Explorer les sorties pour mon projet <Icon name="arrow" /></button></div>}
