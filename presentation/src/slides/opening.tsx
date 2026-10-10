@@ -135,3 +135,20 @@ export const storyLowpoly: SlideDef[] = STORY.map((s, i) => ({
   enter: ({ el, t0 }) => void loadStory3D().then((m) => m.DeckStory.play(el, s.lp, t0)),
   leave: (el) => void loadStory3D().then((m) => m.DeckStory.stop(el)),
 }));
+
+// La salle des profs, en décor de théâtre (image NanoBanana), sans texte : l'image seule, en zoom lent.
+// La scène 3D low poly équivalente existe encore dans three/lowpoly.ts (« salleProfs »), pour y revenir au besoin.
+export const staffRoom: SlideDef = {
+  id: "salle-profs", tone: "dark", cls: "s-story", trans: "iris",
+  Body: () => (
+    <div className="story-frame"><img className="story-img" src="assets/story/00-salle-profs.jpg" data-in="kenburns" data-kb="1.0,0,0;1.12,0,-2" alt="" /></div>
+  ),
+};
+
+// Le même théâtre, monté en plateau de conférence (image NanoBanana, même cadrage), sans texte. Scène 3D gardée : « conference ».
+export const stage: SlideDef = {
+  id: "plateau", tone: "dark", cls: "s-story", trans: "iris",
+  Body: () => (
+    <div className="story-frame"><img className="story-img" src="assets/story/00-conference.jpg" data-in="kenburns" data-kb="1.12,0,-2;1.24,0,-1" alt="" /></div>
+  ),
+};

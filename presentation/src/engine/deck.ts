@@ -58,6 +58,7 @@ export class DeckEngine {
   }
 
   go = (n: number, fast = false) => {
+    if (!this.slides.length) return; // diapo vide (slides retirées le temps de les remettre)
     n = Math.max(0, Math.min(this.slides.length - 1, n));
     const { cur } = this.state;
     if (n === cur) return;

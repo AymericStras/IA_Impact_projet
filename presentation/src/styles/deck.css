@@ -542,3 +542,10 @@ kbd { font: 800 22px var(--font); border: 2px solid currentColor; border-radius:
 /* Transitions TER 3D : le canvas three.js passe au-dessus des slides le temps du passage */
 .gl-trans { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .soon { display: inline-block; margin-top: 40px; background: var(--yellow); color: var(--navy); font: 800 30px var(--font-title); text-transform: uppercase; letter-spacing: .1em; padding: 12px 30px; border-radius: var(--pill); }
+
+/* Slide de fin : QR code du site sur carte blanche (le QR garde sa marge blanche pour rester lisible) */
+.s-qr { display: flex; align-items: center; justify-content: space-between; gap: 80px; padding: 0 140px; }
+.qr-text { flex: 1; min-width: 0; }
+.qr-text .trame { margin-top: 56px; }
+.qr-card { flex: none; width: 600px; height: 600px; padding: 24px; background: #fff; border-radius: 40px; box-shadow: 0 40px 120px rgba(15,33,73,.45), 0 0 0 10px var(--yellow, #ffd500); }
+.qr-card img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }

@@ -179,3 +179,21 @@ export const thanks: SlideDef = {
     </>
   ),
 };
+
+// Slide vierge : un temps blanc, amené par le TER dessiné en 2D qui traverse l'écran (à remplir plus tard)
+export const blank: SlideDef = { id: "vierge", tone: "light", cls: "s-blank", trans: "train", Body: () => <></> };
+
+// Fin du diapo : le QR code du site, à scanner depuis la salle
+export const qr: SlideDef = {
+  id: "qr", tone: "red-bg", cls: "s-qr", trans: "train",
+  Body: () => (
+    <>
+      <div className="qr-text">
+        <Words className="title huge" data-d={2} text={T.qrTitle} />
+        <p className="lead" data-in="up" data-d={5} dangerouslySetInnerHTML={html(T.qrLead)} />
+        <Trame rows={3} cols={20} palette={["yellow", "white", "navy"]} data-in="trame" data-d={6} data-idle="drift" />
+      </div>
+      <div className="qr-card" data-in="pop" data-d={4} data-idle="float"><img src="assets/qr-ia-impact.png" alt={T.qrAlt} /></div>
+    </>
+  ),
+};
