@@ -75,9 +75,9 @@
       "id": "DEPLOY-002",
       "status": "ready",
       "priority": 3,
-      "title": "After the V3 release: live conversation with voice on the public URL, rollback exercise, prune old images",
-      "acceptance": "One real conversation with voice completed on the public URL; rollback to the previous release verified; only current and previous images kept",
-      "evidence": "2026-10-10: release fbeabc2dc29a live; deploy.sh status healthy (API 72 MiB, web 37 MiB), public web/API 200, config and conversation creation checked, neighbouring sites unchanged. Live model, voice and rollback not exercised."
+      "title": "After the V3 release: live conversation with voice on the public URL, rollback exercise",
+      "acceptance": "One real conversation with voice completed on the public URL; rollback to the previous release verified",
+      "evidence": "2026-10-10: release fbeabc2dc29a live; deploy.sh status healthy (API 72 MiB, web 37 MiB), public web/API 200, config and conversation creation checked, neighbouring sites unchanged. Live model, voice and rollback not exercised. Older images (a2d62efa4418, 967768381684) removed at the owner's request; no rollback target on the host."
     },
     {
       "id": "QA-REAL-VOICE",
