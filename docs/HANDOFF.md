@@ -31,3 +31,12 @@ Then P2 (multi-turn + questions), P3 (frontend; design pass with Stitch using th
 
 - Handoff transport to the planner module: pull via `GET /export`, or push (webhook)? Default: pull.
 - Return date inference when only a time is given (see PRODUCT.md) — confirm rule with teammates.
+
+
+## Deployment maintenance — 2026-10-10
+
+Branch `fix/deploy-guardrails`, isolated from the concurrent frontend session. Fixed strict host-guard admission for the full 768 MiB budget, per-port ownership checks, the route heredoc/input bug, rollback after nginx validation/reload failure, and actual 2 MiB/s image stream throttling. Removing the route must succeed before stopping the stack; up no longer removes unknown orphan containers.
+
+Verified here: `python3 -m unittest discover -s deploy -p 'test_*.py' -q` (8 passed), `bash -n deploy/deploy.sh`, `git diff --check`, short stream limiter byte/timing check. Scope is deployment helpers; backend/frontend and paid model checks were not rerun. No ship/up/route performed. Host controller maintenance is tracked separately in the host-guard repository.
+
+Next: integrate this scoped commit with the frontend work, then implement/verify the guarded deployment transaction (shared Docker import is not isolated by a capped client stream). Current preflight is readiness, not a task reservation. See docs/DEPLOYMENT.md.

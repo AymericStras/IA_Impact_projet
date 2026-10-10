@@ -47,7 +47,8 @@
       "title": "Run the stack at https://zhaoyang.fr/sncf-chatbot/",
       "requires": [
         "deploy/deploy.sh preflight returning allowed=true (host memory PSI full < 1 %, host-guard without resource_pressure / production_health failure)",
-        "web image built (needs P6-GUARDRAILS sub-path support)"
+        "web image built (needs P6-GUARDRAILS sub-path support)",
+        "guarded deployment transaction covering shared Docker import and actual container cgroups; readiness alone is not a reservation"
       ],
       "acceptance": "deploy.sh status shows both containers healthy under their caps; public web and API health return 200; one real conversation completed on the public URL; other services on the host unchanged"
     },
@@ -56,7 +57,10 @@
       "status": "blocked",
       "priority": 3,
       "title": "Real teacher recordings and real devices",
-      "requires": ["authorised French recordings (accents, noise, numbers, dates)", "a phone and a laptop over HTTPS"],
+      "requires": [
+        "authorised French recordings (accents, noise, numbers, dates)",
+        "a phone and a laptop over HTTPS"
+      ],
       "acceptance": "Recorded results for permission denied, interruption, noisy room, long message; error rate on numbers/dates/times"
     },
     {
@@ -64,7 +68,9 @@
       "status": "blocked",
       "priority": 4,
       "title": "Hand the confirmed JSON to the teammates' planning module",
-      "requires": ["their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"],
+      "requires": [
+        "their endpoint or agreed transport (default: they pull GET /api/v1/conversations/{id}/export)"
+      ],
       "acceptance": "Their module consumes packages/contracts/examples/confirmed_requirements.json and one live export"
     },
     {
@@ -86,8 +92,16 @@
       "status": "blocked",
       "priority": 7,
       "title": "Items of docs/PRODUCTION.md (identity, retention, Postgres path, device and assistive-technology passes)",
-      "requires": ["deployment and privacy requirements from the owner"],
+      "requires": [
+        "deployment and privacy requirements from the owner"
+      ],
       "acceptance": "Each item implemented and tested; none ticked from code inspection"
+    },
+    {
+      "id": "DEPLOY-GUARDRAILS",
+      "status": "done",
+      "title": "Strict readiness and transactional gateway configuration helpers",
+      "evidence": "8 deployment helper tests; bash -n; stream byte/timing check; no live deployment performed"
     }
   ]
 }
