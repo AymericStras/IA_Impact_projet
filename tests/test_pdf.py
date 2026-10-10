@@ -75,7 +75,7 @@ def test_every_recap_carries_the_watermark_and_only_simulated_ones_the_notice():
 
 def test_missing_optional_values_are_stated_not_invented():
     text = text_of(pdf_of(example("02-aller-simple-minimal")))
-    assert "Montpellier Saint-Roch" in text and "Sète" in text
+    assert "Toulouse Matabiau" in text and "Carcassonne" in text
     assert "Aller simple" in text
     assert "14 h 32" in text
     assert "non communiquée" in text  # class, arrival
@@ -98,7 +98,7 @@ def test_seating_columns_and_long_names():
         "41, 42",
         "12, 14",
         "38 min",
-        "1 h 24",
+        "24 min",
     ]:
         assert expected in text, expected
 

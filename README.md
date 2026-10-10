@@ -242,13 +242,14 @@ per recap. Records and PDFs are deleted after 30 days.
 
 ## Examples
 
-`contracts/examples/` — the recipient is a placeholder, `destinataire@example.fr`.
+`contracts/examples/` — every example runs between Toulouse Matabiau and
+Carcassonne; the recipient is a placeholder, `destinataire@example.fr`.
 
 | File | Shows | Result |
 |---|---|---|
 | `01-aller-retour-complet.json` | round trip, 30 travellers, 2nd class, simulated | accepted, 30,00 € |
 | `02-aller-simple-minimal.json` | one way, required values only | accepted, "non communiqué" |
-| `03-correspondance-premiere-classe.json` | connection, 1st class, train/coach/seat, long name | accepted |
+| `03-correspondance-premiere-classe.json` | connection at Castelnaudary, 1st class, train/coach/seat, long name | accepted |
 | `90-invalide-prix-transmis.json` | a `price` field although the tariff is fixed | 422 |
 | `91-invalide-arrivee-avant-depart.json` | arrival before departure | 422 |
 

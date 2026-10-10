@@ -32,15 +32,15 @@ def test_round_trip_summary():
 def test_one_way_with_connection_ends_at_the_last_station():
     view = build_trip_view(example("03-correspondance-premiere-classe").trip)
     assert (view.origin, view.destination, view.kind) == (
-        "Perpignan",
         "Toulouse Matabiau",
+        "Carcassonne",
         "Aller simple",
     )
     assert not view.round_trip
-    assert view.arrival == f"9{NB}h{NB}38"
+    assert view.arrival == f"8{NB}h{NB}38"
     assert view.return_departure is None
     assert view.has_seating
-    assert [leg.duration for leg in view.legs] == [f"38{NB}min", f"1{NB}h{NB}24"]
+    assert [leg.duration for leg in view.legs] == [f"38{NB}min", f"24{NB}min"]
     assert (view.price_total, view.price_per_person) == (f"2,00{NB}€", f"1,00{NB}€")
 
 

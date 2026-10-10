@@ -9,8 +9,8 @@
     "travel_class": null,
     "legs": [
       {
-        "from_station": "Montpellier Saint-Roch",
-        "to_station": "Sète",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
         "departure": "2026-10-20T14:32+02:00",
         "arrival": null,
         "line": null,

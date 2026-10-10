@@ -9,8 +9,8 @@
     "travel_class": "2",
     "legs": [
       {
-        "from_station": "Nîmes",
-        "to_station": "Montpellier Saint-Roch",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Carcassonne",
         "departure": "2026-10-20T10:30+02:00",
         "arrival": "2026-10-20T10:02+02:00",
         "line": null,

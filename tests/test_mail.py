@@ -60,7 +60,7 @@ def test_text_body_with_every_optional_value_missing(config):
     assert "Classe       : non communiquée" in text
     assert "Prix total   : 1,00 €" in text
     assert "Par personne : 1,00 €" in text
-    assert "Départ       : 14 h 32 de Montpellier Saint-Roch\n" in text
+    assert "Départ       : 14 h 32 de Toulouse Matabiau\n" in text
     for absent in ["Retour", "Référence", "simulées", "None", "arrivée"]:
         assert absent not in text, absent
     assert "Merci de ne pas répondre à ce message." in text

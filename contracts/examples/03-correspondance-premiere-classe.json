@@ -4,26 +4,26 @@
   "recipient": { "email": "destinataire@example.fr", "name": "M. Jean-Baptiste de La Rochefoucauld-Montmorency" },
   "trip": {
     "reference": "SIM-7A21C0DE",
-    "title": "Déplacement Perpignan – Toulouse avec correspondance à Narbonne",
+    "title": "Déplacement Toulouse – Carcassonne avec correspondance à Castelnaudary",
     "participants_count": 2,
     "travel_class": "1",
     "legs": [
       {
-        "from_station": "Perpignan",
-        "to_station": "Narbonne",
+        "from_station": "Toulouse Matabiau",
+        "to_station": "Castelnaudary",
         "departure": "2026-12-03T07:12+01:00",
         "arrival": "2026-12-03T07:50+01:00",
-        "line": "liO Perpignan – Narbonne",
+        "line": "liO Toulouse Matabiau – Castelnaudary",
         "train_number": "876512",
         "coach": "3",
         "seat": "41, 42"
       },
       {
-        "from_station": "Narbonne",
-        "to_station": "Toulouse Matabiau",
+        "from_station": "Castelnaudary",
+        "to_station": "Carcassonne",
         "departure": "2026-12-03T08:14+01:00",
-        "arrival": "2026-12-03T09:38+01:00",
-        "line": "liO Narbonne – Toulouse Matabiau",
+        "arrival": "2026-12-03T08:38+01:00",
+        "line": "liO Castelnaudary – Carcassonne",
         "train_number": "871408",
         "coach": "1",
         "seat": "12, 14"

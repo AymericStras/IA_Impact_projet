@@ -207,7 +207,7 @@ def test_render_returns_a_pdf_and_leaves_no_trace(client, outbox, config):
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
     assert 'filename="recapitulatif-2026-10-20.pdf"' in response.headers["content-disposition"]
-    assert "Montpellier" in PdfReader(io.BytesIO(response.content)).pages[0].extract_text()
+    assert "Carcassonne" in PdfReader(io.BytesIO(response.content)).pages[0].extract_text()
     assert outbox.messages == []
     assert list((config.data_dir / "documents").iterdir()) == []
 
