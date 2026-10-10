@@ -4,9 +4,15 @@ Target: `zhao-zenbook` (home server), published through the existing `zhaoyang.f
 `https://zhaoyang.fr/sncf-chatbot/`. Development, tests and image builds happen on the developer
 machine; the server only runs two small containers.
 
-## Current release gate — 2026-10-10
+## Current release — 2026-10-10
 
-The V3 restyle is merged on `main` (PR #1) and **not deployed**. On 2026-10-10 around 08:20 UTC `deploy/deploy.sh preflight` returned `allowed=false` (`health_warmup`, `maintenance_or_unknown`, `resource_pressure`) while `host-guard status` reported `maintenance_active` (`repair-workflow-external-backup.service`) and `io_pressure`; nothing was shipped or started. At 08:27 UTC the only remaining reason was `maintenance_or_unknown`: that backup unit is not a long run but a failure loop (`RuntimeError: snapshot_retention_expired`, systemd `auto-restart`), so the gate stays closed until the host's backup job is repaired — a host task, outside this repository. Images for `fbeabc2dc29a` were built on the developer machine and are ready to ship. An earlier read-only inspection found the live containers on `a2d62efa4418`. The server-build and `--owner-approved` paths were removed from `deploy/deploy.sh` with the guardrails merge: there is no override. The release evidence further down describes an earlier release built with the removed server-build path.
+**Live at https://zhaoyang.fr/sncf-chatbot/: release `fbeabc2dc29a`** (V3 identity, five fields, simulated journey in both interfaces), images built on the developer machine.
+
+- How it went: the preflight refused while `repair-workflow-external-backup.service` was in a failure loop on the host (`RuntimeError: snapshot_retention_expired`, systemd `auto-restart`; host-guard reports it as `maintenance_active`). With the owner's explicit approval that unit was stopped for the release and started again afterwards (it still fails: a host task, outside this repository). The preflight then returned `allowed=true`.
+- Upload: the home uplink gives about 0.2 MB/s, far under the 2 MiB/s cap of `ship`. With the owner's approval the 497 MB stream was sent compressed instead (`docker save … | zstd -T0 -12 | ssh host 'zstd -d | docker load'`, 140 MB, 11 min 18 s), then the compose file and `.env.next` were written as `ship` does, and `deploy/deploy.sh up --yes` (with its preflight) replaced the two containers.
+- Verified after the switch: `deploy.sh status` — API healthy 72 MiB, web 37 MiB (caps 384 MiB), public web and API health 200; `GET /config` returns `planner_mode: simulated`; `POST /conversations` 201 with the five-field welcome; `/` and `/vocal/` 200. Host memory PSI 0 before and after. `zhaoyang.fr/`, `/sitelist/` and `rex31.com/` answered 200 before and after; `/label-print/` answered 404 before and after.
+- Not verified: a full conversation with the live model or the microphone on this release, real devices, a rollback (`.env.previous` points to `a2d62efa4418`, whose images are still on the host).
+- host-guard's `allowed=true` is a readiness answer for its offline sandbox; it has no admission path for a Docker import and a container replacement. This release went ahead on the owner's repeated explicit instruction. The server-build and `--owner-approved` paths no longer exist in `deploy/deploy.sh`. The release evidence further down describes an earlier release.
 
 ## Layout on the server (host conventions)
 

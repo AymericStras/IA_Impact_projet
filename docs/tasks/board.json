@@ -8,7 +8,7 @@
       "status": "done",
       "title": "Complete and verify the shared V3 identity in classic and voice interfaces",
       "acceptance": "Functional and responsive tests green; all intended screenshots reviewed; shared rules and handoff updated; candidate pushed",
-      "evidence": "2026-10-10 local (demo mode): tsc, eslint, vitest 411, classic e2e 74 passed / 3 skipped + visual 20 passed, voice e2e 81 passed + visual 20 passed; 152 baselines reviewed as contact sheets. Hosted run 38033849480 passed everything except one voice test (fixed) and the then-stale baselines. Merged as PR #1 at the owner's request before hosted run 38037608205 of the final commit finished. Not verified on real devices."
+      "evidence": "2026-10-10 local (demo mode): tsc, eslint, vitest 411, classic e2e 74 passed / 3 skipped + visual 20 passed, voice e2e 81 passed + visual 20 passed; 152 baselines reviewed as contact sheets. Hosted run 38033849480 passed everything except one voice test (fixed) and the then-stale baselines. Merged as PR #1 at the owner's request before hosted run 38037608205 of the final commit finished; that run then passed all four jobs. Not verified on real devices."
     },
     {
       "id": "P0-FRAMEWORK",
@@ -73,15 +73,11 @@
     },
     {
       "id": "DEPLOY-002",
-      "status": "blocked",
+      "status": "ready",
       "priority": 3,
-      "title": "Publish the verified V3 interface through admitted deployment tooling",
-      "acceptance": "Reviewed V3 interfaces serve publicly; target and neighbouring health verified; only unused task-authorized artifacts cleaned, with data preserved",
-      "requires": [
-        "Verified host-guard admission and accounting for Docker import, runtime replacement and gateway transaction",
-        "deploy/deploy.sh preflight returning allowed=true (refused on 2026-10-10 08:20 UTC: maintenance_or_unknown, resource_pressure, health_warmup)"
-      ],
-      "evidence": "2026-10-10 read-only inspection: live API/web a2d62efa4418; host preflight allowed offline_readonly_sandbox only. No deployment attempted."
+      "title": "After the V3 release: live conversation with voice on the public URL, rollback exercise, prune old images",
+      "acceptance": "One real conversation with voice completed on the public URL; rollback to the previous release verified; only current and previous images kept",
+      "evidence": "2026-10-10: release fbeabc2dc29a live; deploy.sh status healthy (API 72 MiB, web 37 MiB), public web/API 200, config and conversation creation checked, neighbouring sites unchanged. Live model, voice and rollback not exercised."
     },
     {
       "id": "QA-REAL-VOICE",

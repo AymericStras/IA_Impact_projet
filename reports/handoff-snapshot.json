@@ -1,27 +1,21 @@
 {
-  "generated_at_utc": "2026-10-10T08:25:04+00:00",
+  "generated_at_utc": "2026-10-10T09:00:43+00:00",
   "branch": "main",
-  "commit": "dc01e59166e29ec4f9cf6a69d47c53e54d628418",
+  "commit": "f141c27ed6fcb63b9328083d3bfa8e8713cfd101",
   "last_commits": [
+    "f141c27 docs: record why the host preflight keeps refusing the V3 release",
+    "fbeabc2 fix(deploy): merge strict host-guard admission and gateway rollback; drop server build and owner override",
     "dc01e59 Merge pull request #1 from ze2phyrzhenyin/feature/restyle-v3-complete",
     "f1debe3 fix(web): reviewed V3 baselines; heading face on voice itineraries; keyboard focus check",
     "543844d fix(web): preserve space for small-screen conversations",
     "44253e7 fix(web): finish voice controls and type the contrast check",
     "5c20864 feat(web): complete the shared V3 identity in both experiences",
-    "a2d62ef feat(web): simulated journey stages in the staged voice flow",
-    "d551917 feat(web): simulated journey after confirmation in the classic chat",
-    "bc578f5 feat(web): shared data layer for the journey after confirmation"
+    "a2d62ef feat(web): simulated journey stages in the staged voice flow"
   ],
   "uncommitted": [
-    "M  deploy/deploy.sh",
-    "A  deploy/gateway.py",
-    "A  deploy/preflight.py",
-    "A  deploy/rate_limit.py",
-    "D  deploy/remote-build.sh",
-    "A  deploy/test_deploy.py",
-    "M  docs/DEPLOYMENT.md",
-    "M  docs/HANDOFF.md",
-    "M  docs/tasks/board.json"
+    "M docs/DEPLOYMENT.md",
+    " M docs/HANDOFF.md",
+    " M docs/tasks/board.json"
   ],
   "last_recorded_checks": null,
   "last_recorded_evals": {
